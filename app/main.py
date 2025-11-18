@@ -1,11 +1,13 @@
 from contextlib import asynccontextmanager
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from loguru import logger
 
 from .config_loader import load_digest_schedule
@@ -104,6 +106,11 @@ def create_app() -> FastAPI:
         title="100kwhy WeChat MP Backend",
         lifespan=lifespan,
     )
+
+    # 挂载静态资源目录，用于提供公众号二维码等图片
+    static_dir = Path(__file__).resolve().parent / "static"
+    if static_dir.exists():
+        app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
     @app.get("/", response_class=HTMLResponse)
     async def root():
@@ -226,6 +233,23 @@ def create_app() -> FastAPI:
             .btn-ghost:hover {
               background: rgba(249,250,251,0.8);
             }
+            .qr-section {
+              margin-top: 4px;
+              margin-bottom: 10px;
+              display: flex;
+              align-items: center;
+              gap: 12px;
+            }
+            .qr-section img {
+              width: 80px;
+              height: 80px;
+              border-radius: 16px;
+              box-shadow: 0 10px 25px rgba(15,23,42,0.18);
+            }
+            .qr-text {
+              font-size: 13px;
+              color: #4b5563;
+            }
             .meta {
               font-size: 12px;
               color: #9ca3af;
@@ -267,12 +291,12 @@ def create_app() -> FastAPI:
               </div>
               <div class="actions">
                 <a class="btn btn-primary" href="/digest/panel">进入管理员面板</a>
-                <a class="btn btn-ghost" href="https://mp.weixin.qq.com" target="_blank" rel="noopener noreferrer">
+                <a class="btn btn-ghost" href="/static/wechat_mp_qr.jpg" target="_blank" rel="noopener noreferrer">
                   查看微信公众号
                 </a>
               </div>
               <div class="meta">
-                如需修改推送时间或文章池，请登录服务器编辑 <code>config/digest_schedule.json</code> 与 <code>config/ai_articles.json</code>。
+                开源仓库：<a href="https://github.com/yunlongwen/100kwhy_wechat_mp" target="_blank" rel="noopener noreferrer">github.com/yunlongwen/100kwhy_wechat_mp</a>
               </div>
             </div>
           </div>

@@ -1,6 +1,8 @@
+import os
 from datetime import datetime
+from typing import Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from loguru import logger
@@ -17,6 +19,26 @@ from ..sources.ai_articles import (
 from ..sources.article_crawler import fetch_article_info
 
 router = APIRouter()
+
+
+# 管理员授权码从环境变量中读取，避免敏感信息写死在代码里
+ADMIN_CODE = os.getenv("AICODING_ADMIN_CODE")
+
+
+def _require_admin(x_admin_code: Optional[str] = Header(default=None)) -> None:
+    """
+    简单的管理授权校验。
+
+    - 前端在请求时通过 header: X-Admin-Code 传入授权码
+    - 授权码从环境变量 AICODING_ADMIN_CODE 中读取
+    - 如果环境变量未配置，则不启用认证（用于本地开发）
+    """
+    # 未配置管理员授权码：认为处于开发/测试环境，不做校验
+    if not ADMIN_CODE:
+        return
+
+    if x_admin_code != ADMIN_CODE:
+        raise HTTPException(status_code=403, detail="无权限：缺少或错误的授权码")
 
 
 class AddArticleRequest(BaseModel):
@@ -57,7 +79,7 @@ def _build_digest():
 
 
 @router.get("/preview")
-async def preview_digest():
+async def preview_digest(admin: None = Depends(_require_admin)):
     """
     返回当前配置下将要推送的日报内容（不真正发送）。
     """
@@ -66,7 +88,7 @@ async def preview_digest():
 
 
 @router.post("/trigger")
-async def trigger_digest():
+async def trigger_digest(admin: None = Depends(_require_admin)):
     """
     手动触发一次企业微信推送，并返回本次发送的内容。
     """
@@ -82,7 +104,7 @@ async def trigger_digest():
 
 
 @router.get("/articles")
-async def list_all_articles():
+async def list_all_articles(admin: None = Depends(_require_admin)):
     """
     获取配置文件中所有文章列表。
     
@@ -94,7 +116,7 @@ async def list_all_articles():
 
 
 @router.post("/add-article")
-async def add_article(request: AddArticleRequest):
+async def add_article(request: AddArticleRequest, admin: None = Depends(_require_admin)):
     """
     从URL爬取文章信息并添加到配置文件中。
     
@@ -134,7 +156,7 @@ async def add_article(request: AddArticleRequest):
 
 
 @router.post("/delete-article")
-async def delete_article(request: DeleteArticleRequest):
+async def delete_article(request: DeleteArticleRequest, admin: None = Depends(_require_admin)):
     """
     从配置文件中删除指定URL的文章。
     
@@ -204,10 +226,64 @@ async def digest_panel():
         .status.error { color: #dc2626; }
         a { color: #2563eb; text-decoration: none; }
         a:hover { text-decoration: underline; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .top-bar-links { font-size: 13px; color: #6b7280; }
+        .top-bar-links a { color: #2563eb; }
+        .auth-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(15,23,42,0.65);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 50;
+        }
+        .auth-dialog {
+          width: 320px;
+          background: #ffffff;
+          border-radius: 16px;
+          padding: 20px 18px 16px;
+          box-shadow: 0 18px 45px rgba(15,23,42,0.35);
+        }
+        .auth-dialog h2 {
+          margin: 0 0 8px;
+          font-size: 18px;
+        }
+        .auth-dialog p {
+          margin: 0 0 12px;
+          font-size: 13px;
+          color: #6b7280;
+        }
+        .auth-dialog input {
+          width: 100%;
+          padding: 8px 12px;
+          border-radius: 8px;
+          border: 1px solid #d1d5db;
+          font-size: 14px;
+          box-sizing: border-box;
+        }
+        .auth-dialog input:focus {
+          outline: none;
+          border-color: #2563eb;
+        }
+        .auth-actions {
+          margin-top: 12px;
+          display: flex;
+          justify-content: flex-end;
+          gap: 8px;
+        }
       </style>
     </head>
     <body>
-      <h1>AI 编程最新资讯 · 管理员面板</h1>
+      <div class="top-bar">
+        <h1>AI 编程最新资讯 · 管理员面板</h1>
+        <div class="top-bar-links">
+          开源仓库：
+          <a href="https://github.com/yunlongwen/100kwhy_wechat_mp" target="_blank" rel="noopener noreferrer">
+            github.com/yunlongwen/100kwhy_wechat_mp
+          </a>
+        </div>
+      </div>
       
       <h2>添加文章</h2>
       <div class="add-article-form">
@@ -234,7 +310,82 @@ async def digest_panel():
 
       <div class="articles" id="articles"></div>
 
+      <div class="auth-overlay" id="auth-overlay" style="display: none;">
+        <div class="auth-dialog">
+          <h2>输入授权码</h2>
+          <p>仅限管理员访问。请填写授权码后进入面板。</p>
+          <input type="password" id="admin-code-input" placeholder="授权码" />
+          <div class="status" id="auth-status"></div>
+          <div class="auth-actions">
+            <button class="btn" id="auth-submit-btn">确认</button>
+          </div>
+        </div>
+      </div>
+
       <script>
+        const ADMIN_CODE_KEY = "aicoding_admin_code";
+        let authFailCount = 0;
+        let authBlockedUntil = 0; // timestamp ms
+
+        function getAdminCode() {
+          return localStorage.getItem(ADMIN_CODE_KEY) || "";
+        }
+
+        function setAdminCode(code) {
+          localStorage.setItem(ADMIN_CODE_KEY, code || "");
+        }
+
+        function showAuthOverlay() {
+          const overlay = document.getElementById("auth-overlay");
+          const input = document.getElementById("admin-code-input");
+          const statusEl = document.getElementById("auth-status");
+          overlay.style.display = "flex";
+          statusEl.textContent = "";
+          statusEl.className = "status";
+          input.value = "";
+          input.focus();
+        }
+
+        function hideAuthOverlay() {
+          const overlay = document.getElementById("auth-overlay");
+          overlay.style.display = "none";
+        }
+
+        function handleAuthError(contextStatusEl) {
+          const now = Date.now();
+          if (authBlockedUntil && now < authBlockedUntil) {
+            const seconds = Math.ceil((authBlockedUntil - now) / 1000);
+            if (contextStatusEl) {
+              contextStatusEl.textContent = `❌ 授权多次失败，请 ${seconds} 秒后再试`;
+              contextStatusEl.className = "status error";
+            }
+            return false;
+          }
+
+          authFailCount += 1;
+          if (authFailCount >= 5) {
+            // 简单限流：5 次失败后，锁定 60 秒
+            authBlockedUntil = now + 60 * 1000;
+          }
+
+          setAdminCode("");
+          showAuthOverlay();
+          if (contextStatusEl) {
+            contextStatusEl.textContent = "❌ 授权码错误，请重新输入";
+            contextStatusEl.className = "status error";
+          }
+          return false;
+        }
+
+        async function ensureAdminCode() {
+          let code = getAdminCode();
+          if (!code) {
+            showAuthOverlay();
+            return false;
+          }
+          return true;
+        }
+
         async function loadArticleList() {
           const listEl = document.getElementById("article-list");
           const statusEl = document.getElementById("list-status");
@@ -242,7 +393,16 @@ async def digest_panel():
           listEl.innerHTML = "加载中...";
 
           try {
-            const res = await fetch("./articles");
+            const adminCode = getAdminCode();
+            const res = await fetch("./articles", {
+              headers: { "X-Admin-Code": adminCode || "" },
+            });
+
+            if (res.status === 401 || res.status === 403) {
+              handleAuthError(statusEl);
+              return;
+            }
+
             const data = await res.json();
             
             if (!data.ok || !data.articles || data.articles.length === 0) {
@@ -293,11 +453,19 @@ async def digest_panel():
           statusEl.className = "status";
 
           try {
+            const adminCode = getAdminCode();
             const res = await fetch("./delete-article", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: {
+                "Content-Type": "application/json",
+                "X-Admin-Code": adminCode || "",
+              },
               body: JSON.stringify({ url: url })
             });
+            if (res.status === 401 || res.status === 403) {
+              handleAuthError(statusEl);
+              return;
+            }
             const data = await res.json();
             
             if (data.ok) {
@@ -326,7 +494,14 @@ async def digest_panel():
           metaEl.textContent = "加载中...";
 
           try {
-            const res = await fetch("./preview");
+            const adminCode = getAdminCode();
+            const res = await fetch("./preview", {
+              headers: { "X-Admin-Code": adminCode || "" }
+            });
+            if (res.status === 401 || res.status === 403) {
+              handleAuthError(statusEl);
+              return;
+            }
             const data = await res.json();
             metaEl.textContent = `日期：${data.date} ｜ 主题：${data.theme} ｜ 定时：${String(data.schedule.hour).padStart(2,'0')}:${String(data.schedule.minute).padStart(2,'0')} ｜ 篇数：${data.schedule.count}`;
 
@@ -368,11 +543,19 @@ async def digest_panel():
           statusEl.className = "status";
           
           try {
+            const adminCode = getAdminCode();
             const res = await fetch("./add-article", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: {
+                "Content-Type": "application/json",
+                "X-Admin-Code": adminCode || "",
+              },
               body: JSON.stringify({ url: url })
             });
+            if (res.status === 401 || res.status === 403) {
+              handleAuthError(statusEl);
+              return;
+            }
             
             // 检查 HTTP 状态码
             if (!res.ok) {
@@ -428,7 +611,15 @@ async def digest_panel():
           btn.disabled = true;
           statusEl.textContent = "正在触发推送，请稍候...";
           try {
-            const res = await fetch("./trigger", { method: "POST" });
+            const adminCode = getAdminCode();
+            const res = await fetch("./trigger", {
+              method: "POST",
+              headers: { "X-Admin-Code": adminCode || "" }
+            });
+            if (res.status === 401 || res.status === 403) {
+              handleAuthError(statusEl);
+              return;
+            }
             const data = await res.json();
             if (data.ok) {
               statusEl.textContent = `✅ 已触发一次推送：${data.date} ｜ 主题：${data.theme}`;
@@ -452,8 +643,36 @@ async def digest_panel():
           }
         });
         document.getElementById("trigger-btn").addEventListener("click", triggerOnce);
-        loadArticleList();
-        loadPreview();
+
+        document.getElementById("auth-submit-btn").addEventListener("click", async function () {
+          const input = document.getElementById("admin-code-input");
+          const statusEl = document.getElementById("auth-status");
+          const code = input.value.trim();
+          if (!code) {
+            statusEl.textContent = "❌ 请输入授权码";
+            statusEl.className = "status error";
+            return;
+          }
+          setAdminCode(code);
+          hideAuthOverlay();
+          await initializePanel();
+        });
+
+        document.getElementById("admin-code-input").addEventListener("keypress", function (e) {
+          if (e.key === "Enter") {
+            document.getElementById("auth-submit-btn").click();
+          }
+        });
+
+        async function initializePanel() {
+          const ok = await ensureAdminCode();
+          if (!ok) return;
+          loadArticleList();
+          loadPreview();
+        }
+
+        // 初始加载：检查是否已有授权码，没有则弹出对话框
+        initializePanel();
       </script>
     </body>
     </html>
