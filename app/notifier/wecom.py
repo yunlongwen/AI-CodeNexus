@@ -1,5 +1,5 @@
 import os
-from typing import Iterable
+from typing import Iterable, List
 
 import httpx
 from loguru import logger
@@ -48,7 +48,7 @@ def build_wecom_digest_markdown(
       - source
       - summary (optional)
     """
-    lines: list[str] = []
+    lines: List[str] = []
     lines.append(f"**AI 编程优质文章推荐｜{date_str}**")
     lines.append("")
     lines.append(f"> 今日主题：{theme}")

@@ -1,9 +1,7 @@
-from __future__ import annotations
-
 from dataclasses import dataclass
 from datetime import datetime
 from random import sample
-from typing import List
+from typing import List, Optional
 
 
 @dataclass
@@ -69,7 +67,7 @@ def pick_daily_ai_articles(k: int = 5) -> List[AiArticle]:
     return sample(pool, k)
 
 
-def todays_theme(now: datetime | None = None) -> str:
+def todays_theme(now: Optional[datetime] = None) -> str:
     # 简单占位：后续可以根据星期 / 最近热点等自动生成主题
     return "AI 编程效率与工程实践精选"
 
