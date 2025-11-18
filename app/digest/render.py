@@ -33,7 +33,7 @@ def render_digest_for_mp(digest: DailyDigest) -> str:
 
 DAILY_TEMPLATE = dedent(
     """
-    【AI 编程 & 团队管理日报】{date}
+    【AI 编程最新资讯 · 管理员面板】{date}
 
     今日主题：{theme}
 
