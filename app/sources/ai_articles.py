@@ -16,19 +16,19 @@ class AiArticle:
     summary: str
 
 
-def _config_path() -> Path:
+def _articles_path() -> Path:
     """
-    Get path to config/ai_articles.json relative to project root.
+    Get path to data/ai_articles.json relative to project root.
     """
-    # app/sources/ai_articles.py -> project_root/config/ai_articles.json
-    return Path(__file__).resolve().parents[2] / "config" / "ai_articles.json"
+    # app/sources/ai_articles.py -> project_root/data/ai_articles.json
+    return Path(__file__).resolve().parents[2] / "data" / "ai_articles.json"
 
 
 def load_ai_articles_pool() -> List[AiArticle]:
     """
-    Load a pool of high-quality AI coding articles from JSON config file.
+    Load a pool of high-quality AI coding articles from JSON data file.
 
-    Config file: config/ai_articles.json
+    Data file: data/ai_articles.json
     Structure:
       [
         {
@@ -40,7 +40,7 @@ def load_ai_articles_pool() -> List[AiArticle]:
         ...
       ]
     """
-    path = _config_path()
+    path = _articles_path()
     if not path.exists():
         logger.warning(f"AI articles config not found at {path}, return empty list.")
         return []
@@ -102,7 +102,7 @@ def save_article_to_config(article: dict) -> bool:
     Returns:
         bool: 是否保存成功
     """
-    path = _config_path()
+    path = _articles_path()
     
     # 确保目录存在
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -160,7 +160,7 @@ def delete_article_from_config(url: str) -> bool:
     Returns:
         bool: 是否删除成功
     """
-    path = _config_path()
+    path = _articles_path()
     
     if not path.exists():
         logger.warning(f"配置文件不存在: {path}")
@@ -208,7 +208,7 @@ def get_all_articles() -> List[dict]:
     Returns:
         List[dict]: 所有文章的列表
     """
-    path = _config_path()
+    path = _articles_path()
     
     if not path.exists():
         return []
@@ -230,4 +230,26 @@ def get_all_articles() -> List[dict]:
         logger.error(f"Failed to load all articles: {exc}")
         return []
 
+
+def overwrite_articles(articles: List[dict]) -> bool:
+    """
+    覆盖写入文章池。
+    """
+    path = _articles_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with path.open("w", encoding="utf-8") as f:
+            json.dump(articles, f, ensure_ascii=False, indent=2)
+        logger.info(f"Overwrote article pool with {len(articles)} articles.")
+        return True
+    except Exception as exc:  # noqa: BLE001
+        logger.error(f"Failed to overwrite article pool: {exc}")
+        return False
+
+
+def clear_articles() -> bool:
+    """
+    清空文章池。
+    """
+    return overwrite_articles([])
 

@@ -1,15 +1,18 @@
+import math
 import os
 from datetime import datetime
 from typing import Optional
 
+from dataclasses import asdict
 from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
 from loguru import logger
+from pydantic import BaseModel
 
 from ..config_loader import load_digest_schedule
 from ..notifier.wecom import build_wecom_digest_markdown, send_markdown_to_wecom
 from ..sources.ai_articles import (
+    clear_articles,
     delete_article_from_config,
     get_all_articles,
     pick_daily_ai_articles,
@@ -18,7 +21,13 @@ from ..sources.ai_articles import (
 )
 from ..sources.article_crawler import fetch_article_info
 from ..crawlers.sogou_wechat import search_articles_by_keyword
-from ..sources.ai_candidates import add_candidates_to_pool, load_candidate_pool, save_candidate_pool
+from ..sources.ai_candidates import (
+    add_candidates_to_pool,
+    clear_candidate_pool,
+    load_candidate_pool,
+    promote_candidates_to_articles,
+    save_candidate_pool,
+)
 import json
 from pathlib import Path
 
@@ -54,6 +63,12 @@ class DeleteArticleRequest(BaseModel):
 
 class CandidateActionRequest(BaseModel):
     url: str
+
+
+def _clear_content_pools() -> None:
+    """清空正式文章池与候选池"""
+    clear_articles()
+    clear_candidate_pool()
 
 
 def _build_digest():
@@ -105,8 +120,12 @@ async def trigger_digest(admin: None = Depends(_require_admin)):
         theme=digest["theme"],
         items=digest["articles"],
     )
+    if not digest["articles"]:
+        raise HTTPException(status_code=400, detail="文章池为空，请先添加或抓取文章。")
+
     logger.info("Manual trigger: sending digest to WeCom group...")
     await send_markdown_to_wecom(content)
+    _clear_content_pools()
     return {"ok": True, **digest}
 
 
@@ -164,9 +183,24 @@ async def add_article(request: AddArticleRequest, admin: None = Depends(_require
 
 @router.get("/candidates")
 async def list_candidate_articles(admin: None = Depends(_require_admin)):
-    """获取所有待审核的文章列表"""
+    """获取所有待审核的文章列表，并按关键词分组"""
     candidates = load_candidate_pool()
-    return {"ok": True, "candidates": candidates}
+    logger.info(f"Endpoint /candidates: Found {len(candidates)} candidates in the pool.")
+
+    grouped_candidates = {}
+    for candidate in candidates:
+        # crawled_from format is "sogou_wechat:KEYWORD"
+        try:
+            source_parts = candidate.crawled_from.split(":", 1)
+            keyword = source_parts[1] if len(source_parts) > 1 else "未知来源"
+        except AttributeError:
+            keyword = "未知来源"
+
+        if keyword not in grouped_candidates:
+            grouped_candidates[keyword] = []
+        grouped_candidates[keyword].append(asdict(candidate))
+
+    return {"ok": True, "grouped_candidates": grouped_candidates}
 
 
 @router.post("/accept-candidate")
@@ -235,7 +269,7 @@ async def crawl_articles(admin: None = Depends(_require_admin)):
     - 从 `config/crawler_keywords.json` 读取关键词。
     - 使用搜狗微信搜索爬虫抓取文章。
     - 对比现有文章池和候选池，进行去重。
-    - 将新文章存入候选池 `config/ai_candidates.json`。
+    - 将新文章存入候选池 `data/ai_candidates.json`。
     """
     # 1. 读取关键词
     keywords_path = Path(__file__).resolve().parents[2] / "config" / "crawler_keywords.json"
@@ -262,15 +296,29 @@ async def crawl_articles(admin: None = Depends(_require_admin)):
     for article in candidate_pool_articles:
         if article.url:
             existing_urls.add(article.url)
+
+    # 自动获取前清空候选池，避免旧数据混入
+    if candidate_pool_articles:
+        logger.info("Clearing candidate pool before crawling new articles.")
+        clear_candidate_pool()
             
     logger.info(f"Found {len(existing_urls)} existing URLs to skip.")
+
+    schedule = load_digest_schedule()
+    max_articles = max(1, schedule.max_articles_per_keyword)
+    max_pages = max(1, math.ceil(max_articles / 10))
 
     # 3. 遍历关键词并抓取
     all_new_candidates = []
     for keyword in keywords:
         try:
-            # 限制每次抓取1页，避免被封
-            found_candidates = await search_articles_by_keyword(keyword, pages=1)
+            logger.info(
+                f"Crawling keyword '{keyword}' for up to {max_articles} articles "
+                f"({max_pages} page(s))."
+            )
+            found_candidates = await search_articles_by_keyword(keyword, pages=max_pages)
+            if len(found_candidates) > max_articles:
+                found_candidates = found_candidates[:max_articles]
             all_new_candidates.extend(found_candidates)
         except Exception as e:
             logger.error(f"Error crawling for keyword '{keyword}': {e}")
@@ -454,7 +502,7 @@ async def digest_panel():
       <button id="trigger-btn">手动触发一次推送到企业微信群</button>
       <div class="status" id="status"></div>
 
-      <div class="articles" id="articles"></div>
+
 
       <div class="auth-overlay" id="auth-overlay" style="display: none;">
         <div class="auth-dialog">
@@ -557,6 +605,7 @@ async def digest_panel():
                     statusEl.textContent = `✅ ${data.message}`;
                     statusEl.className = "status success";
                     loadCandidateList(); // Refresh the list
+                    loadCandidateList(); // Refresh the list
                 } else {
                     statusEl.textContent = `❌ ${data.message || "抓取失败"}`;
                     statusEl.className = "status error";
@@ -572,12 +621,12 @@ async def digest_panel():
 
         async function loadCandidateList() {
             const listEl = document.getElementById("candidate-list");
-            const statusEl = document.getElementById("crawl-status"); // Use the same status element for feedback
+            const statusEl = document.getElementById("crawl-status");
             listEl.innerHTML = "加载中...";
 
             try {
                 const adminCode = getAdminCode();
-                const res = await fetch("./candidates", {
+                const res = await fetch(`./candidates?_t=${Date.now()}`, {
                     headers: { "X-Admin-Code": adminCode || "" }
                 });
 
@@ -587,38 +636,49 @@ async def digest_panel():
                 }
 
                 const data = await res.json();
-                if (!data.ok || !data.candidates || data.candidates.length === 0) {
+                if (!data.ok || !data.grouped_candidates || Object.keys(data.grouped_candidates).length === 0) {
                     listEl.innerHTML = "<p>当前没有待审核的文章。</p>";
                     return;
                 }
 
                 listEl.innerHTML = "";
-                data.candidates.forEach((item, idx) => {
-                    const div = document.createElement("div");
-                    div.className = "article";
-                    const urlEscaped = item.url.replace(/'/g, "&#39;").replace(/"/g, "&quot;");
-                    const titleEscaped = (item.title || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                    const sourceEscaped = (item.source || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                    const summaryEscaped = (item.summary || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-                    div.innerHTML = `
-                        <div class="article-header">
-                          <div class="article-title">
-                            ${idx + 1}. <a href="${item.url}" target="_blank" rel="noopener noreferrer">${titleEscaped}</a>
-                          </div>
-                          <div class="article-actions">
-                            <button class="btn-success" data-url="${urlEscaped}">采纳</button>
-                            <button class="btn-secondary" data-url="${urlEscaped}">忽略</button>
-                          </div>
-                        </div>
-                        <div class="article-meta">来源：${sourceEscaped}</div>
-                        <div class="article-summary">${summaryEscaped}</div>
-                    `;
+                Object.keys(data.grouped_candidates).forEach(keyword => {
+                    const articles = data.grouped_candidates[keyword];
+                    const groupContainer = document.createElement("div");
                     
-                    div.querySelector(".btn-success").addEventListener("click", () => acceptCandidate(item.url));
-                    div.querySelector(".btn-secondary").addEventListener("click", () => rejectCandidate(item.url));
+                    const groupTitle = document.createElement("h3");
+                    const keywordEscaped = keyword.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    groupTitle.innerHTML = `关键词: ${keywordEscaped} <span class="article-count">(${articles.length}篇)</span>`;
+                    groupContainer.appendChild(groupTitle);
 
-                    listEl.appendChild(div);
+                    articles.forEach((item, idx) => {
+                        const div = document.createElement("div");
+                        div.className = "article";
+                        const urlEscaped = item.url.replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+                        const titleEscaped = (item.title || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                        const sourceEscaped = (item.source || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                        const summaryEscaped = (item.summary || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+                        div.innerHTML = `
+                            <div class="article-header">
+                              <div class="article-title">
+                                ${idx + 1}. <a href="${item.url}" target="_blank" rel="noopener noreferrer">${titleEscaped}</a>
+                              </div>
+                              <div class="article-actions">
+                                <button class="btn-success" data-url="${urlEscaped}">采纳</button>
+                                <button class="btn-secondary" data-url="${urlEscaped}">忽略</button>
+                              </div>
+                            </div>
+                            <div class="article-meta">来源：${sourceEscaped}</div>
+                            <div class="article-summary">${summaryEscaped}</div>
+                        `;
+                        
+                        div.querySelector(".btn-success").addEventListener("click", () => acceptCandidate(item.url));
+                        div.querySelector(".btn-secondary").addEventListener("click", () => rejectCandidate(item.url));
+
+                        groupContainer.appendChild(div);
+                    });
+                    listEl.appendChild(groupContainer);
                 });
             } catch (err) {
                 console.error(err);
@@ -823,7 +883,7 @@ async def digest_panel():
             metaEl.textContent = `日期：${data.date} ｜ 主题：${data.theme} ｜ 定时：${String(data.schedule.hour).padStart(2,'0')}:${String(data.schedule.minute).padStart(2,'0')} ｜ 篇数：${data.schedule.count}`;
 
             if (!data.articles || data.articles.length === 0) {
-              listEl.innerHTML = "<p>当前配置下没有可用文章，请在服务器的 config/ai_articles.json 中添加。</p>";
+              listEl.innerHTML = "<p>当前配置下没有可用文章，请在服务器的 data/ai_articles.json 中添加。</p>";
               return;
             }
 
@@ -940,6 +1000,8 @@ async def digest_panel():
             const data = await res.json();
             if (data.ok) {
               statusEl.textContent = `✅ 已触发一次推送：${data.date} ｜ 主题：${data.theme}`;
+              loadArticleList();
+              loadCandidateList();
             } else {
               statusEl.textContent = "❌ 推送失败，请查看服务器日志。";
             }

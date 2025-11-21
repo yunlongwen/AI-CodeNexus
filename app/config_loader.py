@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional
 
 from loguru import logger
 
@@ -26,6 +26,7 @@ class DigestSchedule:
     minute: int = 0
     count: int = 5
     cron: Optional[str] = None  # 可选 cron 表达式（优先使用）
+    max_articles_per_keyword: int = 5  # 每个关键词最多抓取的文章数
 
 
 def _digest_schedule_path() -> Path:
@@ -102,8 +103,58 @@ def load_digest_schedule() -> DigestSchedule:
         minute=minute,
         count=_get_int("count", default.count),
         cron=cron_expr,
+        max_articles_per_keyword=_get_int(
+            "max_articles_per_keyword", default.max_articles_per_keyword
+        ),
     )
 
     return schedule
+
+
+DEFAULT_WECOM_TEMPLATE: Dict[str, object] = {
+    "title": "**AI 编程优质文章推荐｜{date}**",
+    "theme": "> 今日主题：{theme}",
+    "item": {
+        "title": "{idx}. [{title}]({url})",
+        "source": "   - 来源：{source}",
+        "summary": "   - 摘要：{summary}",
+    },
+    "footer": "> 更多关于 AI 编程的实践与思考，见：100kwhy.fun",
+}
+
+
+def _wecom_template_path() -> Path:
+    return _project_root() / "config" / "wecom_template.json"
+
+
+def _deep_merge(base: Dict[str, object], override: Dict[str, object]) -> Dict[str, object]:
+    merged = dict(base)
+    for key, value in override.items():
+        if key in merged and isinstance(merged[key], dict) and isinstance(value, dict):
+            merged[key] = _deep_merge(merged[key], value)
+        else:
+            merged[key] = value
+    return merged
+
+
+def load_wecom_template() -> Dict[str, object]:
+    """
+    加载企业微信推送的样式模板。
+    """
+    path = _wecom_template_path()
+    if not path.exists():
+        logger.warning(f"WeCom template config not found at {path}, using defaults.")
+        return DEFAULT_WECOM_TEMPLATE
+
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, dict):
+            raise ValueError("template file must be a JSON object")
+    except Exception as exc:  # noqa: BLE001
+        logger.error(f"Failed to load WeCom template config: {exc}, using defaults.")
+        return DEFAULT_WECOM_TEMPLATE
+
+    return _deep_merge(DEFAULT_WECOM_TEMPLATE, data)
 
 

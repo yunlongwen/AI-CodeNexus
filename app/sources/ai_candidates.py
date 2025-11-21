@@ -1,10 +1,11 @@
 """
-管理待审核的文章候选池（`config/ai_candidates.json`）
+管理待审核的文章候选池（`data/ai_candidates.json`）
 """
 import json
+import random
 from dataclasses import dataclass, asdict
 from pathlib import Path
-from typing import List
+from typing import Dict, List
 
 from loguru import logger
 
@@ -20,14 +21,14 @@ class CandidateArticle:
     crawled_from: str = ""
 
 
-def _candidate_config_path() -> Path:
-    """获取候选池配置文件的路径"""
-    return Path(__file__).resolve().parents[2] / "config" / "ai_candidates.json"
+def _candidate_data_path() -> Path:
+    """获取候选池数据文件的路径"""
+    return Path(__file__).resolve().parents[2] / "data" / "ai_candidates.json"
 
 
 def load_candidate_pool() -> List[CandidateArticle]:
     """加载所有待审核的文章"""
-    path = _candidate_config_path()
+    path = _candidate_data_path()
     if not path.exists():
         return []
 
@@ -47,7 +48,8 @@ def load_candidate_pool() -> List[CandidateArticle]:
 
 def save_candidate_pool(candidates: List[CandidateArticle]) -> bool:
     """将候选文章列表完整写入配置文件（覆盖）"""
-    path = _candidate_config_path()
+    path = _candidate_data_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
     try:
         with path.open("w", encoding="utf-8") as f:
             json.dump([asdict(c) for c in candidates], f, ensure_ascii=False, indent=2)
@@ -87,4 +89,54 @@ def add_candidates_to_pool(new_candidates: List[CandidateArticle], existing_urls
         logger.info("No new unique candidates to add.")
         
     return added_count
+
+
+def clear_candidate_pool() -> bool:
+    """清空候选池"""
+    return save_candidate_pool([])
+
+
+def promote_candidates_to_articles(per_keyword: int = 2) -> int:
+    """
+    将候选池中的文章按关键词随机挑选若干篇，写入正式文章池。
+    每个关键词随机选 per_keyword 篇（不足则全取），剩余文章继续留在候选池。
+    返回写入正式文章池的文章数量。
+    """
+    from .ai_articles import overwrite_articles
+
+    if per_keyword <= 0:
+        logger.warning("per_keyword <= 0, skip promoting candidates.")
+        return 0
+
+    candidates = load_candidate_pool()
+    if not candidates:
+        logger.info("Candidate pool is empty, nothing to promote.")
+        return 0
+
+    grouped: Dict[str, List[CandidateArticle]] = {}
+    for candidate in candidates:
+        parts = candidate.crawled_from.split(":", 1)
+        keyword = parts[1] if len(parts) > 1 else "未知关键词"
+        grouped.setdefault(keyword, []).append(candidate)
+
+    selected: List[CandidateArticle] = []
+    remaining: List[CandidateArticle] = []
+
+    for keyword, items in grouped.items():
+        random.shuffle(items)
+        take = items[:per_keyword]
+        selected.extend(take)
+        remaining.extend(items[per_keyword:])
+
+    if not selected:
+        logger.info("No candidates selected for promotion.")
+        return 0
+
+    overwrite_articles([asdict(item) for item in selected])
+    save_candidate_pool(remaining)
+    logger.info(
+        f"Promoted {len(selected)} articles from candidates "
+        f"(across {len(grouped)} keywords) into the main pool."
+    )
+    return len(selected)
 

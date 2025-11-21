@@ -1,0 +1,10 @@
+{
+  "title": "**AI 编程优质文章推荐｜{date}**",
+  "theme": "> 今日主题：{theme}",
+  "item": {
+    "title": "{idx}. [{title}]({url})",
+    "source": "   - 来源：{source}",
+    "summary": "   - 摘要：{summary}"
+  },
+  "footer": "> 更多关于 AI 编程的实践与思考，见：100kwhy.fun"
+}

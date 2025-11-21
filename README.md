@@ -1,255 +1,132 @@
-## AICoding Daily · AI 编程资讯自动聚合与推送
+﻿## AICoding Daily · 把热度新闻“秒变”你的内容资产
 
-`100kwhy_wechat_mp` 是一个面向「AI 编程」场景的开源项目，用于：
+`100kwhy_wechat_mp` 是一个聚焦 资讯自动化获取分享的项目。只要配置好关键词和企业微信群机器人，它就能帮你：
 
-- 通过**爬虫**自动采集 AI 编程 / 工程效率相关资讯；
-- 汇总成每日「AI 编程资讯日报」；
-- 通过企业微信机器人推送到团队群（后续可扩展为微信公众号图文推送）。
+- **自动发现热点**：Playwright 驱动关键词抓取，过滤掉旧闻，只保留当天新内容；
+- **一眼看完候选池**：抓到的文章会按关键词分组，方便人工筛选、快速采纳；
+- **定点推送 + 自动补位**：APScheduler 定时任务在推送前自动抽样文章，如遇空池会临时从候选池补齐；
+- **推送即清空**：手动/自动推送成功后，文章池与候选池自动清空，下一轮继续抓取，实现“无人值守”。
 
-最终目标：**把分散在各个公众号和网站上的优质 AI 编程内容，自动整理并转载到你的公众号/团队渠道。**
-
----
-
-### 功能概览
-
-- **文章爬取**
-  - 在管理面板中粘贴文章 URL（支持微信公众号文章等）
-  - 爬虫自动抓取：标题 / 来源（作者或公众号）/ 摘要
-  - 一键加入文章池配置（`config/ai_articles.json`）
-
-- **文章池管理**
-  - 在 Web 面板查看当前所有文章
-  - 支持按 URL 删除文章
-
-- **每日定时推送**
-  - 使用 APScheduler + cron 表达式配置每日推送时间
-  - 根据配置从文章池中随机抽取 N 篇
-  - 生成适配企业微信机器人的 Markdown 消息并推送
-
-- **管理面板**
-  - 路径：`/digest/panel`（例如 `http://your-domain/digest/panel`）
-  - 功能：
-    - 添加文章（粘贴 URL）
-    - 查看/删除文章列表
-    - 预览当日将推送的日报内容
-    - 手动触发一次企业微信推送
+> 目标：把“找内容 → 组日报 → 推送”整个链路自动化，让运营同学专注观点与读者，而不是到处找素材。
 
 ---
 
-### 技术栈
+### 亮点能力
 
-- **语言 & 框架**
-  - Python 3.10+
-  - FastAPI（Web API & 管理页面）
-- **调度**
-  - APScheduler（基于 cron 表达式的定时任务）
-- **HTTP & 爬虫基础**
-  - httpx（HTTP 客户端）
-  - 标准库 `html.parser` + 正则解析文章标题 / 来源 / 摘要
+| 能力 | 描述 |
+| --- | --- |
+| 关键词抓取 | 每个关键词可配置最多抓取多少篇文章，自动计算翻页并限量存储 |
+| 候选池分组 | 面板中按关键词展示候选文章，可随时采纳/忽略 |
+| 自动补位推送 | 推送前若文章池为空，会按关键词随机抽取候选文章填充主池 |
+| 推送即清空 | 推送成功后自动清空文章池 & 候选池，防止旧内容重复推送 |
+| 管理面板 | `/digest/panel` 集成添加文章、候选池分组、预览日报、手动推送等操作 |
 
 ---
 
-### 目录结构（简要）
+### 技术栈一览
+
+- Python 3.10+
+- FastAPI + Uvicorn
+- Playwright（搜狗微信爬虫）
+- APScheduler（cron 定时任务）
+- 企业微信机器人 Markdown 推送
+
+---
+
+### 目录速览
 
 ```text
 app/
-  main.py                # 应用入口，包含 scheduler 与根路由
-  routes/
-    digest.py            # 日报相关 API + 管理面板 HTML
-    wechat.py            # 微信公众号接入（占位/待扩展）
-  sources/
-    ai_articles.py       # 文章池加载/保存/删除
-    article_crawler.py   # 通用文章爬虫（通过 URL 获取标题/来源/摘要）
-  notifier/
-    wecom.py             # 企业微信机器人推送
-
+  main.py                # 应用入口 + 定时任务
+  routes/digest.py       # API & 管理面板
+  sources/               # 文章池 / 候选池工具 & 爬虫
+  notifier/wecom.py      # 企业微信推送
 config/
-  digest_schedule.json   # 推送时间 & 篇数配置（支持 cron）
-  ai_articles.json       # 文章池（由面板或脚本维护）
-
+  digest_schedule.json   # 推送策略
+  wecom_template.json    # 企业微信推送样式
+data/
+  ai_articles.json       # 正式文章池（运行期数据）
+  ai_candidates.json     # 候选池（运行期数据）
+requirements.txt         # 依赖清单
 docs/
-  nginx_config_example.conf      # Nginx 反向代理示例
-  403_error_troubleshooting.md   # 403 错误排查指南
-  quick_diagnose.sh              # 服务器快速诊断脚本
+  deploy_python.md       # Python 环境一键部署
 ```
 
 ---
 
-## 快速开始（开发环境）
-
-### 1. 克隆仓库
+## 快速开始
 
 ```bash
 git clone https://github.com/your-name/100kwhy_wechat_mp.git
 cd 100kwhy_wechat_mp
-```
 
-### 2. 创建虚拟环境并安装依赖
-
-推荐使用 `venv` 或 `poetry`，这里以 `venv` 为例：
-
-```bash
-python3 -m venv venv
+python -m venv venv
+# Windows: .\venv\Scripts\activate
 source venv/bin/activate
 
-pip install --upgrade pip
-pip install fastapi "uvicorn[standard]" httpx apscheduler loguru python-dotenv
+pip install -r requirements.txt
+playwright install  # 首次安装需要下载浏览器内核
 ```
 
-> 若使用 `poetry`，直接执行：
-> ```bash
-> poetry install
-> ```
-
-### 3. 配置环境变量
-
-在项目根目录新建 `.env` 或 `env.sh`，至少配置企业微信机器人 Webhook：
+创建 `.env`（或直接以环境变量形式注入）：
 
 ```bash
-cat > .env << 'EOF'
+cat > .env <<'EOF'
 WECOM_WEBHOOK="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=YOUR_KEY"
+# 可选：管理面板授权码
+# AICODING_ADMIN_CODE="your-admin-code"
 EOF
 ```
 
-或使用 `env.sh`：
-
-```bash
-cat > env.sh << 'EOF'
-#!/usr/bin/env bash
-export WECOM_WEBHOOK="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=YOUR_KEY"
-# 可选：管理面板授权码（如不配置则默认不做鉴权，仅适合本地开发）
-# export AICODING_ADMIN_CODE="your-admin-code"
-EOF
-```
-
-在本地启动前，执行：
-
-```bash
-source env.sh  # 如果你使用的是 env.sh
-```
-
-### 4. 配置推送时间与篇数
-
-编辑 `config/digest_schedule.json`：
+设置推送策略 `config/digest_schedule.json`：
 
 ```json
 {
   "cron": "0 14 * * *",
-  "count": 5
+  "count": 5,
+  "max_articles_per_keyword": 3
 }
 ```
 
-- `cron`：标准 5 段 cron 表达式（分 时 日 月 周），上例表示每天 14:00 推送
-- `count`：每天选取的文章数量
-
-### 5. 启动应用
+启动：
 
 ```bash
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-浏览器访问：
-
 - 首页：`http://localhost:8000/`
 - 管理面板：`http://localhost:8000/digest/panel`
 
----
+> 生产环境部署？请参考 [docs/deploy_python.md](docs/deploy_python.md) 的 Python 环境一键部署指南。
 
-## 生产部署（示例）
-
-这里给出一个基于 **systemd + Nginx** 的通用部署方案（不依赖宝塔）。
-
-### 1. 后端服务（systemd）
-
-创建文件 `/etc/systemd/system/aicoding.service`：
-
-```ini
-[Unit]
-Description=AICoding Daily Backend (FastAPI)
-After=network.target
-
-[Service]
-WorkingDirectory=/www/wwwroot/100kwhy_wechat_mp
-EnvironmentFile=/www/wwwroot/100kwhy_wechat_mp/env.sh
-ExecStart=/usr/bin/python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000
-Restart=always
-User=www-data
-Group=www-data
-
-[Install]
-WantedBy=multi-user.target
-```
-
-启动并设置开机自启：
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl start aicoding.service
-sudo systemctl enable aicoding.service
-```
-
-### 2. Nginx 反向代理
-
-参考 `docs/nginx_config_example.conf`，核心配置类似：
-
-```nginx
-server {
-    listen 80;
-    server_name aicoding.example.com;
-
-    location / {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-配置完成后：
-
-```bash
-sudo nginx -t
-sudo systemctl reload nginx
-```
+若需自定义企业微信群消息样式，可编辑 `config/wecom_template.json`，支持调整标题、主题文案、每条文章的格式与页脚内容，模板字段使用 Python `str.format` 占位符（例如 `{date}`、`{title}`、`{idx}` 等）。
 
 ---
 
-## 如何利用本项目为公众号获取 & 转载 AI 编程资讯
+## 使用场景
 
-1. **从面板导入文章**
-   - 打开 `http://your-domain/digest/panel`
-   - 在「添加文章」区域粘贴公众号文章 URL（例如 `https://mp.weixin.qq.com/s/...`）
-   - 系统会自动爬取标题 / 来源（作者或公众号）/ 摘要，并写入 `config/ai_articles.json`
+1. **自动抓取热点**：定时任务根据关键词抓取最新文章，候选池自动按关键词分组。
+2. **人工质检**：在面板上按分组浏览，决定采纳或忽略；也可手动粘贴 URL 增补精品内容。
+3. **定时推送**：APScheduler 在设定时间构建日报 → 调用企业微信机器人，一次搞定。
+4. **循环往复**：推送成功后自动清空两个池子，下一轮继续抓取，实现“日更模式”。
 
-2. **筛选与管理文章池**
-   - 使用同一面板中的「文章列表」模块查看与删除文章
-   - 你可以人工筛选，只保留真正适合你公众号调性的内容
-
-3. **自动生成每日推荐并推送到企业微信群**
-   - 根据 `digest_schedule.json` 的 cron 配置，每天自动在文章池中随机抽取若干篇
-   - 使用 `app/notifier/wecom.py` 生成 Markdown 并通过机器人推送
-
-4. **在公众号中二次编辑/转载**
-   - 你可以手动把当天推荐列表（标题 + 链接 + 摘要）整理为公众号图文
-   - 或者基于 `app/digest/render.py` 的示例，扩展出「生成公众号图文内容」的渲染逻辑
-
-> 注意：转载第三方内容时，请遵守各平台/公众号的转载规范，可加上原文链接及出处说明。
+> 转载第三方内容请遵守对应平台协议，保持原文链接和署名。
 
 ---
 
-## 未来规划（与 `todo.md` 对应）
+## 路线图
 
-- 真正打通 **微信公众号** 群发接口，一键在公众号后台创建图文消息；
-- 引入更多数据源（例如 RSS、Hacker News、GitHub Trending 等）；
-- 用 Embedding/Tag 对文章做主题分类，支持智能推荐；
-- 支持多频道配置（不同企业微信群/公众号使用不同的文章池与推送策略）。
+详细任务都写在 [TODO.md](TODO.md)，包括：
 
-欢迎 Issue / PR，一起把「AI 编程资讯自动化」这条链路打磨得更好。
+- 引入更多资讯源（RSS、GitHub Trending、Hacker News…）
+- 文章打标签 + 智能排序，支持多频道策略
+- 打通微信公众号草稿 / 发布接口，真正做到“抓 → 发”全自动
+- 管理面板批注、协作与更细粒度的权限控制
+
+欢迎 Issue / PR，一起来把 AI 资讯的“自动驾驶模式”做稳。
 
 ---
 
 ## 开源协议
 
-本项目采用 **MIT License** 开源协议发布，详情见仓库中的 `LICENSE` 文件。你可以在遵守许可证的前提下自由使用、修改和分发本项目。*** End Patch***}"}еша to=functions.apply_patchорошIEnumerator to=functions.apply_patch ***!
+MIT License — 在遵守协议前提下可自由使用、修改、分发。若 AICoding Daily 帮到了你，欢迎 ⭐️ 支持，并分享给更多需要自动化内容生产的团队！

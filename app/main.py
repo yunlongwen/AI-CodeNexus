@@ -1,7 +1,20 @@
+import asyncio
+import sys
+
+# On Windows, the default asyncio event loop (ProactorEventLoop) does not support
+# subprocesses, which Playwright needs to launch browsers.
+# We switch to SelectorEventLoop, which does.
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+from dotenv import load_dotenv
+
+# 在所有模块导入前，从 .env 文件加载环境变量
+load_dotenv()
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -13,7 +26,8 @@ from loguru import logger
 from .config_loader import load_digest_schedule
 from .notifier.wecom import build_wecom_digest_markdown, send_markdown_to_wecom
 from .routes import wechat, digest
-from .sources.ai_articles import pick_daily_ai_articles, todays_theme
+from .sources.ai_articles import pick_daily_ai_articles, todays_theme, clear_articles
+from .sources.ai_candidates import promote_candidates_to_articles, clear_candidate_pool
 
 # 全局 scheduler 实例
 scheduler: Optional[AsyncIOScheduler] = None
@@ -24,8 +38,13 @@ async def job_send_daily_ai_digest(digest_count: int) -> None:
     now = datetime.now()
     articles = pick_daily_ai_articles(k=digest_count)
     if not articles:
-        logger.warning("No AI articles available for today, skip sending.")
-        return
+        logger.info("Article pool is empty before scheduled push, promoting from candidates...")
+        promoted = promote_candidates_to_articles(per_keyword=2)
+        if promoted:
+            articles = pick_daily_ai_articles(k=digest_count)
+        else:
+            logger.warning("No candidates available to promote, skip sending.")
+            return
 
     theme = todays_theme(now)
     date_str = now.strftime("%Y-%m-%d")
@@ -42,6 +61,8 @@ async def job_send_daily_ai_digest(digest_count: int) -> None:
     content = build_wecom_digest_markdown(date_str=date_str, theme=theme, items=items)
     logger.info("Sending daily AI digest to WeCom group...")
     await send_markdown_to_wecom(content)
+    clear_articles()
+    clear_candidate_pool()
 
 
 @asynccontextmanager
