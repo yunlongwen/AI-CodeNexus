@@ -17,6 +17,10 @@ from ..sources.ai_articles import (
     todays_theme,
 )
 from ..sources.article_crawler import fetch_article_info
+from ..crawlers.sogou_wechat import search_articles_by_keyword
+from ..sources.ai_candidates import add_candidates_to_pool, load_candidate_pool, save_candidate_pool
+import json
+from pathlib import Path
 
 router = APIRouter()
 
@@ -46,6 +50,9 @@ class AddArticleRequest(BaseModel):
 
 
 class DeleteArticleRequest(BaseModel):
+    url: str
+
+class CandidateActionRequest(BaseModel):
     url: str
 
 
@@ -155,6 +162,134 @@ async def add_article(request: AddArticleRequest, admin: None = Depends(_require
         raise HTTPException(status_code=500, detail=f"添加文章失败: {str(e)}")
 
 
+@router.get("/candidates")
+async def list_candidate_articles(admin: None = Depends(_require_admin)):
+    """获取所有待审核的文章列表"""
+    candidates = load_candidate_pool()
+    return {"ok": True, "candidates": candidates}
+
+
+@router.post("/accept-candidate")
+async def accept_candidate(request: CandidateActionRequest, admin: None = Depends(_require_admin)):
+    """采纳一篇文章，从候选池移动到正式文章池"""
+    url = request.url.strip()
+    if not url:
+        raise HTTPException(status_code=400, detail="URL不能为空")
+
+    candidates = load_candidate_pool()
+    
+    article_to_accept = None
+    remaining_candidates = []
+    for candidate in candidates:
+        if candidate.url == url:
+            article_to_accept = {
+                "title": candidate.title,
+                "url": candidate.url,
+                "source": candidate.source,
+                "summary": candidate.summary,
+            }
+        else:
+            remaining_candidates.append(candidate)
+
+    if not article_to_accept:
+        raise HTTPException(status_code=404, detail="在候选池中未找到该文章")
+
+    # 1. 从候选池中移除
+    save_candidate_pool(remaining_candidates)
+    
+    # 2. 添加到正式文章池
+    success = save_article_to_config(article_to_accept)
+    if not success:
+        # 如果添加失败（比如已存在），也算操作成功，只是不做添加
+        logger.warning(f"Article already exists in main pool, but accepting from candidate: {url}")
+        return {"ok": True, "message": "文章已存在于正式池中，已从候选池移除。"}
+
+    return {"ok": True, "message": "文章已成功采纳到正式池。"}
+
+
+@router.post("/reject-candidate")
+async def reject_candidate(request: CandidateActionRequest, admin: None = Depends(_require_admin)):
+    """忽略一篇文章，从候选池中删除"""
+    url = request.url.strip()
+    if not url:
+        raise HTTPException(status_code=400, detail="URL不能为空")
+
+    candidates = load_candidate_pool()
+    
+    original_count = len(candidates)
+    remaining_candidates = [c for c in candidates if c.url != url]
+
+    if len(remaining_candidates) == original_count:
+        raise HTTPException(status_code=404, detail="在候选池中未找到该文章")
+
+    save_candidate_pool(remaining_candidates)
+    
+    return {"ok": True, "message": "文章已成功从候选池中忽略。"}
+
+
+@router.post("/crawl-articles")
+async def crawl_articles(admin: None = Depends(_require_admin)):
+    """
+    触发一次文章抓取任务。
+
+    - 从 `config/crawler_keywords.json` 读取关键词。
+    - 使用搜狗微信搜索爬虫抓取文章。
+    - 对比现有文章池和候选池，进行去重。
+    - 将新文章存入候选池 `config/ai_candidates.json`。
+    """
+    # 1. 读取关键词
+    keywords_path = Path(__file__).resolve().parents[2] / "config" / "crawler_keywords.json"
+    if not keywords_path.exists():
+        raise HTTPException(status_code=404, detail="关键词配置文件 crawler_keywords.json 未找到")
+    
+    try:
+        with keywords_path.open("r", encoding="utf-8") as f:
+            keywords = json.load(f)
+        if not isinstance(keywords, list) or not keywords:
+            raise HTTPException(status_code=400, detail="关键词配置格式错误或为空")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"读取关键词配置失败: {e}")
+
+    # 2. 获取所有已存在的 URL 用于去重
+    existing_urls = set()
+    # 来自正式文章池
+    main_pool_articles = get_all_articles()
+    for article in main_pool_articles:
+        if article.get("url"):
+            existing_urls.add(article["url"])
+    # 来自现有候选池
+    candidate_pool_articles = load_candidate_pool()
+    for article in candidate_pool_articles:
+        if article.url:
+            existing_urls.add(article.url)
+            
+    logger.info(f"Found {len(existing_urls)} existing URLs to skip.")
+
+    # 3. 遍历关键词并抓取
+    all_new_candidates = []
+    for keyword in keywords:
+        try:
+            # 限制每次抓取1页，避免被封
+            found_candidates = await search_articles_by_keyword(keyword, pages=1)
+            all_new_candidates.extend(found_candidates)
+        except Exception as e:
+            logger.error(f"Error crawling for keyword '{keyword}': {e}")
+            # 单个关键词失败不中断整个任务
+            continue
+            
+    # 4. 添加到候选池并去重
+    if not all_new_candidates:
+        return {"ok": True, "message": "抓取完成，但未发现任何新文章。"}
+
+    added_count = add_candidates_to_pool(all_new_candidates, existing_urls)
+    
+    return {
+        "ok": True, 
+        "message": f"抓取完成！共发现 {len(all_new_candidates)} 篇文章，成功添加 {added_count} 篇新文章到候选池。",
+        "added_count": added_count
+    }
+
+
 @router.post("/delete-article")
 async def delete_article(request: DeleteArticleRequest, admin: None = Depends(_require_admin)):
     """
@@ -229,6 +364,8 @@ async def digest_panel():
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .top-bar-links { font-size: 13px; color: #6b7280; }
         .top-bar-links a { color: #2563eb; }
+        .btn-success { background: #16a34a; font-size: 12px; padding: 6px 12px; }
+        .btn-success:hover { background: #15803d; }
         .auth-overlay {
           position: fixed;
           inset: 0;
@@ -295,6 +432,15 @@ async def digest_panel():
           <button id="add-article-btn">添加文章</button>
         </div>
         <div class="status" id="add-status"></div>
+      </div>
+
+      <h2>文章抓取与候选池</h2>
+      <div class="add-article-form">
+        <div class="form-actions">
+          <button id="crawl-btn">开始自动抓取</button>
+        </div>
+        <div class="status" id="crawl-status"></div>
+        <div class="articles" id="candidate-list">加载中...</div>
       </div>
 
       <h2>文章列表</h2>
@@ -384,6 +530,177 @@ async def digest_panel():
             return false;
           }
           return true;
+        }
+
+        async function crawlArticles() {
+            const btn = document.getElementById("crawl-btn");
+            const statusEl = document.getElementById("crawl-status");
+
+            btn.disabled = true;
+            statusEl.textContent = "正在从网络抓取文章，请稍候...（可能需要几十秒）";
+            statusEl.className = "status";
+
+            try {
+                const adminCode = getAdminCode();
+                const res = await fetch("./crawl-articles", {
+                    method: "POST",
+                    headers: { "X-Admin-Code": adminCode || "" }
+                });
+
+                if (res.status === 401 || res.status === 403) {
+                    handleAuthError(statusEl);
+                    return;
+                }
+
+                const data = await res.json();
+                if (data.ok) {
+                    statusEl.textContent = `✅ ${data.message}`;
+                    statusEl.className = "status success";
+                    loadCandidateList(); // Refresh the list
+                } else {
+                    statusEl.textContent = `❌ ${data.message || "抓取失败"}`;
+                    statusEl.className = "status error";
+                }
+            } catch (err) {
+                console.error(err);
+                statusEl.textContent = "❌ 请求失败，请查看浏览器控制台或服务器日志。";
+                statusEl.className = "status error";
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function loadCandidateList() {
+            const listEl = document.getElementById("candidate-list");
+            const statusEl = document.getElementById("crawl-status"); // Use the same status element for feedback
+            listEl.innerHTML = "加载中...";
+
+            try {
+                const adminCode = getAdminCode();
+                const res = await fetch("./candidates", {
+                    headers: { "X-Admin-Code": adminCode || "" }
+                });
+
+                if (res.status === 401 || res.status === 403) {
+                    handleAuthError(statusEl);
+                    return;
+                }
+
+                const data = await res.json();
+                if (!data.ok || !data.candidates || data.candidates.length === 0) {
+                    listEl.innerHTML = "<p>当前没有待审核的文章。</p>";
+                    return;
+                }
+
+                listEl.innerHTML = "";
+                data.candidates.forEach((item, idx) => {
+                    const div = document.createElement("div");
+                    div.className = "article";
+                    const urlEscaped = item.url.replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+                    const titleEscaped = (item.title || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    const sourceEscaped = (item.source || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    const summaryEscaped = (item.summary || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+                    div.innerHTML = `
+                        <div class="article-header">
+                          <div class="article-title">
+                            ${idx + 1}. <a href="${item.url}" target="_blank" rel="noopener noreferrer">${titleEscaped}</a>
+                          </div>
+                          <div class="article-actions">
+                            <button class="btn-success" data-url="${urlEscaped}">采纳</button>
+                            <button class="btn-secondary" data-url="${urlEscaped}">忽略</button>
+                          </div>
+                        </div>
+                        <div class="article-meta">来源：${sourceEscaped}</div>
+                        <div class="article-summary">${summaryEscaped}</div>
+                    `;
+                    
+                    div.querySelector(".btn-success").addEventListener("click", () => acceptCandidate(item.url));
+                    div.querySelector(".btn-secondary").addEventListener("click", () => rejectCandidate(item.url));
+
+                    listEl.appendChild(div);
+                });
+            } catch (err) {
+                console.error(err);
+                listEl.innerHTML = "<p>加载候选文章失败，请检查服务是否正常运行。</p>";
+            }
+        }
+
+        async function acceptCandidate(url) {
+            const statusEl = document.getElementById("crawl-status");
+            statusEl.textContent = "正在采纳文章...";
+            statusEl.className = "status";
+
+            try {
+                const adminCode = getAdminCode();
+                const res = await fetch("./accept-candidate", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Admin-Code": adminCode || "",
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+
+                if (res.status === 401 || res.status === 403) {
+                    handleAuthError(statusEl);
+                    return;
+                }
+
+                const data = await res.json();
+                if (data.ok) {
+                    statusEl.textContent = `✅ ${data.message}`;
+                    statusEl.className = "status success";
+                    loadCandidateList();
+                    loadArticleList();
+                    loadPreview();
+                } else {
+                    statusEl.textContent = `❌ ${data.message || "采纳失败"}`;
+                    statusEl.className = "status error";
+                }
+            } catch (err) {
+                console.error(err);
+                statusEl.textContent = "❌ 请求失败，请查看浏览器控制台。";
+                statusEl.className = "status error";
+            }
+        }
+
+        async function rejectCandidate(url) {
+            const statusEl = document.getElementById("crawl-status");
+            statusEl.textContent = "正在忽略文章...";
+            statusEl.className = "status";
+
+            try {
+                const adminCode = getAdminCode();
+                const res = await fetch("./reject-candidate", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Admin-Code": adminCode || "",
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+
+                if (res.status === 401 || res.status === 403) {
+                    handleAuthError(statusEl);
+                    return;
+                }
+
+                const data = await res.json();
+                if (data.ok) {
+                    statusEl.textContent = `✅ ${data.message}`;
+                    statusEl.className = "status success";
+                    loadCandidateList();
+                    loadPreview();
+                } else {
+                    statusEl.textContent = `❌ ${data.message || "忽略失败"}`;
+                    statusEl.className = "status error";
+                }
+            } catch (err) {
+                console.error(err);
+                statusEl.textContent = "❌ 请求失败，请查看浏览器控制台。";
+                statusEl.className = "status error";
+            }
         }
 
         async function loadArticleList() {
@@ -636,6 +953,7 @@ async def digest_panel():
           }
         }
 
+        document.getElementById("crawl-btn").addEventListener("click", crawlArticles);
         document.getElementById("add-article-btn").addEventListener("click", addArticle);
         document.getElementById("article-url").addEventListener("keypress", function(e) {
           if (e.key === "Enter") {
@@ -667,6 +985,7 @@ async def digest_panel():
         async function initializePanel() {
           const ok = await ensureAdminCode();
           if (!ok) return;
+          loadCandidateList();
           loadArticleList();
           loadPreview();
         }
