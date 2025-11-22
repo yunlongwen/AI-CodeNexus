@@ -1,8 +1,11 @@
 import math
 import os
+import re
 from datetime import datetime
 from typing import Optional
 
+import httpx
+from bs4 import BeautifulSoup
 from dataclasses import asdict
 from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import HTMLResponse
@@ -575,9 +578,10 @@ async def test_all_sources(request: dict, admin: None = Depends(_require_admin))
         raise HTTPException(status_code=500, detail=f"测试失败: {str(e)}")
 
 
-@router.post("/wechat-mp/create-draft")
-async def create_wechat_mp_draft(request: dict, admin: None = Depends(_require_admin)):
-    """创建微信公众号草稿"""
+# ========== 微信公众号功能已暂时屏蔽 ==========
+# @router.post("/wechat-mp/create-draft")
+async def create_wechat_mp_draft_disabled(request: dict, admin: None = Depends(_require_admin)):
+    """创建微信公众号草稿（已禁用）"""
     articles = request.get("articles", [])
     if not articles:
         raise HTTPException(status_code=400, detail="请提供文章列表")
@@ -599,8 +603,8 @@ async def create_wechat_mp_draft(request: dict, admin: None = Depends(_require_a
         raise HTTPException(status_code=500, detail=f"创建草稿失败: {str(e)}")
 
 
-@router.post("/wechat-mp/publish")
-async def publish_wechat_mp(request: dict, admin: None = Depends(_require_admin)):
+# @router.post("/wechat-mp/publish")
+async def publish_wechat_mp_disabled(request: dict, admin: None = Depends(_require_admin)):
     """发布微信公众号草稿"""
     media_id = request.get("media_id", "").strip()
     if not media_id:
@@ -622,8 +626,8 @@ async def publish_wechat_mp(request: dict, admin: None = Depends(_require_admin)
         raise HTTPException(status_code=500, detail=f"发布失败: {str(e)}")
 
 
-@router.post("/wechat-mp/publish-digest")
-async def publish_digest_to_wechat_mp(admin: None = Depends(_require_admin)):
+# @router.post("/wechat-mp/publish-digest")
+async def publish_digest_to_wechat_mp_disabled(admin: None = Depends(_require_admin)):
     """将当前日报发布到微信公众号"""
     try:
         # 获取当前文章列表
@@ -676,8 +680,8 @@ async def publish_digest_to_wechat_mp(admin: None = Depends(_require_admin)):
         raise HTTPException(status_code=500, detail=f"发布失败: {str(e)}")
 
 
-@router.get("/wechat-mp/drafts")
-async def get_wechat_mp_drafts(offset: int = 0, count: int = 20, admin: None = Depends(_require_admin)):
+# @router.get("/wechat-mp/drafts")
+async def get_wechat_mp_drafts_disabled(offset: int = 0, count: int = 20, admin: None = Depends(_require_admin)):
     """获取微信公众号草稿箱列表"""
     try:
         client = WeChatMPClient()
@@ -699,8 +703,8 @@ async def get_wechat_mp_drafts(offset: int = 0, count: int = 20, admin: None = D
         raise HTTPException(status_code=500, detail=f"获取草稿列表失败: {str(e)}")
 
 
-@router.get("/wechat-mp/draft/{media_id}")
-async def get_wechat_mp_draft(media_id: str, admin: None = Depends(_require_admin)):
+# @router.get("/wechat-mp/draft/{media_id}")
+async def get_wechat_mp_draft_disabled(media_id: str, admin: None = Depends(_require_admin)):
     """获取微信公众号草稿详情"""
     try:
         client = WeChatMPClient()
@@ -720,8 +724,8 @@ async def get_wechat_mp_draft(media_id: str, admin: None = Depends(_require_admi
         raise HTTPException(status_code=500, detail=f"获取草稿详情失败: {str(e)}")
 
 
-@router.post("/wechat-mp/draft/{media_id}/update")
-async def update_wechat_mp_draft(media_id: str, request: dict, admin: None = Depends(_require_admin)):
+# @router.post("/wechat-mp/draft/{media_id}/update")
+async def update_wechat_mp_draft_disabled(media_id: str, request: dict, admin: None = Depends(_require_admin)):
     """更新微信公众号草稿"""
     index = request.get("index", 0)
     article = request.get("article")
@@ -747,8 +751,8 @@ async def update_wechat_mp_draft(media_id: str, request: dict, admin: None = Dep
         raise HTTPException(status_code=500, detail=f"更新草稿失败: {str(e)}")
 
 
-@router.post("/wechat-mp/draft/{media_id}/delete")
-async def delete_wechat_mp_draft(media_id: str, admin: None = Depends(_require_admin)):
+# @router.post("/wechat-mp/draft/{media_id}/delete")
+async def delete_wechat_mp_draft_disabled(media_id: str, admin: None = Depends(_require_admin)):
     """删除微信公众号草稿"""
     try:
         client = WeChatMPClient()
@@ -768,8 +772,197 @@ async def delete_wechat_mp_draft(media_id: str, admin: None = Depends(_require_a
         raise HTTPException(status_code=500, detail=f"删除草稿失败: {str(e)}")
 
 
-@router.post("/wechat-mp/create-draft-from-articles")
-async def create_draft_from_articles(request: dict, admin: None = Depends(_require_admin)):
+def decode_unicode_escapes(text: str) -> str:
+    """
+    解码字符串中的 Unicode 转义序列（如 \u5728 -> 在）
+    
+    Args:
+        text: 可能包含 Unicode 转义序列的字符串
+        
+    Returns:
+        str: 解码后的字符串
+    """
+    try:
+        import codecs
+        # 使用 codecs 解码 Unicode 转义序列
+        # 需要先编码为 latin-1，然后解码为 unicode_escape
+        return codecs.decode(text.encode('latin-1'), 'unicode_escape')
+    except Exception:
+        try:
+            # 如果上面的方法失败，使用正则表达式逐个替换
+            def replace_unicode(match):
+                code_point = int(match.group(1), 16)
+                return chr(code_point)
+            
+            # 匹配 \uXXXX 格式（4位十六进制）
+            return re.sub(r'\\u([0-9a-fA-F]{4})', replace_unicode, text)
+        except Exception:
+            # 如果解码失败，返回原字符串
+            return text
+
+
+async def fetch_article_content_html(url: str) -> str:
+    """
+    从 URL 抓取文章的完整 HTML 内容
+    
+    Args:
+        url: 文章 URL
+        
+    Returns:
+        str: 清理后的 HTML 内容（适合微信公众号格式）
+    """
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+    }
+    
+    try:
+        async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
+            response = await client.get(url, headers=headers)
+            response.raise_for_status()
+            # 确保正确解码响应内容，使用 UTF-8 编码
+            # 如果响应头没有指定编码，默认使用 UTF-8
+            if response.encoding:
+                html_content = response.text
+            else:
+                # 如果没有编码信息，尝试 UTF-8
+                html_content = response.content.decode('utf-8', errors='ignore')
+            
+            # 如果内容中包含 Unicode 转义序列，立即解码（在 BeautifulSoup 处理之前）
+            if '\\u' in html_content:
+                html_content = decode_unicode_escapes(html_content)
+                logger.info(f"检测到 Unicode 转义序列，已解码: {url}")
+            
+        # 使用 BeautifulSoup 解析 HTML，指定编码为 UTF-8
+        soup = BeautifulSoup(html_content, 'html.parser', from_encoding='utf-8')
+        
+        # 移除 script 和 style 标签
+        for script in soup(["script", "style", "noscript"]):
+            script.decompose()
+        
+        # 尝试找到文章正文内容
+        # 常见的文章内容选择器
+        content_selectors = [
+            'article',
+            '.article-content',
+            '.post-content',
+            '.entry-content',
+            '#article-content',
+            '#post-content',
+            '#entry-content',
+            '.content',
+            '#content',
+            'main article',
+            'main .content',
+        ]
+        
+        article_body = None
+        for selector in content_selectors:
+            article_body = soup.select_one(selector)
+            if article_body:
+                break
+        
+        # 如果没找到，尝试查找包含最多文本的 div
+        if not article_body:
+            # 查找所有可能的正文容器
+            candidates = soup.find_all(['div', 'article', 'main'], class_=re.compile(r'content|article|post|entry', re.I))
+            if candidates:
+                # 选择文本最长的那个
+                article_body = max(candidates, key=lambda x: len(x.get_text()))
+        
+        # 如果还是没找到，使用 body 标签
+        if not article_body:
+            article_body = soup.find('body')
+        
+        if not article_body:
+            # 如果完全找不到，返回默认内容
+            logger.warning(f"无法从 {url} 提取文章内容，使用默认内容")
+            return "<p>无法获取文章内容，请查看原文链接。</p>"
+        
+        # 直接提取 HTML 内容，保持原始格式和字符
+        # 移除所有链接、图片等外部资源引用
+        for a in article_body.find_all('a'):
+            # 保留链接文本，移除链接
+            a.replace_with(a.get_text())
+        
+        for img in article_body.find_all('img'):
+            # 移除图片标签
+            img.decompose()
+        
+        # 移除其他可能的外部资源
+        for iframe in article_body.find_all('iframe'):
+            iframe.decompose()
+        
+        # 获取清理后的 HTML 内容
+        # 使用 get_text() 获取纯文本，然后手动构建 HTML，避免 BeautifulSoup 转义
+        # 这样可以确保中文字符不被转义
+        text_content = article_body.get_text(separator='\n', strip=True)
+        
+        # 解码可能存在的 Unicode 转义序列
+        if '\\u' in text_content:
+            text_content = decode_unicode_escapes(text_content)
+        
+        # 如果文本为空，尝试使用 decode_contents()
+        if not text_content or not text_content.strip():
+            html_content = article_body.decode_contents()
+            # 再次解码 Unicode 转义序列
+            if '\\u' in html_content:
+                html_content = decode_unicode_escapes(html_content)
+        else:
+            # 将文本转换为 HTML 段落
+            text_paragraphs = [p.strip() for p in text_content.split('\n') if p.strip()]
+            if text_paragraphs:
+                html_content = ''.join([f'<p>{p}</p>' for p in text_paragraphs])
+            else:
+                html_content = "<p>无法获取文章内容。</p>"
+        
+        # 如果内容为空，尝试获取纯文本
+        if not html_content or not html_content.strip():
+            text = article_body.get_text(separator='\n', strip=True)
+            if text:
+                # 解码文本中的 Unicode 转义序列
+                if '\\u' in text:
+                    text = decode_unicode_escapes(text)
+                # 按换行符分割成段落
+                text_paragraphs = [p.strip() for p in text.split('\n') if p.strip()]
+                if text_paragraphs:
+                    # 直接使用文本，不转义（因为我们要生成 HTML）
+                    html_content = ''.join([f'<p>{p}</p>' for p in text_paragraphs])
+                else:
+                    return "<p>无法获取文章内容。</p>"
+            else:
+                return "<p>无法获取文章内容。</p>"
+        
+        # 确保所有段落都被 <p> 标签包裹
+        # 如果内容中没有段落标签，尝试添加
+        if '<p>' not in html_content and '<div>' not in html_content:
+            # 按换行分割并包裹
+            lines = [line.strip() for line in html_content.split('\n') if line.strip()]
+            if lines:
+                # 解码每行中的 Unicode 转义序列，但不转义 HTML（因为已经是 HTML 了）
+                decoded_lines = [decode_unicode_escapes(line) if '\\u' in line else line for line in lines]
+                html_content = ''.join([f'<p>{line}</p>' for line in decoded_lines])
+        
+        # 限制总长度（微信公众号限制 2 万字符）
+        if len(html_content) > 20000:
+            # 如果超过限制，截断到 20000 字符，并确保最后一个标签完整
+            html_content = html_content[:20000]
+            # 找到最后一个完整的 </p> 标签
+            last_p = html_content.rfind('</p>')
+            if last_p > 0:
+                html_content = html_content[:last_p + 4]
+            html_content += '<p>...</p>'
+        
+        return html_content
+            
+    except Exception as e:
+        logger.error(f"抓取文章内容失败 {url}: {e}")
+        return "<p>抓取文章内容失败，请查看原文链接。</p>"
+
+
+# @router.post("/wechat-mp/create-draft-from-articles")
+async def create_draft_from_articles_disabled(request: dict, admin: None = Depends(_require_admin)):
     """从文章池创建微信公众号草稿"""
     article_ids = request.get("article_ids", [])
     
@@ -777,14 +970,14 @@ async def create_draft_from_articles(request: dict, admin: None = Depends(_requi
         raise HTTPException(status_code=400, detail="请选择要发布的文章")
     
     try:
-        # 获取文章数据
-        all_articles_data = get_all_articles()
-        if not all_articles_data or not all_articles_data.get("articles"):
+        # 获取文章数据 - get_all_articles() 返回的是 List[dict]，不是字典
+        all_articles = get_all_articles()
+        if not all_articles or len(all_articles) == 0:
             raise HTTPException(status_code=400, detail="文章池为空")
         
         # 根据 URL 匹配文章（因为文章池使用 URL 作为唯一标识）
         selected_articles = []
-        for article in all_articles_data["articles"]:
+        for article in all_articles:
             if article.get("url") in article_ids:
                 selected_articles.append(article)
         
@@ -794,15 +987,48 @@ async def create_draft_from_articles(request: dict, admin: None = Depends(_requi
         # 转换为微信公众号格式
         wechat_articles = []
         for article in selected_articles[:8]:  # 最多8篇
-            wechat_articles.append({
-                "title": article.get("title", "无标题"),
-                "author": article.get("source", "未知"),
-                "digest": (article.get("summary", "") or "")[:120],
-                "content": f"<p>{article.get('summary', '') or ''}</p><p><a href='{article.get('url', '')}'>阅读原文</a></p>",
-                "content_source_url": article.get("url", ""),
-                "thumb_media_id": "",  # 可选：封面图
-                "show_cover_pic": 1,
-            })
+            title = article.get("title", "").strip()
+            author = article.get("source", "").strip() or "未知"
+            url = article.get("url", "").strip()
+            
+            # 验证必填字段
+            if not title:
+                raise HTTPException(status_code=400, detail=f"文章标题不能为空: {url}")
+            if not url or not url.startswith(("http://", "https://")):
+                raise HTTPException(status_code=400, detail=f"文章 URL 格式不正确: {url}")
+            
+            # 确保标题在 20 个字符以内
+            max_title_length = 20
+            if len(title) > max_title_length:
+                # 尝试在合适的位置截断（优先在标点符号、空格处）
+                truncated = title[:max_title_length]
+                # 查找最后一个标点符号或空格的位置（在截断范围内）
+                for sep in ['。', '，', '、', '：', '；', '！', '？', ' ', '·', '-', '—', '–']:
+                    last_sep_pos = truncated.rfind(sep)
+                    if last_sep_pos > max_title_length * 0.6:  # 至少保留 60% 的内容
+                        truncated = truncated[:last_sep_pos]
+                        break
+                title = truncated
+                logger.info(f"标题已缩减: {article.get('title', '')[:50]}... -> {title}")
+            
+            # 从 URL 抓取完整的文章 HTML 内容
+            logger.info(f"正在抓取文章内容: {url}")
+            content_html = await fetch_article_content_html(url)
+            logger.info(f"文章内容抓取完成，长度: {len(content_html)} 字符")
+            
+            # 构建文章对象，严格按照微信公众号 API 要求
+            article_data = {
+                "article_type": "news",  # 必填：图文消息类型
+                "title": title,
+                "author": author,
+                "content": content_html,  # 从 URL 抓取的 HTML 内容
+                # thumb_media_id 将在 create_draft 方法中自动添加
+                # 可选字段
+                "need_open_comment": 0,
+                "only_fans_can_comment": 0,
+            }
+            
+            wechat_articles.append(article_data)
         
         # 创建草稿
         client = WeChatMPClient()
@@ -1098,6 +1324,30 @@ async def digest_panel():
           min-height: 100px;
           font-family: inherit;
         }
+        .html-editor-btn {
+          padding: 6px 12px;
+          border: 1px solid #d1d5db;
+          border-radius: 4px;
+          background: #fff;
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: bold;
+          color: #374151;
+        }
+        .html-editor-btn:hover {
+          background: #f3f4f6;
+          border-color: #9ca3af;
+        }
+        .html-editor-btn:active {
+          background: #e5e7eb;
+        }
+        [contenteditable="true"] {
+          outline: none;
+        }
+        [contenteditable="true"]:focus {
+          border-color: #2563eb;
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
       </style>
     </head>
     <body>
@@ -1145,6 +1395,8 @@ async def digest_panel():
       <button id="trigger-btn">手动触发一次推送到企业微信群</button>
       <div class="status" id="status"></div>
 
+      <!-- 微信公众号草稿箱功能已暂时屏蔽 -->
+      <!--
       <h2>微信公众号草稿箱</h2>
       <div class="draft-actions">
         <button id="create-draft-btn" class="btn-success">从文章池创建草稿</button>
@@ -1152,6 +1404,7 @@ async def digest_panel():
       </div>
       <div class="status" id="drafts-status"></div>
       <div class="drafts-list" id="drafts-list">加载中...</div>
+      -->
 
 
 
@@ -2322,7 +2575,8 @@ async def digest_panel():
         document.getElementById("save-template-btn").addEventListener("click", saveWecomTemplateConfig);
         document.getElementById("save-env-btn").addEventListener("click", saveEnvConfig);
 
-        // 微信公众号草稿箱功能
+        // ========== 微信公众号草稿箱功能已暂时屏蔽 ==========
+        /*
         async function loadDraftsList() {
           const listEl = document.getElementById("drafts-list");
           const statusEl = document.getElementById("drafts-status");
@@ -2492,29 +2746,94 @@ async def digest_panel():
                 return;
               }
               
-              contentEl.innerHTML = newsItem.map(function(article, idx) {
-                const title = (article.title || "").replace(/"/g, "&quot;").replace(/&/g, "&amp;");
-                const author = (article.author || "").replace(/"/g, "&quot;").replace(/&/g, "&amp;");
-                const digest = (article.digest || "").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/&/g, "&amp;");
-                const content = (article.content || "").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/&/g, "&amp;");
-                const url = (article.content_source_url || "").replace(/"/g, "&quot;").replace(/&/g, "&amp;");
+              // 使用 DOM 方法创建元素，避免转义问题
+              contentEl.innerHTML = "";
+              newsItem.forEach(function(article, idx) {
+                const formDiv = document.createElement("div");
+                formDiv.className = "draft-edit-form";
                 
-                return `
-                  <div class="draft-edit-form">
-                    <h3>文章 ${idx + 1}</h3>
-                    <label>标题</label>
-                    <input type="text" id="draft-title-${idx}" value="${title}" placeholder="标题" />
-                    <label>作者</label>
-                    <input type="text" id="draft-author-${idx}" value="${author}" placeholder="作者" />
-                    <label>摘要（120字以内）</label>
-                    <textarea id="draft-digest-${idx}" placeholder="摘要（120字以内）">${digest}</textarea>
-                    <label>内容（HTML格式）</label>
-                    <textarea id="draft-content-${idx}" placeholder="内容（HTML格式）" style="min-height: 200px;">${content}</textarea>
-                    <label>原文链接</label>
-                    <input type="text" id="draft-url-${idx}" value="${url}" placeholder="原文链接" />
-                  </div>
+                const h3 = document.createElement("h3");
+                h3.textContent = "文章 " + (idx + 1);
+                formDiv.appendChild(h3);
+                
+                // 标题（限制 20 个字符）
+                const titleLabel = document.createElement("label");
+                titleLabel.textContent = "标题（20字以内）";
+                formDiv.appendChild(titleLabel);
+                const titleInput = document.createElement("input");
+                titleInput.type = "text";
+                titleInput.id = "draft-title-" + idx;
+                titleInput.value = article.title || "";
+                titleInput.placeholder = "标题（20字以内）";
+                titleInput.maxLength = 20;  // HTML5 最大长度限制
+                // 添加实时字符计数提示
+                const titleCounter = document.createElement("div");
+                titleCounter.id = "draft-title-counter-" + idx;
+                titleCounter.style.cssText = "font-size: 12px; color: #6b7280; margin-top: -10px; margin-bottom: 12px;";
+                titleCounter.textContent = `已输入 ${(article.title || "").length} / 20 字符`;
+                formDiv.appendChild(titleInput);
+                formDiv.appendChild(titleCounter);
+                // 监听输入变化，更新字符计数
+                titleInput.addEventListener("input", function() {
+                  const length = this.value.length;
+                  titleCounter.textContent = `已输入 ${length} / 20 字符`;
+                  if (length > 20) {
+                    titleCounter.style.color = "#ef4444";
+                  } else {
+                    titleCounter.style.color = "#6b7280";
+                  }
+                });
+                
+                // 作者
+                const authorLabel = document.createElement("label");
+                authorLabel.textContent = "作者";
+                formDiv.appendChild(authorLabel);
+                const authorInput = document.createElement("input");
+                authorInput.type = "text";
+                authorInput.id = "draft-author-" + idx;
+                authorInput.value = article.author || "";
+                authorInput.placeholder = "作者";
+                formDiv.appendChild(authorInput);
+                
+                // 内容（HTML编辑器）
+                const contentLabel = document.createElement("label");
+                contentLabel.textContent = "内容（HTML格式）";
+                formDiv.appendChild(contentLabel);
+                
+                // 工具栏
+                const toolbar = document.createElement("div");
+                toolbar.style.cssText = "margin-bottom: 8px; padding: 8px; background: #f5f5f5; border-radius: 4px; display: flex; gap: 8px; flex-wrap: wrap;";
+                toolbar.innerHTML = `
+                  <button type="button" class="html-editor-btn" data-command="bold" title="粗体">B</button>
+                  <button type="button" class="html-editor-btn" data-command="italic" title="斜体">I</button>
+                  <button type="button" class="html-editor-btn" data-command="underline" title="下划线">U</button>
+                  <button type="button" class="html-editor-btn" data-command="formatBlock" data-value="p" title="段落">P</button>
+                  <button type="button" class="html-editor-btn" data-command="insertUnorderedList" title="无序列表">•</button>
+                  <button type="button" class="html-editor-btn" data-command="insertOrderedList" title="有序列表">1.</button>
                 `;
-              }).join("");
+                formDiv.appendChild(toolbar);
+                
+                // HTML 编辑器（contenteditable div）
+                const contentEditor = document.createElement("div");
+                contentEditor.id = "draft-content-" + idx;
+                contentEditor.contentEditable = true;
+                contentEditor.style.cssText = "min-height: 200px; padding: 12px; border: 1px solid #d1d5db; border-radius: 4px; background: #fff; outline: none;";
+                contentEditor.innerHTML = article.content || "";  // 直接设置 HTML 内容
+                formDiv.appendChild(contentEditor);
+                
+                // 为工具栏按钮绑定事件
+                toolbar.querySelectorAll(".html-editor-btn").forEach(function(btn) {
+                  btn.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    const command = this.getAttribute("data-command");
+                    const value = this.getAttribute("data-value");
+                    contentEditor.focus();
+                    document.execCommand(command, false, value || null);
+                  });
+                });
+                
+                contentEl.appendChild(formDiv);
+              });
               
               contentEl.innerHTML += `
                 <div class="form-actions" style="margin-top: 20px;">
@@ -2547,18 +2866,36 @@ async def digest_panel():
           const articles = [];
           
           forms.forEach(function(form, idx) {
-            const title = document.getElementById(`draft-title-${idx}`).value;
+            let title = document.getElementById(`draft-title-${idx}`).value.trim();
             const author = document.getElementById(`draft-author-${idx}`).value;
-            const digest = document.getElementById(`draft-digest-${idx}`).value;
-            const content = document.getElementById(`draft-content-${idx}`).value;
-            const url = document.getElementById(`draft-url-${idx}`).value;
+            // 从 contenteditable div 获取 HTML 内容
+            const contentEditor = document.getElementById(`draft-content-${idx}`);
+            const content = contentEditor ? contentEditor.innerHTML : "";
+            
+            // 确保标题在 20 个字符以内
+            const maxTitleLength = 20;
+            if (title.length > maxTitleLength) {
+              // 尝试在合适的位置截断（优先在标点符号、空格处）
+              let truncated = title.substring(0, maxTitleLength);
+              // 查找最后一个标点符号或空格的位置（在截断范围内）
+              const separators = ['。', '，', '、', '：', '；', '！', '？', ' ', '·', '-', '—', '–'];
+              for (let i = 0; i < separators.length; i++) {
+                const sep = separators[i];
+                const lastSepPos = truncated.lastIndexOf(sep);
+                if (lastSepPos > maxTitleLength * 0.6) {  // 至少保留 60% 的内容
+                  truncated = truncated.substring(0, lastSepPos);
+                  break;
+                }
+              }
+              title = truncated;
+              console.log(`标题已缩减: ${document.getElementById(`draft-title-${idx}`).value} -> ${title}`);
+            }
             
             articles.push({
               title: title,
               author: author,
-              digest: digest,
               content: content,
-              content_source_url: url,
+              // 不包含 content_source_url 和 digest
               thumb_media_id: "",
               show_cover_pic: 1,
             });
@@ -2724,8 +3061,9 @@ async def digest_panel():
         // 初始加载：检查是否已有授权码，没有则弹出对话框
         initializePanel();
         
-        // 加载草稿列表
-        loadDraftsList();
+        // 加载草稿列表（已屏蔽）
+        // loadDraftsList();
+        */
       </script>
     </body>
     </html>
