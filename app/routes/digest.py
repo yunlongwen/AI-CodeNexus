@@ -380,7 +380,7 @@ async def digest_panel():
     <html lang="zh-CN">
     <head>
       <meta charset="UTF-8" />
-      <title>AI 编程日报面板</title>
+    <title>每日新闻管理面板</title>
       <style>
         body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 24px; background: #f5f5f7; color: #111827; }
         h1 { font-size: 24px; margin-bottom: 8px; }
@@ -461,7 +461,7 @@ async def digest_panel():
     </head>
     <body>
       <div class="top-bar">
-        <h1>AI 编程最新资讯 · 管理员面板</h1>
+        <h1>每日新闻精选 · 管理员面板</h1>
         <div class="top-bar-links">
           开源仓库：
           <a href="https://github.com/yunlongwen/100kwhy_wechat_mp" target="_blank" rel="noopener noreferrer">

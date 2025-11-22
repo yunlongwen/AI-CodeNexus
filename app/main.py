@@ -135,14 +135,14 @@ def create_app() -> FastAPI:
 
     @app.get("/", response_class=HTMLResponse)
     async def root():
-        """AICoding 首页：介绍 + 入口"""
+        """Daily Digest 首页：介绍 + 入口"""
         html = """
         <!DOCTYPE html>
         <html lang="zh-CN">
         <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <title>AICoding · 每日 AI 编程资讯</title>
+          <title>Daily Digest · 每日新闻精选</title>
           <style>
             * { box-sizing: border-box; }
             body {
@@ -297,13 +297,13 @@ def create_app() -> FastAPI:
         <body>
           <div class="page">
             <div class="logo">
-              <div class="logo-mark">AI</div>
-              <span>AICoding</span>
+              <div class="logo-mark">DN</div>
+              <span>Daily Digest</span>
             </div>
             <div class="card">
-              <h1>AI 编程最新资讯 · 日报中心</h1>
+              <h1>每日新闻精选 · 日报中心</h1>
               <div class="subtitle">
-                聚焦 AI 编程效率、工程实践与团队管理，每天将精选文章自动推送到你的企业微信群。
+                聚焦最新行业与技术动态，每天将精选资讯自动推送到你的企业微信群。
               </div>
               <div class="badges">
                 <span class="badge">每日定时推送</span>
