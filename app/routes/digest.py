@@ -20,6 +20,7 @@ from ..config_loader import (
     save_env_var,
 )
 from ..notifier.wecom import build_wecom_digest_markdown, send_markdown_to_wecom
+from ..notifier.wechat_mp import WeChatMPClient
 from ..sources.ai_articles import (
     clear_articles,
     delete_article_from_config,
@@ -572,6 +573,107 @@ async def test_all_sources(request: dict, admin: None = Depends(_require_admin))
     except Exception as e:
         logger.error(f"测试所有资讯源失败: {e}")
         raise HTTPException(status_code=500, detail=f"测试失败: {str(e)}")
+
+
+@router.post("/wechat-mp/create-draft")
+async def create_wechat_mp_draft(request: dict, admin: None = Depends(_require_admin)):
+    """创建微信公众号草稿"""
+    articles = request.get("articles", [])
+    if not articles:
+        raise HTTPException(status_code=400, detail="请提供文章列表")
+    
+    try:
+        client = WeChatMPClient()
+        media_id = await client.create_draft(articles)
+        
+        if media_id:
+            return {
+                "ok": True,
+                "media_id": media_id,
+                "message": "草稿创建成功"
+            }
+        else:
+            raise HTTPException(status_code=500, detail="创建草稿失败，请检查配置和日志")
+    except Exception as e:
+        logger.error(f"创建微信公众号草稿失败: {e}")
+        raise HTTPException(status_code=500, detail=f"创建草稿失败: {str(e)}")
+
+
+@router.post("/wechat-mp/publish")
+async def publish_wechat_mp(request: dict, admin: None = Depends(_require_admin)):
+    """发布微信公众号草稿"""
+    media_id = request.get("media_id", "").strip()
+    if not media_id:
+        raise HTTPException(status_code=400, detail="请提供 media_id")
+    
+    try:
+        client = WeChatMPClient()
+        success = await client.publish(media_id)
+        
+        if success:
+            return {
+                "ok": True,
+                "message": "发布成功"
+            }
+        else:
+            raise HTTPException(status_code=500, detail="发布失败，请检查配置和日志")
+    except Exception as e:
+        logger.error(f"发布微信公众号失败: {e}")
+        raise HTTPException(status_code=500, detail=f"发布失败: {str(e)}")
+
+
+@router.post("/wechat-mp/publish-digest")
+async def publish_digest_to_wechat_mp(admin: None = Depends(_require_admin)):
+    """将当前日报发布到微信公众号"""
+    try:
+        # 获取当前文章列表
+        articles_data = get_all_articles()
+        if not articles_data or not articles_data.get("articles"):
+            raise HTTPException(status_code=400, detail="当前没有可发布的文章")
+        
+        # 构建微信公众号文章格式
+        wechat_articles = []
+        for article in articles_data["articles"][:8]:  # 最多8篇
+            wechat_articles.append({
+                "title": article.get("title", "无标题"),
+                "author": article.get("source", "未知"),
+                "digest": article.get("summary", "")[:120],  # 摘要限制120字
+                "content": f"<p>{article.get('summary', '')}</p><p><a href='{article.get('url', '')}'>阅读原文</a></p>",
+                "content_source_url": article.get("url", ""),
+                "thumb_media_id": "",  # 需要先上传封面图
+                "show_cover_pic": 1,
+            })
+        
+        if not wechat_articles:
+            raise HTTPException(status_code=400, detail="没有可发布的文章")
+        
+        # 创建草稿
+        client = WeChatMPClient()
+        media_id = await client.create_draft(wechat_articles)
+        
+        if not media_id:
+            raise HTTPException(status_code=500, detail="创建草稿失败")
+        
+        # 发布草稿
+        success = await client.publish(media_id)
+        
+        if success:
+            return {
+                "ok": True,
+                "media_id": media_id,
+                "message": "已成功发布到微信公众号"
+            }
+        else:
+            return {
+                "ok": False,
+                "media_id": media_id,
+                "message": "草稿已创建，但发布失败，请手动发布"
+            }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"发布日报到微信公众号失败: {e}")
+        raise HTTPException(status_code=500, detail=f"发布失败: {str(e)}")
 
 
 @router.get("/panel", response_class=HTMLResponse)
