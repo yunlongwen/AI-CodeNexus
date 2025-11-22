@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from loguru import logger
 
@@ -111,6 +111,88 @@ def load_digest_schedule() -> DigestSchedule:
     return schedule
 
 
+def _crawler_keywords_path() -> Path:
+    return _project_root() / "config" / "crawler_keywords.json"
+
+
+def load_crawler_keywords() -> List[str]:
+    path = _crawler_keywords_path()
+    if not path.exists():
+        logger.warning(f"Crawler keywords config not found at {path}.")
+        return []
+
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, list):
+            raise ValueError("crawler keywords file must be a JSON array")
+
+        return [str(item).strip() for item in data if str(item).strip()]
+    except Exception as exc:  # noqa: BLE001
+        logger.error(f"Failed to load crawler keywords: {exc}.")
+        return []
+
+
+def save_crawler_keywords(keywords: List[str]) -> bool:
+    path = _crawler_keywords_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    clean_keywords = [str(item).strip() for item in keywords if str(item).strip()]
+    try:
+        with path.open("w", encoding="utf-8") as f:
+            json.dump(clean_keywords, f, ensure_ascii=False, indent=2)
+        logger.info(f"Saved {len(clean_keywords)} crawler keywords.")
+        return True
+    except Exception as exc:  # noqa: BLE001
+        logger.error(f"Failed to save crawler keywords: {exc}.")
+        return False
+
+
+def save_digest_schedule(schedule: Dict[str, Any]) -> bool:
+    path = _digest_schedule_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    sanitized: Dict[str, Any] = {}
+    numeric_keys = {
+        "hour",
+        "minute",
+        "count",
+        "max_articles_per_keyword",
+    }
+
+    for key in numeric_keys:
+        if key in schedule:
+            try:
+                sanitized[key] = int(schedule[key])
+            except (ValueError, TypeError):
+                logger.warning(f"Ignoring invalid schedule value for {key}: {schedule[key]!r}")
+
+    if "cron" in schedule and isinstance(schedule["cron"], str):
+        sanitized["cron"] = schedule["cron"].strip()
+
+    try:
+        with path.open("w", encoding="utf-8") as f:
+            json.dump(sanitized, f, ensure_ascii=False, indent=2)
+        logger.info("Digest schedule saved.")
+        return True
+    except Exception as exc:  # noqa: BLE001
+        logger.error(f"Failed to save digest schedule: {exc}.")
+        return False
+
+
+def save_wecom_template(template: Dict[str, Any]) -> bool:
+    path = _wecom_template_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with path.open("w", encoding="utf-8") as f:
+            json.dump(template, f, ensure_ascii=False, indent=2)
+        logger.info("WeCom template saved.")
+        return True
+    except Exception as exc:  # noqa: BLE001
+        logger.error(f"Failed to save WeCom template: {exc}.")
+        return False
+
+
 DEFAULT_WECOM_TEMPLATE: Dict[str, object] = {
     "title": "**AI 编程优质文章推荐｜{date}**",
     "theme": "> 今日主题：{theme}",
@@ -156,5 +238,82 @@ def load_wecom_template() -> Dict[str, object]:
         return DEFAULT_WECOM_TEMPLATE
 
     return _deep_merge(DEFAULT_WECOM_TEMPLATE, data)
+
+
+def _env_file_path() -> Path:
+    """获取 .env 文件路径"""
+    return _project_root() / ".env"
+
+
+def load_env_var(key: str) -> str:
+    """从 .env 文件读取环境变量值"""
+    import os
+    env_path = _env_file_path()
+    if not env_path.exists():
+        return os.getenv(key, "")
+    
+    try:
+        with env_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if "=" in line:
+                    k, v = line.split("=", 1)
+                    k = k.strip()
+                    v = v.strip().strip('"').strip("'")
+                    if k == key:
+                        return v
+    except Exception as exc:  # noqa: BLE001
+        logger.error(f"Failed to read .env file: {exc}")
+    
+    return os.getenv(key, "")
+
+
+def save_env_var(key: str, value: str) -> bool:
+    """更新 .env 文件中的环境变量"""
+    env_path = _env_file_path()
+    lines = []
+    key_found = False
+    
+    # 读取现有内容
+    if env_path.exists():
+        try:
+            with env_path.open("r", encoding="utf-8") as f:
+                lines = f.readlines()
+        except Exception as exc:  # noqa: BLE001
+            logger.error(f"Failed to read .env file: {exc}")
+            return False
+    
+    # 更新或添加变量
+    new_lines = []
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            new_lines.append(line)
+            continue
+        
+        if "=" in stripped:
+            k = stripped.split("=", 1)[0].strip()
+            if k == key:
+                new_lines.append(f'{key}="{value}"\n')
+                key_found = True
+                continue
+        
+        new_lines.append(line)
+    
+    # 如果没找到，添加到末尾
+    if not key_found:
+        new_lines.append(f'{key}="{value}"\n')
+    
+    # 写入文件
+    try:
+        with env_path.open("w", encoding="utf-8") as f:
+            f.writelines(new_lines)
+        logger.info(f"Updated {key} in .env file")
+        return True
+    except Exception as exc:  # noqa: BLE001
+        logger.error(f"Failed to write .env file: {exc}")
+        return False
 
 

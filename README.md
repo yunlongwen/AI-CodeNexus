@@ -20,6 +20,7 @@
 | 自动补位推送 | 推送前若文章池为空，会按关键词随机抽取候选文章填充主池 |
 | 推送即清空 | 推送成功后自动清空文章池 & 候选池，防止旧内容重复推送 |
 | 管理面板 | `/digest/panel` 集成添加文章、候选池分组、预览日报、手动推送等操作 |
+| 可视化配置 | 支持在管理面板中配置关键词、调度策略、企业微信模板、系统环境变量等 |
 
 ---
 
@@ -97,9 +98,18 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 - 首页：`http://localhost:8000/`
 - 管理面板：`http://localhost:8000/digest/panel`
 
-> 生产环境部署？请参考 [docs/deploy_python.md](docs/deploy_python.md) 的 Python 环境一键部署指南。
+> 生产环境部署？请参考 [docs/deploy_python.md](docs/deploy_python.md) 的 Python 环境一键部署指南，桌面/本地调试可参照 [docs/deploy_windows.md](docs/deploy_windows.md)。
 
-若需自定义企业微信群消息样式，可编辑 `config/wecom_template.json`，支持调整标题、主题文案、每条文章的格式与页脚内容，模板字段使用 Python `str.format` 占位符（例如 `{date}`、`{title}`、`{idx}` 等）。
+### 配置管理
+
+所有配置都可以在管理面板的"配置管理"中完成，无需手动编辑配置文件：
+
+- **关键词配置**：设置抓取关键词，每行一个
+- **调度配置**：设置推送时间（支持 Cron 表达式或小时+分钟）和数量控制
+- **企业微信模板**：自定义推送消息的 Markdown 格式，支持占位符 `{date}`、`{theme}`、`{idx}`、`{title}`、`{url}`、`{source}`、`{summary}`
+- **系统配置**：配置管理员验证码和企业微信推送地址
+
+> 提示：配置修改后会自动保存，系统配置（环境变量）需要重启服务后生效。
 
 ---
 

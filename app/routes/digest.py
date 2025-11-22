@@ -9,7 +9,16 @@ from fastapi.responses import HTMLResponse
 from loguru import logger
 from pydantic import BaseModel
 
-from ..config_loader import load_digest_schedule
+from ..config_loader import (
+    load_digest_schedule,
+    load_crawler_keywords,
+    save_crawler_keywords,
+    save_digest_schedule,
+    load_wecom_template,
+    save_wecom_template,
+    load_env_var,
+    save_env_var,
+)
 from ..notifier.wecom import build_wecom_digest_markdown, send_markdown_to_wecom
 from ..sources.ai_articles import (
     clear_articles,
@@ -60,6 +69,19 @@ class AddArticleRequest(BaseModel):
 
 class DeleteArticleRequest(BaseModel):
     url: str
+
+class KeywordsConfigRequest(BaseModel):
+    keywords: list[str]
+
+class ScheduleConfigRequest(BaseModel):
+    cron: Optional[str] = None
+    hour: Optional[int] = None
+    minute: Optional[int] = None
+    count: Optional[int] = None
+    max_articles_per_keyword: Optional[int] = None
+
+class WecomTemplateRequest(BaseModel):
+    template: dict
 
 class CandidateActionRequest(BaseModel):
     url: str
@@ -370,6 +392,104 @@ async def delete_article(request: DeleteArticleRequest, admin: None = Depends(_r
         raise HTTPException(status_code=500, detail=f"删除文章失败: {str(e)}")
 
 
+@router.get("/config/keywords")
+async def get_keywords_config(admin: None = Depends(_require_admin)):
+    """获取关键词配置"""
+    keywords = load_crawler_keywords()
+    return {"ok": True, "keywords": keywords}
+
+
+@router.post("/config/keywords")
+async def update_keywords_config(request: KeywordsConfigRequest, admin: None = Depends(_require_admin)):
+    """更新关键词配置"""
+    keywords = [k.strip() for k in request.keywords if k.strip()]
+    if not keywords:
+        raise HTTPException(status_code=400, detail="关键词列表不能为空")
+    
+    if not save_crawler_keywords(keywords):
+        raise HTTPException(status_code=500, detail="保存关键词配置失败")
+    
+    return {"ok": True, "keywords": keywords}
+
+
+@router.get("/config/schedule")
+async def get_schedule_config(admin: None = Depends(_require_admin)):
+    """获取调度配置"""
+    schedule = load_digest_schedule()
+    return {"ok": True, "schedule": asdict(schedule)}
+
+
+@router.post("/config/schedule")
+async def update_schedule_config(request: ScheduleConfigRequest, admin: None = Depends(_require_admin)):
+    """更新调度配置"""
+    payload = request.dict(exclude_none=True)
+    if not payload:
+        raise HTTPException(status_code=400, detail="请提供至少一项调度配置")
+    
+    if not save_digest_schedule(payload):
+        raise HTTPException(status_code=500, detail="保存调度配置失败")
+    
+    schedule = load_digest_schedule()
+    return {"ok": True, "schedule": asdict(schedule)}
+
+
+@router.get("/config/wecom-template")
+async def get_wecom_template_config(admin: None = Depends(_require_admin)):
+    """获取企业微信模板配置"""
+    template = load_wecom_template()
+    return {"ok": True, "template": template}
+
+
+@router.post("/config/wecom-template")
+async def update_wecom_template_config(request: WecomTemplateRequest, admin: None = Depends(_require_admin)):
+    """更新企业微信模板配置"""
+    if not request.template:
+        raise HTTPException(status_code=400, detail="模板不能是空对象")
+    
+    if not save_wecom_template(request.template):
+        raise HTTPException(status_code=500, detail="保存企业微信模板失败")
+    
+    template = load_wecom_template()
+    return {"ok": True, "template": template}
+
+
+@router.get("/config/env")
+async def get_env_config(admin: None = Depends(_require_admin)):
+    """获取环境变量配置"""
+    admin_code = load_env_var("AICODING_ADMIN_CODE")
+    wecom_webhook = load_env_var("WECOM_WEBHOOK")
+    return {
+        "ok": True,
+        "env": {
+            "admin_code": admin_code,
+            "wecom_webhook": wecom_webhook,
+        }
+    }
+
+
+@router.post("/config/env")
+async def update_env_config(request: dict, admin: None = Depends(_require_admin)):
+    """更新环境变量配置"""
+    admin_code = request.get("admin_code", "").strip()
+    wecom_webhook = request.get("wecom_webhook", "").strip()
+    
+    if admin_code:
+        if not save_env_var("AICODING_ADMIN_CODE", admin_code):
+            raise HTTPException(status_code=500, detail="保存管理员验证码失败")
+    
+    if wecom_webhook:
+        if not save_env_var("WECOM_WEBHOOK", wecom_webhook):
+            raise HTTPException(status_code=500, detail="保存企业微信推送地址失败")
+    
+    return {
+        "ok": True,
+        "env": {
+            "admin_code": load_env_var("AICODING_ADMIN_CODE"),
+            "wecom_webhook": load_env_var("WECOM_WEBHOOK"),
+        }
+    }
+
+
 @router.get("/panel", response_class=HTMLResponse)
 async def digest_panel():
     """
@@ -457,6 +577,106 @@ async def digest_panel():
           justify-content: flex-end;
           gap: 8px;
         }
+        .config-btn {
+          border-radius: 999px;
+          padding: 6px 16px;
+          font-weight: 600;
+          background: #2563eb;
+          color: #fff;
+          border: none;
+          cursor: pointer;
+          font-size: 14px;
+        }
+        .config-modal {
+          display: none;
+          position: fixed;
+          inset: 0;
+          background: rgba(15, 23, 42, 0.45);
+          align-items: center;
+          justify-content: center;
+          z-index: 60;
+        }
+        .config-modal.is-visible {
+          display: flex;
+        }
+        .config-modal-content {
+          width: min(980px, 95vw);
+          max-height: 90vh;
+          overflow-y: auto;
+          background: #fff;
+          border-radius: 20px;
+          padding: 24px;
+          box-shadow: 0 25px 45px rgba(15, 23, 42, 0.25);
+          position: relative;
+        }
+        .config-modal-close {
+          position: absolute;
+          top: 14px;
+          right: 18px;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          border: none;
+          background: #f4f5f7;
+          color: #1d4ed8;
+          font-size: 18px;
+          cursor: pointer;
+        }
+        .config-menu {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 20px;
+        }
+        .config-menu-btn {
+          flex: 1;
+          padding: 8px 12px;
+          border-radius: 8px;
+          border: 1px solid #d1d5db;
+          background: #f8fafc;
+          color: #111827;
+          cursor: pointer;
+          font-size: 14px;
+        }
+        .config-menu-btn.is-active {
+          background: #2563eb;
+          color: #fff;
+          border-color: #2563eb;
+        }
+        .config-section {
+          display: none;
+        }
+        .config-section.is-active {
+          display: block;
+        }
+        .config-textarea {
+          width: 100%;
+          min-height: 150px;
+          padding: 8px 12px;
+          border-radius: 8px;
+          border: 1px solid #d1d5db;
+          font-size: 13px;
+          font-family: monospace;
+          resize: vertical;
+          box-sizing: border-box;
+        }
+        .config-note {
+          margin-top: 8px;
+          font-size: 12px;
+          color: #6b7280;
+          line-height: 1.5;
+        }
+        .form-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+          gap: 12px;
+        }
+        .form-grid input {
+          padding: 8px 12px;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
+          font-size: 14px;
+          box-sizing: border-box;
+        }
       </style>
     </head>
     <body>
@@ -468,6 +688,7 @@ async def digest_panel():
             github.com/yunlongwen/100kwhy_wechat_mp
           </a>
         </div>
+        <button class="config-btn" id="open-config-btn">配置管理</button>
       </div>
       
       <h2>添加文章</h2>
@@ -499,6 +720,7 @@ async def digest_panel():
 
       <h2>预览 & 推送</h2>
       <div class="meta" id="meta">加载中...</div>
+      <div id="articles"></div>
       <button id="trigger-btn">手动触发一次推送到企业微信群</button>
       <div class="status" id="status"></div>
 
@@ -512,6 +734,101 @@ async def digest_panel():
           <div class="status" id="auth-status"></div>
           <div class="auth-actions">
             <button class="btn" id="auth-submit-btn">确认</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="config-modal" id="config-modal">
+        <div class="config-modal-content">
+          <button class="config-modal-close" id="close-config-btn">&times;</button>
+          <h2>配置管理</h2>
+          <div class="config-menu">
+            <button class="config-menu-btn is-active" data-section="keywords">关键词</button>
+            <button class="config-menu-btn" data-section="schedule">调度</button>
+            <button class="config-menu-btn" data-section="template">企业微信模板</button>
+            <button class="config-menu-btn" data-section="env">系统配置</button>
+          </div>
+
+          <div id="config-keywords-section" class="config-section is-active">
+            <div class="form-group">
+              <label for="config-keywords-input">关键词（每行一个）</label>
+              <textarea id="config-keywords-input" class="config-textarea" placeholder="例如：&#10;AI 编码&#10;数字孪生"></textarea>
+              <p class="config-note">一行一个关键词，支持中文与英文。保存后下一次抓取会自动生效。</p>
+            </div>
+            <div class="form-actions">
+              <button class="btn-success" id="save-keywords-btn">保存关键词</button>
+            </div>
+            <div class="status" id="config-keywords-status"></div>
+          </div>
+
+          <div id="config-schedule-section" class="config-section">
+            <div class="form-group">
+              <label>调度方式</label>
+              <div class="form-grid">
+                <input type="text" id="schedule-cron" placeholder="Cron 表达式（可选）" />
+                <input type="number" id="schedule-hour" min="0" max="23" placeholder="小时" />
+                <input type="number" id="schedule-minute" min="0" max="59" placeholder="分钟" />
+              </div>
+              <p class="config-note">
+                • <strong>Cron 表达式</strong>（推荐）：5 字段格式，例如 <code>0 14 * * *</code> 表示每天 14:00 执行<br />
+                • <strong>小时 + 分钟</strong>：仅在未设置 Cron 时生效，例如 14:00 表示每天下午 2 点
+              </p>
+            </div>
+            <div class="form-group">
+              <label>数量控制</label>
+              <div class="form-grid">
+                <input type="number" id="schedule-count" min="1" placeholder="推送篇数" />
+                <input type="number" id="schedule-max" min="1" placeholder="每关键词最大篇数" />
+              </div>
+              <p class="config-note">
+                • <strong>推送篇数</strong>：每期推送的文章总数<br />
+                • <strong>每关键词最大篇数</strong>：每个关键词最多抓取的文章数量
+              </p>
+            </div>
+            <div class="form-actions">
+              <button class="btn-success" id="save-schedule-btn">保存调度</button>
+            </div>
+            <div class="status" id="config-schedule-status"></div>
+          </div>
+
+          <div id="config-template-section" class="config-section">
+            <div class="form-group">
+              <label for="wecom-template-input">企业微信模板（JSON 格式）</label>
+              <textarea id="wecom-template-input" class="config-textarea"></textarea>
+              <p class="config-note">
+                <strong>模板说明：</strong><br />
+                填写完整的 JSON 对象，支持 Markdown 格式。推送时会自动替换以下占位符：<br />
+                • <code>{date}</code> - 推送日期（如：2024-01-15）<br />
+                • <code>{theme}</code> - 今日主题（如：AI 编码）<br />
+                • <code>{idx}</code> - 文章序号（如：1, 2, 3）<br />
+                • <code>{title}</code> - 文章标题<br />
+                • <code>{url}</code> - 文章链接<br />
+                • <code>{source}</code> - 文章来源<br />
+                • <code>{summary}</code> - 文章摘要<br />
+                <strong>示例结构：</strong>包含 <code>title</code>、<code>theme</code>、<code>item</code>（含 title/source/summary）、<code>footer</code> 等字段。
+              </p>
+            </div>
+            <div class="form-actions">
+              <button class="btn-success" id="save-template-btn">保存模板</button>
+            </div>
+            <div class="status" id="config-template-status"></div>
+          </div>
+
+          <div id="config-env-section" class="config-section">
+            <div class="form-group">
+              <label for="env-admin-code">管理员验证码</label>
+              <input type="password" id="env-admin-code" class="config-textarea" style="min-height: auto; height: auto;" placeholder="用于保护管理面板的授权码" />
+              <p class="config-note">设置后访问管理面板时需要输入此验证码。留空则不设置验证码（不推荐）。</p>
+            </div>
+            <div class="form-group">
+              <label for="env-wecom-webhook">企业微信推送地址</label>
+              <input type="text" id="env-wecom-webhook" class="config-textarea" style="min-height: auto; height: auto;" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=YOUR_KEY" />
+              <p class="config-note">企业微信群机器人的 Webhook URL。在企业微信群中添加机器人后获取。</p>
+            </div>
+            <div class="form-actions">
+              <button class="btn-success" id="save-env-btn">保存系统配置</button>
+            </div>
+            <div class="status" id="config-env-status"></div>
           </div>
         </div>
       </div>
@@ -866,6 +1183,10 @@ async def digest_panel():
           const metaEl = document.getElementById("meta");
           const listEl = document.getElementById("articles");
           const statusEl = document.getElementById("status");
+          if (!metaEl || !listEl || !statusEl) {
+            console.error("预览元素未找到");
+            return;
+          }
           statusEl.textContent = "";
           listEl.innerHTML = "";
           metaEl.textContent = "加载中...";
@@ -1051,6 +1372,518 @@ async def digest_panel():
           loadArticleList();
           loadPreview();
         }
+
+        // 配置弹窗基础功能
+        const configModal = document.getElementById("config-modal");
+        const openConfigBtn = document.getElementById("open-config-btn");
+        const closeConfigBtn = document.getElementById("close-config-btn");
+
+        function openConfigModal() {
+          if (configModal) {
+            configModal.classList.add("is-visible");
+            switchConfigSection("keywords");
+          }
+        }
+
+        function closeConfigModal() {
+          if (configModal) {
+            configModal.classList.remove("is-visible");
+          }
+        }
+
+        async function loadKeywordConfig() {
+          const textarea = document.getElementById("config-keywords-input");
+          const statusEl = document.getElementById("config-keywords-status");
+          if (!textarea) return;
+          
+          if (statusEl) statusEl.textContent = "";
+          textarea.value = "";
+          
+          try {
+            const adminCode = getAdminCode();
+            const res = await fetch("./config/keywords", {
+              headers: { "X-Admin-Code": adminCode || "" }
+            });
+            
+            if (res.status === 401 || res.status === 403) {
+              if (statusEl) {
+                statusEl.textContent = "❌ 需要授权";
+                statusEl.className = "status error";
+              }
+              return;
+            }
+            
+            if (!res.ok) {
+              throw new Error("HTTP " + res.status);
+            }
+            
+            const data = await res.json();
+            if (data.ok && data.keywords) {
+              textarea.value = data.keywords.join("\\n");
+            } else {
+              textarea.value = "AI 编码\\n数字孪生\\nCursor";
+            }
+          } catch (err) {
+            console.error("加载关键词失败:", err);
+            textarea.value = "AI 编码\\n数字孪生\\nCursor";
+          }
+        }
+
+        async function loadScheduleConfig() {
+          const cronInput = document.getElementById("schedule-cron");
+          const hourInput = document.getElementById("schedule-hour");
+          const minuteInput = document.getElementById("schedule-minute");
+          const countInput = document.getElementById("schedule-count");
+          const maxInput = document.getElementById("schedule-max");
+          const statusEl = document.getElementById("config-schedule-status");
+          
+          if (statusEl) statusEl.textContent = "";
+          
+          try {
+            const adminCode = getAdminCode();
+            const res = await fetch("./config/schedule", {
+              headers: { "X-Admin-Code": adminCode || "" }
+            });
+            
+            if (res.status === 401 || res.status === 403) {
+              if (statusEl) {
+                statusEl.textContent = "❌ 需要授权";
+                statusEl.className = "status error";
+              }
+              return;
+            }
+            
+            if (!res.ok) {
+              throw new Error("HTTP " + res.status);
+            }
+            
+            const data = await res.json();
+            if (data.ok && data.schedule) {
+              const s = data.schedule;
+              if (cronInput) cronInput.value = s.cron || "";
+              if (hourInput) hourInput.value = s.hour || "";
+              if (minuteInput) minuteInput.value = s.minute || "";
+              if (countInput) countInput.value = s.count || "";
+              if (maxInput) maxInput.value = s.max_articles_per_keyword || "";
+            }
+          } catch (err) {
+            console.error("加载调度配置失败:", err);
+          }
+        }
+
+        async function loadWecomTemplateConfig() {
+          const textarea = document.getElementById("wecom-template-input");
+          const statusEl = document.getElementById("config-template-status");
+          if (!textarea) return;
+          
+          if (statusEl) statusEl.textContent = "";
+          
+          const defaultTemplateObj = {
+            "title": "**每日精选通知｜{date}**",
+            "theme": "> 今日主题：{theme}",
+            "item": {
+              "title": "{idx}. [{title}]({url})",
+              "source": "   - 来源：{source}",
+              "summary": "   - 摘要：{summary}"
+            },
+            "footer": "> 以上内容每日推送，仅限内部分享。"
+          };
+          const defaultTemplate = JSON.stringify(defaultTemplateObj, null, 2);
+          
+          try {
+            const adminCode = getAdminCode();
+            const res = await fetch("./config/wecom-template", {
+              headers: { "X-Admin-Code": adminCode || "" }
+            });
+            
+            if (res.status === 401 || res.status === 403) {
+              if (statusEl) {
+                statusEl.textContent = "❌ 需要授权";
+                statusEl.className = "status error";
+              }
+              textarea.value = defaultTemplate;
+              return;
+            }
+            
+            if (!res.ok) {
+              throw new Error("HTTP " + res.status);
+            }
+            
+            const data = await res.json();
+            if (data.ok && data.template) {
+              textarea.value = JSON.stringify(data.template, null, 2);
+            } else {
+              textarea.value = defaultTemplate;
+            }
+          } catch (err) {
+            console.error("加载模板失败:", err);
+            textarea.value = defaultTemplate;
+          }
+        }
+
+        async function loadEnvConfig() {
+          const adminCodeInput = document.getElementById("env-admin-code");
+          const wecomWebhookInput = document.getElementById("env-wecom-webhook");
+          const statusEl = document.getElementById("config-env-status");
+          
+          if (!adminCodeInput || !wecomWebhookInput) return;
+          
+          if (statusEl) statusEl.textContent = "";
+          
+          try {
+            const adminCode = getAdminCode();
+            const res = await fetch("./config/env", {
+              headers: { "X-Admin-Code": adminCode || "" }
+            });
+            
+            if (res.status === 401 || res.status === 403) {
+              if (statusEl) {
+                statusEl.textContent = "❌ 需要授权";
+                statusEl.className = "status error";
+              }
+              return;
+            }
+            
+            if (!res.ok) {
+              throw new Error("HTTP " + res.status);
+            }
+            
+            const data = await res.json();
+            if (data.ok && data.env) {
+              adminCodeInput.value = data.env.admin_code || "";
+              wecomWebhookInput.value = data.env.wecom_webhook || "";
+            }
+          } catch (err) {
+            console.error("加载系统配置失败:", err);
+          }
+        }
+
+        async function saveEnvConfig() {
+          const adminCodeInput = document.getElementById("env-admin-code");
+          const wecomWebhookInput = document.getElementById("env-wecom-webhook");
+          const statusEl = document.getElementById("config-env-status");
+          
+          if (!adminCodeInput || !wecomWebhookInput) return;
+          
+          const adminCode = adminCodeInput.value.trim();
+          const wecomWebhook = wecomWebhookInput.value.trim();
+          
+          if (!adminCode && !wecomWebhook) {
+            if (statusEl) {
+              statusEl.textContent = "❌ 请至少填写一项配置";
+              statusEl.className = "status error";
+            }
+            return;
+          }
+          
+          if (statusEl) {
+            statusEl.textContent = "保存中...";
+            statusEl.className = "status";
+          }
+          
+          try {
+            const currentAdminCode = getAdminCode();
+            const res = await fetch("./config/env", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Admin-Code": currentAdminCode || ""
+              },
+              body: JSON.stringify({
+                admin_code: adminCode,
+                wecom_webhook: wecomWebhook
+              })
+            });
+            
+            if (res.status === 401 || res.status === 403) {
+              handleAuthError(statusEl);
+              return;
+            }
+            
+            if (!res.ok) {
+              throw new Error("HTTP " + res.status);
+            }
+            
+            const data = await res.json();
+            if (data.ok) {
+              if (statusEl) {
+                statusEl.textContent = "✅ 系统配置已保存（需要重启服务后生效）";
+                statusEl.className = "status success";
+              }
+              // 如果更新了管理员验证码，更新本地存储
+              if (adminCode) {
+                localStorage.setItem(ADMIN_CODE_KEY, adminCode);
+              }
+            } else {
+              throw new Error(data.message || "保存失败");
+            }
+          } catch (err) {
+            console.error("保存系统配置失败:", err);
+            if (statusEl) {
+              statusEl.textContent = "❌ 保存失败: " + err.message;
+              statusEl.className = "status error";
+            }
+          }
+        }
+
+        function switchConfigSection(sectionName) {
+          const sections = ["keywords", "schedule", "template", "env"];
+          const menuBtns = document.querySelectorAll(".config-menu-btn");
+          
+          sections.forEach(function(name) {
+            const sectionEl = document.getElementById("config-" + name + "-section");
+            const btn = document.querySelector('[data-section="' + name + '"]');
+            if (sectionEl) {
+              if (name === sectionName) {
+                sectionEl.classList.add("is-active");
+              } else {
+                sectionEl.classList.remove("is-active");
+              }
+            }
+            if (btn) {
+              if (name === sectionName) {
+                btn.classList.add("is-active");
+              } else {
+                btn.classList.remove("is-active");
+              }
+            }
+          });
+          
+          if (sectionName === "keywords") {
+            loadKeywordConfig();
+          } else if (sectionName === "schedule") {
+            loadScheduleConfig();
+          } else if (sectionName === "template") {
+            loadWecomTemplateConfig();
+          } else if (sectionName === "env") {
+            loadEnvConfig();
+          }
+        }
+
+        if (openConfigBtn) {
+          openConfigBtn.addEventListener("click", openConfigModal);
+        }
+        if (closeConfigBtn) {
+          closeConfigBtn.addEventListener("click", closeConfigModal);
+        }
+        if (configModal) {
+          configModal.addEventListener("click", function(event) {
+            if (event.target === configModal) {
+              closeConfigModal();
+            }
+          });
+        }
+
+        async function saveKeywordConfig() {
+          const textarea = document.getElementById("config-keywords-input");
+          const statusEl = document.getElementById("config-keywords-status");
+          if (!textarea) return;
+          
+          const keywords = textarea.value.split("\\n").map(function(k) {
+            return k.trim();
+          }).filter(function(k) {
+            return k.length > 0;
+          });
+          
+          if (keywords.length === 0) {
+            if (statusEl) {
+              statusEl.textContent = "❌ 关键词不能为空";
+              statusEl.className = "status error";
+            }
+            return;
+          }
+          
+          if (statusEl) {
+            statusEl.textContent = "保存中...";
+            statusEl.className = "status";
+          }
+          
+          try {
+            const adminCode = getAdminCode();
+            const res = await fetch("./config/keywords", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Admin-Code": adminCode || ""
+              },
+              body: JSON.stringify({ keywords: keywords })
+            });
+            
+            if (res.status === 401 || res.status === 403) {
+              handleAuthError(statusEl);
+              return;
+            }
+            
+            if (!res.ok) {
+              throw new Error("HTTP " + res.status);
+            }
+            
+            const data = await res.json();
+            if (data.ok) {
+              if (statusEl) {
+                statusEl.textContent = "✅ 关键词已保存";
+                statusEl.className = "status success";
+              }
+            } else {
+              throw new Error(data.message || "保存失败");
+            }
+          } catch (err) {
+            console.error("保存关键词失败:", err);
+            if (statusEl) {
+              statusEl.textContent = "❌ 保存失败: " + err.message;
+              statusEl.className = "status error";
+            }
+          }
+        }
+
+        async function saveScheduleConfig() {
+          const cronInput = document.getElementById("schedule-cron");
+          const hourInput = document.getElementById("schedule-hour");
+          const minuteInput = document.getElementById("schedule-minute");
+          const countInput = document.getElementById("schedule-count");
+          const maxInput = document.getElementById("schedule-max");
+          const statusEl = document.getElementById("config-schedule-status");
+          
+          const payload = {};
+          if (cronInput && cronInput.value.trim()) {
+            payload.cron = cronInput.value.trim();
+          }
+          if (hourInput && hourInput.value) {
+            payload.hour = parseInt(hourInput.value, 10);
+          }
+          if (minuteInput && minuteInput.value) {
+            payload.minute = parseInt(minuteInput.value, 10);
+          }
+          if (countInput && countInput.value) {
+            payload.count = parseInt(countInput.value, 10);
+          }
+          if (maxInput && maxInput.value) {
+            payload.max_articles_per_keyword = parseInt(maxInput.value, 10);
+          }
+          
+          if (Object.keys(payload).length === 0) {
+            if (statusEl) {
+              statusEl.textContent = "❌ 请至少填写一项配置";
+              statusEl.className = "status error";
+            }
+            return;
+          }
+          
+          if (statusEl) {
+            statusEl.textContent = "保存中...";
+            statusEl.className = "status";
+          }
+          
+          try {
+            const adminCode = getAdminCode();
+            const res = await fetch("./config/schedule", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Admin-Code": adminCode || ""
+              },
+              body: JSON.stringify(payload)
+            });
+            
+            if (res.status === 401 || res.status === 403) {
+              handleAuthError(statusEl);
+              return;
+            }
+            
+            if (!res.ok) {
+              throw new Error("HTTP " + res.status);
+            }
+            
+            const data = await res.json();
+            if (data.ok) {
+              if (statusEl) {
+                statusEl.textContent = "✅ 调度配置已保存";
+                statusEl.className = "status success";
+              }
+            } else {
+              throw new Error(data.message || "保存失败");
+            }
+          } catch (err) {
+            console.error("保存调度配置失败:", err);
+            if (statusEl) {
+              statusEl.textContent = "❌ 保存失败: " + err.message;
+              statusEl.className = "status error";
+            }
+          }
+        }
+
+        async function saveWecomTemplateConfig() {
+          const textarea = document.getElementById("wecom-template-input");
+          const statusEl = document.getElementById("config-template-status");
+          if (!textarea) return;
+          
+          let template;
+          try {
+            template = JSON.parse(textarea.value);
+          } catch (err) {
+            if (statusEl) {
+              statusEl.textContent = "❌ JSON 格式错误: " + err.message;
+              statusEl.className = "status error";
+            }
+            return;
+          }
+          
+          if (statusEl) {
+            statusEl.textContent = "保存中...";
+            statusEl.className = "status";
+          }
+          
+          try {
+            const adminCode = getAdminCode();
+            const res = await fetch("./config/wecom-template", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Admin-Code": adminCode || ""
+              },
+              body: JSON.stringify({ template: template })
+            });
+            
+            if (res.status === 401 || res.status === 403) {
+              handleAuthError(statusEl);
+              return;
+            }
+            
+            if (!res.ok) {
+              throw new Error("HTTP " + res.status);
+            }
+            
+            const data = await res.json();
+            if (data.ok) {
+              if (statusEl) {
+                statusEl.textContent = "✅ 企业微信模板已保存";
+                statusEl.className = "status success";
+              }
+            } else {
+              throw new Error(data.message || "保存失败");
+            }
+          } catch (err) {
+            console.error("保存模板失败:", err);
+            if (statusEl) {
+              statusEl.textContent = "❌ 保存失败: " + err.message;
+              statusEl.className = "status error";
+            }
+          }
+        }
+
+        document.querySelectorAll(".config-menu-btn").forEach(function(btn) {
+          btn.addEventListener("click", function() {
+            const section = btn.getAttribute("data-section");
+            if (section) {
+              switchConfigSection(section);
+            }
+          });
+        });
+
+        document.getElementById("save-keywords-btn").addEventListener("click", saveKeywordConfig);
+        document.getElementById("save-schedule-btn").addEventListener("click", saveScheduleConfig);
+        document.getElementById("save-template-btn").addEventListener("click", saveWecomTemplateConfig);
+        document.getElementById("save-env-btn").addEventListener("click", saveEnvConfig);
 
         // 初始加载：检查是否已有授权码，没有则弹出对话框
         initializePanel();
