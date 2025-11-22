@@ -100,8 +100,8 @@
         "name": "编程资讯",
         "description": "编程和技术相关文章"
       },
-      "ai_coding": {
-        "id": "cat-articles-ai-coding",
+      "ai_news": {
+        "id": "cat-articles-ai-news",
         "name": "AI资讯",
         "description": "AI和机器学习相关文章"
       }

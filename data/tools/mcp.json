@@ -1,1 +1,80 @@
-[]
+[
+  {
+    "name": "taskmaster",
+    "url": "https://github.com/eyaltoledano/claude-task-master",
+    "description": "它是一个强大的 AI 任务管理工具，专为 AI 驱动开发设计。它通过智能解析产品需求文档（PRD），生成结构化的任务列表，并支持任务拆分、依赖管理及复杂性分析。它不仅能与 Claude、Chatgpt、Gemini 等 AI 模型深度整合，还支持 VS Code、Cursor、Windsurf等编辑器，让开发者在熟悉的开发环境中轻松管理复杂项目。",
+    "category": "mcp",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-07-07T00:00:00Z",
+    "is_featured": false,
+    "id": 1,
+    "identifier": "taskmaster"
+  },
+  {
+    "name": "mcpcn",
+    "url": "https://mcpcn.com/",
+    "description": "mcp 中文网站，有丰富的 mcp 资料",
+    "category": "mcp",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-10-15T00:00:00Z",
+    "is_featured": false,
+    "id": 2,
+    "identifier": "mcpcn"
+  },
+  {
+    "name": "mcp.so",
+    "url": "https://mcp.so/zh",
+    "description": "mcp 市场，有丰富的 mcp 工具",
+    "category": "mcp",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-10-15T00:00:00Z",
+    "is_featured": false,
+    "id": 3,
+    "identifier": "mcpso"
+  },
+  {
+    "name": "cursor-mcp",
+    "url": "https://cursor.directory/mcp",
+    "description": "另一个mcp 市场，有丰富的 mcp 工具",
+    "category": "mcp",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-10-15T00:00:00Z",
+    "is_featured": false,
+    "id": 4,
+    "identifier": "cursor-mcp"
+  },
+  {
+    "name": "context7",
+    "url": "https://context7.com/",
+    "description": "Context7  MCP 是一款基于 Model Context Protocol (MCP) 的服务工具，能够为 AI 编码助手在提示中自动注入最新库/框架的官方文档和代码示例，从而消除过时信息与“幻觉”代码，提升开发效率和准确性。",
+    "category": "mcp",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-10-23T00:00:00Z",
+    "is_featured": false,
+    "id": 5,
+    "identifier": "context7"
+  },
+  {
+    "name": "chrome-devtools",
+    "url": "https://developer.chrome.com/blog/chrome-devtools-mcp?hl=zh-cn",
+    "description": "Chrome DevTools MCP 是谷歌推出的 Model Context Protocol 服务器，作为 AI 编程助手（如 Claude、Cursor）与 Chrome 浏览器间的桥梁，将 DevTools 能力封装为可调用工具，支持 AI 完成页面操控、网络分析、性能追踪、控制台监控等操作，实现自动化测试、调试与优化的闭环，无需人工介入验证。",
+    "category": "mcp",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-10-15T00:00:00Z",
+    "is_featured": false,
+    "id": 6,
+    "identifier": "chrome-devtools"
+  }
+]

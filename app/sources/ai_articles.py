@@ -18,17 +18,17 @@ class AiArticle:
 
 def _articles_path() -> Path:
     """
-    Get path to data/ai_articles.json relative to project root.
+    Get path to data/articles/ai_articles.json relative to project root.
     """
-    # app/sources/ai_articles.py -> project_root/data/ai_articles.json
-    return Path(__file__).resolve().parents[2] / "data" / "ai_articles.json"
+    # app/sources/ai_articles.py -> project_root/data/articles/ai_articles.json
+    return Path(__file__).resolve().parents[2] / "data" / "articles" / "ai_articles.json"
 
 
 def load_ai_articles_pool() -> List[AiArticle]:
     """
     Load a pool of high-quality AI coding articles from JSON data file.
 
-    Data file: data/ai_articles.json
+    Data file: data/articles/ai_articles.json
     Structure:
       [
         {
@@ -136,6 +136,10 @@ def save_article_to_config(article: dict) -> bool:
         "source": article.get("source", "").strip(),
         "summary": article.get("summary", "").strip(),
     }
+    
+    # 如果提供了 tool_tags，则添加
+    if "tool_tags" in article and article["tool_tags"]:
+        new_article["tool_tags"] = article["tool_tags"]
     
     existing_articles.append(new_article)
     

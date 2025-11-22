@@ -8,7 +8,7 @@ class ArticleItem:
     title: str
     url: str
     source: str  # 公众号名 / 网站名
-    category: str  # ai_coding / team_management / other
+    category: str  # ai_news / team_management / other
     pub_time: Optional[datetime] = None
     summary: Optional[str] = None  # 1-2 句摘要
     comment: Optional[str] = None  # 你的点评

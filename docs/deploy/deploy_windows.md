@@ -72,7 +72,7 @@ uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ## 其他建议
 
 - 如果想后台运行，可用 `schtasks`、`nssm`、`winser` 等工具注册服务。
-- 定期检查 `data/ai_articles.json` 与 `data/ai_candidates.json`，确保推送数据准确。
+- 定期检查 `data/articles/ai_articles.json` 与 `data/articles/ai_candidates.json`，确保推送数据准确。
 - 推送失败会在日志（console）打印，可以通过 `>> logs/app.log 2>&1` 重定向。
 
 需要把该部署文档加入目录索引/README？反馈我再做。

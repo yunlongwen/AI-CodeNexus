@@ -103,7 +103,7 @@ async def main():
     print("\n下一步：")
     print("1. 使用 API 接口测试创建草稿和发布")
     print("2. 访问 http://localhost:8000/docs 查看 API 文档")
-    print("3. 参考 docs/wechat_mp_guide.md 了解详细使用方法")
+    print("3. 参考 docs/deploy/wechat_mp_guide.md 了解详细使用方法")
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 from datetime import datetime
 from loguru import logger
+import os
 
 # 数据目录路径（指向项目根目录的data文件夹）
 # app/services/data_loader.py -> app/services -> app -> 项目根目录 -> data
@@ -159,14 +160,33 @@ class DataLoader:
         return paginated_tools, total
     
     @staticmethod
-    def get_tool_by_id(tool_id: int) -> Optional[Dict]:
-        """根据ID获取工具详情"""
-        # 遍历所有工具文件查找
-        for tool_file in TOOLS_DIR.glob("*.json"):
-            tools = DataLoader._load_json_file(tool_file)
-            for tool in tools:
-                if tool.get("id") == tool_id:
-                    return tool
+    def get_tool_by_id(tool_id: Optional[int] = None, tool_identifier: Optional[str] = None) -> Optional[Dict]:
+        """
+        根据ID或identifier获取工具详情
+        
+        Args:
+            tool_id: 工具ID（数字）
+            tool_identifier: 工具identifier（字符串，优先使用）
+        
+        Returns:
+            工具详情字典，如果未找到则返回None
+        """
+        # 优先使用 identifier 查找（更可靠，因为 identifier 是唯一的）
+        if tool_identifier:
+            for tool_file in TOOLS_DIR.glob("*.json"):
+                tools = DataLoader._load_json_file(tool_file)
+                for tool in tools:
+                    if tool.get("identifier") == tool_identifier:
+                        return tool
+        
+        # 如果没有 identifier 或 identifier 未匹配，则使用 ID 查找
+        if tool_id is not None:
+            for tool_file in TOOLS_DIR.glob("*.json"):
+                tools = DataLoader._load_json_file(tool_file)
+                for tool in tools:
+                    if tool.get("id") == tool_id:
+                        return tool
+        
         return None
     
     @staticmethod
@@ -181,7 +201,7 @@ class DataLoader:
         获取文章列表（支持分页）
         
         Args:
-            category: 文章分类（programming, ai_coding等）
+            category: 文章分类（programming, ai_news等）
             page: 页码（从1开始）
             page_size: 每页数量
             search: 搜索关键词
@@ -192,31 +212,77 @@ class DataLoader:
         """
         all_articles = []
         
-        # 加载所有文章文件
+        # 加载所有文章文件（处理分类名称到文件名的映射）
+        # 
+        # 映射关系说明：
+        # - category="programming" -> 文件: programming.json -> UI显示: "编程资讯"
+        # - category="ai_news" -> 文件: ai_news.json -> UI显示: "AI资讯"
         if category:
-            category_file = ARTICLES_DIR / f"{category}.json"
+            # ai_news -> ai_news.json, programming -> programming.json
+            category_file_name = f"{category}.json"
+            category_file = ARTICLES_DIR / category_file_name
             articles = DataLoader._load_json_file(category_file)
+            # 为缺少日期字段的文章补充日期（使用文件修改时间作为采纳日期）
+            file_mtime = datetime.fromtimestamp(os.path.getmtime(category_file)) if category_file.exists() else datetime.now()
+            for article in articles:
+                if not article.get("archived_at") and not article.get("created_at") and not article.get("published_time"):
+                    # 如果完全没有日期字段，使用文件修改时间
+                    article["archived_at"] = file_mtime.isoformat() + "Z"
+                    article["created_at"] = file_mtime.isoformat() + "Z"
+                elif not article.get("archived_at"):
+                    # 如果有其他日期但没有archived_at，使用created_at或published_time作为archived_at
+                    article["archived_at"] = article.get("created_at") or article.get("published_time") or file_mtime.isoformat() + "Z"
             all_articles.extend(articles)
         else:
             # 加载所有分类文件
             for article_file in ARTICLES_DIR.glob("*.json"):
                 articles = DataLoader._load_json_file(article_file)
+                # 为缺少日期字段的文章补充日期（使用文件修改时间作为采纳日期）
+                file_mtime = datetime.fromtimestamp(os.path.getmtime(article_file)) if article_file.exists() else datetime.now()
+                for article in articles:
+                    if not article.get("archived_at") and not article.get("created_at") and not article.get("published_time"):
+                        # 如果完全没有日期字段，使用文件修改时间
+                        article["archived_at"] = file_mtime.isoformat() + "Z"
+                        article["created_at"] = file_mtime.isoformat() + "Z"
+                    elif not article.get("archived_at"):
+                        # 如果有其他日期但没有archived_at，使用created_at或published_time作为archived_at
+                        article["archived_at"] = article.get("created_at") or article.get("published_time") or file_mtime.isoformat() + "Z"
                 all_articles.extend(articles)
         
-        # 去重（基于id）
+        # 去重（优先使用id，如果没有id则使用url作为唯一标识符）
         seen_ids = set()
+        seen_urls = set()
         unique_articles = []
         for article in all_articles:
             article_id = article.get("id")
-            if article_id and article_id not in seen_ids:
-                seen_ids.add(article_id)
+            article_url = article.get("url", "").strip()
+            
+            # 如果有id，使用id去重
+            if article_id:
+                if article_id not in seen_ids:
+                    seen_ids.add(article_id)
+                    unique_articles.append(article)
+            # 如果没有id但有url，使用url去重
+            elif article_url:
+                if article_url not in seen_urls:
+                    seen_urls.add(article_url)
+                    unique_articles.append(article)
+            # 如果既没有id也没有url，直接添加（这种情况应该很少）
+            else:
                 unique_articles.append(article)
         
         # 筛选
         filtered_articles = unique_articles
         
+        # 如果指定了category，筛选匹配的文章
+        # 注意：如果文章没有category字段，但从指定分类文件加载的，也应该包含
+        # 因为文件本身已经代表了分类（programming.json -> programming分类）
         if category:
-            filtered_articles = [a for a in filtered_articles if a.get("category") == category]
+            filtered_articles = [
+                a for a in filtered_articles 
+                # 如果文章有category字段，必须匹配；如果没有category字段，说明是从指定分类文件加载的，应该包含
+                if not a.get("category") or a.get("category") == category
+            ]
         
         if search:
             # 确保 search 是字符串
@@ -321,7 +387,7 @@ class DataLoader:
         
         Args:
             article: 文章数据字典
-            category: 分类名称（如 programming, ai_coding）
+            category: 分类名称（如 programming, ai_news）
             tool_tags: 工具标签列表（可选）
         
         Returns:
@@ -340,14 +406,18 @@ class DataLoader:
                 article["id"] = max_id + 1
             
             # 添加时间戳
+            # 注意：archived_at 是必需字段，表示采纳时间，必须设置
+            now = datetime.now()
+            now_iso = now.isoformat() + "Z"
+            
             if "created_at" not in article:
-                article["created_at"] = datetime.now().isoformat() + "Z"
+                article["created_at"] = now_iso
             
             if "published_time" not in article:
                 article["published_time"] = article["created_at"]
             
-            # 记录归档时间
-            article["archived_at"] = datetime.now().isoformat() + "Z"
+            # 记录归档时间（采纳时间）- 必需字段，强制设置
+            article["archived_at"] = now_iso
             
             # 初始化热度（点击次数）
             if "view_count" not in article:
@@ -364,8 +434,13 @@ class DataLoader:
                     article["tags"] = []
                 article["tags"].extend([tag for tag in tool_tags if tag not in article["tags"]])
             
-            # 加载目标文件
-            category_file = ARTICLES_DIR / f"{category}.json"
+            # 加载目标文件（处理分类名称到文件名的映射）
+            # 
+            # 映射关系说明：
+            # - category="programming" -> 文件: programming.json -> UI显示: "编程资讯"
+            # - category="ai_news" -> 文件: ai_news.json -> UI显示: "AI资讯"
+            category_file_name = f"{category}.json"
+            category_file = ARTICLES_DIR / category_file_name
             articles = DataLoader._load_json_file(category_file)
             
             # 检查是否已存在（基于URL）
@@ -384,18 +459,32 @@ class DataLoader:
             return False
     
     @staticmethod
-    def get_articles_by_tool(tool_name: str, page: int = 1, page_size: int = 20) -> Tuple[List[Dict], int]:
+    def get_articles_by_tool(tool_name: str = None, tool_id: int = None, tool_identifier: str = None, page: int = 1, page_size: int = 20) -> Tuple[List[Dict], int]:
         """
-        根据工具名称获取相关文章
+        根据工具名称、ID或标识符获取相关文章
         
         Args:
-            tool_name: 工具名称
+            tool_name: 工具名称（可选）
+            tool_id: 工具ID（可选）
+            tool_identifier: 工具标识符（可选，用于匹配文章的tool_tags）
             page: 页码
             page_size: 每页数量
         
         Returns:
             (文章列表, 总数)
         """
+        # 如果提供了tool_identifier，优先使用它来获取工具信息
+        if tool_identifier:
+            tool = DataLoader.get_tool_by_id(tool_identifier=tool_identifier)
+            if tool:
+                tool_name = tool.get("name", "") or tool_name
+        # 如果没有tool_identifier但提供了tool_id，则通过tool_id获取工具信息
+        elif tool_id:
+            tool = DataLoader.get_tool_by_id(tool_id=tool_id)
+            if tool:
+                tool_name = tool.get("name", "") or tool_name
+                tool_identifier = tool.get("identifier") or tool_identifier
+        
         all_articles = []
         
         # 加载所有文章文件
@@ -404,12 +493,24 @@ class DataLoader:
             all_articles.extend(articles)
         
         # 筛选包含该工具标签的文章
-        tool_name_lower = tool_name.lower()
         filtered_articles = []
         for article in all_articles:
-            # 检查tool_tags或tags中是否包含该工具
-            tool_tags = article.get("tool_tags", []) or article.get("tags", [])
-            if any(tool_name_lower in str(tag).lower() for tag in tool_tags):
+            matched = False
+            
+            # 优先使用 identifier 匹配（精确匹配）
+            if tool_identifier:
+                tool_tags = article.get("tool_tags", []) or []
+                if tool_identifier in tool_tags:
+                    matched = True
+            
+            # 如果没有 identifier 或 identifier 未匹配，使用工具名称匹配（模糊匹配）
+            if not matched and tool_name:
+                tool_name_lower = tool_name.lower()
+                tool_tags = article.get("tool_tags", []) or article.get("tags", [])
+                if any(tool_name_lower in str(tag).lower() or str(tag).lower() in tool_name_lower for tag in tool_tags):
+                    matched = True
+            
+            if matched:
                 filtered_articles.append(article)
         
         # 按发布时间排序
@@ -484,34 +585,53 @@ class DataLoader:
             return False
     
     @staticmethod
-    def increment_tool_view_count(tool_id: int) -> bool:
+    def increment_tool_view_count(tool_id: Optional[int] = None, tool_identifier: Optional[str] = None) -> bool:
         """
         增加工具的点击次数（热度）
         
         Args:
-            tool_id: 工具ID
+            tool_id: 工具ID（可选）
+            tool_identifier: 工具identifier（可选，优先使用）
         
         Returns:
             是否成功
         """
         try:
-            # 遍历所有工具文件，找到对应的工具
-            for tool_file in TOOLS_DIR.glob("*.json"):
-                tools = DataLoader._load_json_file(tool_file)
-                updated = False
-                
-                for tool in tools:
-                    if tool.get("id") == tool_id:
-                        # 增加点击次数
-                        tool["view_count"] = tool.get("view_count", 0) + 1
-                        updated = True
-                        break
-                
-                # 如果找到并更新了，保存文件
-                if updated:
-                    return DataLoader._save_json_file(tool_file, tools)
+            # 优先使用 identifier 查找工具
+            if tool_identifier:
+                for tool_file in TOOLS_DIR.glob("*.json"):
+                    tools = DataLoader._load_json_file(tool_file)
+                    updated = False
+                    
+                    for tool in tools:
+                        if tool.get("identifier") == tool_identifier:
+                            # 增加点击次数
+                            tool["view_count"] = tool.get("view_count", 0) + 1
+                            updated = True
+                            break
+                    
+                    # 如果找到并更新了，保存文件
+                    if updated:
+                        return DataLoader._save_json_file(tool_file, tools)
             
-            logger.warning(f"未找到工具: {tool_id}")
+            # 如果没有 identifier 或 identifier 未匹配，使用 ID 查找
+            if tool_id is not None:
+                for tool_file in TOOLS_DIR.glob("*.json"):
+                    tools = DataLoader._load_json_file(tool_file)
+                    updated = False
+                    
+                    for tool in tools:
+                        if tool.get("id") == tool_id:
+                            # 增加点击次数
+                            tool["view_count"] = tool.get("view_count", 0) + 1
+                            updated = True
+                            break
+                    
+                    # 如果找到并更新了，保存文件
+                    if updated:
+                        return DataLoader._save_json_file(tool_file, tools)
+            
+            logger.warning(f"未找到工具: tool_id={tool_id}, tool_identifier={tool_identifier}")
             return False
         except Exception as e:
             logger.error(f"增加工具点击次数失败: {e}")

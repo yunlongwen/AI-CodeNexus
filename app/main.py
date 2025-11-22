@@ -152,7 +152,8 @@ def create_app() -> FastAPI:
     @app.get("/submit-tool", response_class=HTMLResponse)
     @app.get("/wechat-mp", response_class=HTMLResponse)
     @app.get("/category/{category}", response_class=HTMLResponse)
-    async def root(category: str = None):
+    @app.get("/tool/{tool_id_or_identifier}", response_class=HTMLResponse)
+    async def root(category: str = None, tool_id_or_identifier: str = None):
         """AICoding基地 首页（支持所有前端路由）"""
         html = """
         <!DOCTYPE html>
@@ -584,7 +585,7 @@ def create_app() -> FastAPI:
                     const viewCount = tool.view_count || 0;
                     
                     html += `
-                      <div class="glass rounded-xl border border-dark-border p-6 card-hover cursor-pointer" onclick="showToolDetail(${tool.id})">
+                      <div class="glass rounded-xl border border-dark-border p-6 card-hover cursor-pointer" onclick="window.location.href='/tool/${tool.identifier || tool.id}'">
                     <div class="flex items-start gap-3 mb-4">
                           <div class="w-10 h-10 rounded-lg bg-gradient-to-br ${iconColor} flex items-center justify-center text-dark-bg text-lg font-bold flex-shrink-0 ${glowClass}">
                             ${tool.icon || '</>'}
@@ -605,7 +606,7 @@ def create_app() -> FastAPI:
                         </p>
                         <a href="${tool.url}" target="_blank" rel="noopener noreferrer" 
                            class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r ${iconColor} text-dark-bg text-sm rounded-lg hover:from-neon-blue hover:to-neon-cyan transition-all font-medium hover-glow"
-                           onclick="event.stopPropagation(); recordToolClick(${tool.id});">
+                           onclick="event.stopPropagation(); recordToolClick('${tool.identifier || tool.id}');">
                       访问工具
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -651,7 +652,7 @@ def create_app() -> FastAPI:
                 mainContent.innerHTML = '<div class="text-center py-20"><div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-neon-cyan"></div></div>';
                 
                 try {
-                  const url = category === 'ai_coding'
+                  const url = category === 'ai_news'
                     ? `${API_BASE}/ai-news?page=${page}&page_size=${currentPage.pageSize}`
                     : `${API_BASE}/news?category=${category}&page=${page}&page_size=${currentPage.pageSize}`;
                   
@@ -671,9 +672,9 @@ def create_app() -> FastAPI:
                 if (!mainContent) return;
                 
                 // 获取页面配置
-                const pageType = category === 'ai_coding' ? 'ai-news' : 'news';
+                const pageType = category === 'ai_news' ? 'ai-news' : 'news';
                 const config = getPageConfig(pageType);
-                const title = config.title || (category === 'ai_coding' ? 'AI资讯' : '编程资讯');
+                const title = config.title || (category === 'ai_news' ? 'AI资讯' : '编程资讯');
                 const description = config.description || '最新技术文章和资讯';
                 
                 let html = `
@@ -689,25 +690,59 @@ def create_app() -> FastAPI:
                   html += '<div class="text-center py-20 text-gray-400">暂无文章数据</div>';
                 } else {
                   articles.forEach(article => {
-                    const date = new Date(article.published_time || article.created_at).toLocaleDateString('zh-CN');
+                    // 处理日期：优先使用 archived_at（采纳日期），其次 published_time，最后 created_at
+                    let dateStr = '未知日期';
+                    const dateValue = article.archived_at || article.published_time || article.created_at;
+                    if (dateValue) {
+                      try {
+                        const date = new Date(dateValue);
+                        if (!isNaN(date.getTime())) {
+                          dateStr = date.toLocaleDateString('zh-CN');
+                        }
+                      } catch (e) {
+                        // 日期解析失败，使用默认值
+                      }
+                    }
+                    
+                    // 处理来源：如果source为空字符串，显示"未知来源"
+                    const source = (article.source && article.source.trim()) ? article.source : '未知来源';
+                    
+                    // 合并标签：tool_tags 和 tags
+                    const allTags = [];
+                    if (article.tool_tags && article.tool_tags.length > 0) {
+                      allTags.push(...article.tool_tags.map(tag => ({ tag, isTool: true })));
+                    }
+                    if (article.tags && article.tags.length > 0) {
+                      allTags.push(...article.tags.map(tag => ({ tag, isTool: false })));
+                    }
+                    
                     html += `
                       <article class="glass rounded-xl border border-dark-border p-6 card-hover">
                         <h4 class="text-lg font-semibold text-gray-100 mb-2 hover:text-neon-cyan cursor-pointer transition-colors">
                           <a href="${article.url}" target="_blank" rel="noopener noreferrer" onclick="recordArticleClick('${article.url.replace(/'/g, "\\'")}')">${article.title}</a>
                         </h4>
                         <div class="flex items-center gap-3 text-sm text-gray-400 mb-2">
-                          <span>${article.source || '未知来源'}</span>
+                          <span>${source}</span>
                           <span>•</span>
-                          <span>${date}</span>
+                          <span>${dateStr}</span>
                       </div>
                         <p class="text-sm text-gray-300 leading-relaxed mb-3">
                           ${article.summary || ''}
                         </p>
+                        ${allTags.length > 0 ? `
                         <div class="flex items-center gap-2 flex-wrap">
-                          ${(article.tags || []).map(tag => 
-                            `<span class="px-2 py-1 glass text-neon-cyan text-xs rounded border border-neon-cyan/30">${tag}</span>`
+                          ${allTags.map(({ tag, isTool }) => 
+                            isTool 
+                              ? `<span class="px-2 py-1 glass text-neon-purple text-xs rounded border border-neon-purple/30 flex items-center gap-1">
+                                  <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                                  </svg>
+                                  ${tag}
+                                </span>`
+                              : `<span class="px-2 py-1 glass text-neon-cyan text-xs rounded border border-neon-cyan/30">${tag}</span>`
                           ).join('')}
-                  </div>
+                        </div>
+                        ` : ''}
                       </article>
                     `;
                   });
@@ -772,9 +807,246 @@ def create_app() -> FastAPI:
               }
               
               // 显示工具详情
-              function showToolDetail(toolId) {
-                console.log('显示工具详情:', toolId);
-                // TODO: 实现工具详情弹窗
+              async function showToolDetail(toolIdOrIdentifier) {
+                const mainContent = document.getElementById('main-content');
+                if (!mainContent) return;
+                
+                mainContent.innerHTML = '<div class="text-center py-20"><div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-neon-cyan"></div></div>';
+                
+                try {
+                  const response = await fetch(`${API_BASE}/tools/${toolIdOrIdentifier}`);
+                  if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                  }
+                  const tool = await response.json();
+                  
+                  renderToolDetail(tool);
+                  
+                  // 更新URL（使用 identifier 如果存在，否则使用 ID）
+                  const urlIdentifier = tool.identifier || tool.id;
+                  window.history.pushState({}, '', `/tool/${urlIdentifier}`);
+                } catch (error) {
+                  console.error('加载工具详情失败:', error);
+                  mainContent.innerHTML = '<div class="text-center py-20 text-red-400">加载失败，请刷新重试</div>';
+                }
+              }
+              
+              // 渲染工具详情
+              function renderToolDetail(tool) {
+                const mainContent = document.getElementById('main-content');
+                if (!mainContent) return;
+                
+                const iconColor = tool.category === 'codeagent' || tool.category === 'ai-test' 
+                  ? 'from-neon-purple to-neon-pink' 
+                  : 'from-neon-cyan to-neon-blue';
+                const glowClass = tool.category === 'codeagent' || tool.category === 'ai-test'
+                  ? 'neon-glow-purple'
+                  : 'neon-glow';
+                const viewCount = tool.view_count || 0;
+                const relatedArticles = tool.related_articles || [];
+                const relatedCount = tool.related_articles_count || 0;
+                
+                let html = `
+                  <div class="mb-6">
+                    <a href="javascript:void(0)" onclick="goBack()" class="inline-flex items-center gap-2 text-gray-400 hover:text-neon-cyan transition-colors mb-4">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                      </svg>
+                      <span>返回分类</span>
+                    </a>
+                    
+                    <div class="glass rounded-xl border border-dark-border p-8">
+                      <div class="flex items-start gap-6 mb-6">
+                        <div class="w-16 h-16 rounded-xl bg-gradient-to-br ${iconColor} flex items-center justify-center text-dark-bg text-2xl font-bold flex-shrink-0 ${glowClass}">
+                          ${tool.icon || '</>'}
+                        </div>
+                        <div class="flex-1">
+                          <h1 class="text-3xl tech-font-bold text-neon-cyan text-glow mb-2">${tool.name}</h1>
+                          <div class="flex items-center gap-4 text-sm text-gray-400 mb-4">
+                            <span>${getCategoryName(tool.category)}</span>
+                            <span>•</span>
+                            <span>🔥 ${viewCount} 次访问</span>
+                          </div>
+                          <a href="${tool.url}" target="_blank" rel="noopener noreferrer" 
+                             class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r ${iconColor} text-dark-bg rounded-lg hover:from-neon-blue hover:to-neon-cyan transition-all font-medium hover-glow"
+                             onclick="recordToolClick('${tool.identifier || tool.id}')">
+                            访问工具
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </a>
+                        </div>
+                      </div>
+                      
+                      <div class="mb-6">
+                        <h2 class="text-xl font-semibold text-gray-100 mb-3">工具描述</h2>
+                        <p class="text-gray-300 leading-relaxed">${tool.description || '暂无描述'}</p>
+                      </div>
+                      
+                      ${tool.tags && tool.tags.length > 0 ? `
+                        <div class="mb-6">
+                          <h2 class="text-xl font-semibold text-gray-100 mb-3">标签</h2>
+                          <div class="flex items-center gap-2 flex-wrap">
+                            ${tool.tags.map(tag => 
+                              `<span class="px-3 py-1 glass text-neon-cyan text-sm rounded border border-neon-cyan/30">${tag}</span>`
+                            ).join('')}
+                          </div>
+                        </div>
+                      ` : ''}
+                    </div>
+                    
+                    <!-- 相关资讯 -->
+                    <div class="mt-8">
+                      <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-2xl tech-font-bold text-neon-cyan text-glow flex items-center gap-2">
+                          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                          </svg>
+                          相关资讯
+                        </h2>
+                        <div class="flex items-center gap-2">
+                          <button onclick="refreshRelatedArticles('${tool.identifier || tool.id}')" 
+                                  class="px-4 py-2 glass border border-dark-border text-gray-300 rounded-lg hover:bg-dark-card hover:text-neon-cyan transition-all text-sm">
+                            刷新
+                          </button>
+                          ${relatedCount > 10 ? `
+                            <a href="javascript:void(0)" onclick="showMoreArticles('${tool.identifier || tool.id}')" 
+                               class="px-4 py-2 glass border border-dark-border text-gray-300 rounded-lg hover:bg-dark-card hover:text-neon-cyan transition-all text-sm">
+                              查看更多 >
+                            </a>
+                          ` : ''}
+                        </div>
+                      </div>
+                      
+                      <div id="related-articles-list" class="space-y-4">
+                `;
+                
+                if (relatedArticles.length === 0) {
+                  html += `
+                    <div class="glass rounded-xl border border-dark-border p-8 text-center text-gray-400">
+                      <p>暂无相关资讯</p>
+                    </div>
+                  `;
+                } else {
+                  relatedArticles.forEach(article => {
+                    const date = new Date(article.published_time || article.created_at || article.archived_at).toLocaleDateString('zh-CN');
+                    const categoryLabel = article.category === 'ai_news' ? 'AI资讯' : '编程资讯';
+                    
+                    html += `
+                      <article class="glass rounded-xl border border-dark-border p-6 card-hover">
+                        <div class="flex items-start gap-3 mb-2">
+                          <span class="text-sm px-2 py-1 glass border border-neon-cyan/30 text-neon-cyan rounded">${categoryLabel}</span>
+                          <span class="text-xs text-gray-400">${date}</span>
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-100 mb-2 hover:text-neon-cyan cursor-pointer transition-colors">
+                          <a href="${article.url}" target="_blank" rel="noopener noreferrer" onclick="recordArticleClick('${article.url.replace(/'/g, "\\'")}')">${article.title}</a>
+                        </h4>
+                        <div class="flex items-center gap-3 text-sm text-gray-400 mb-2">
+                          <span>${article.source || '未知来源'}</span>
+                        </div>
+                        <p class="text-sm text-gray-300 leading-relaxed mb-3">
+                          ${article.summary || ''}
+                        </p>
+                        ${article.tool_tags && article.tool_tags.length > 0 ? `
+                          <div class="flex items-center gap-2 flex-wrap">
+                            ${article.tool_tags.map(tag => 
+                              `<span class="px-2 py-1 glass text-neon-purple text-xs rounded border border-neon-purple/30 flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                                </svg>
+                                ${tag}
+                              </span>`
+                            ).join('')}
+                          </div>
+                        ` : ''}
+                      </article>
+                    `;
+                  });
+                }
+                
+                html += `
+                      </div>
+                    </div>
+                `;
+                
+                mainContent.innerHTML = html;
+              }
+              
+              // 返回上一页
+              function goBack() {
+                const path = window.location.pathname;
+                if (path.includes('/tool/')) {
+                  // 从工具详情页返回，尝试返回到分类页面
+                  const category = localStorage.getItem('last_category') || 'tools';
+                  window.history.pushState({}, '', `/${category}`);
+                  handleRoute();
+                } else {
+                  window.history.back();
+                }
+              }
+              
+              // 刷新相关文章
+              async function refreshRelatedArticles(toolIdOrIdentifier) {
+                try {
+                  const response = await fetch(`${API_BASE}/tools/${toolIdOrIdentifier}`);
+                  if (!response.ok) throw new Error('刷新失败');
+                  const tool = await response.json();
+                  
+                  const relatedArticles = tool.related_articles || [];
+                  const relatedList = document.getElementById('related-articles-list');
+                  if (!relatedList) return;
+                  
+                  if (relatedArticles.length === 0) {
+                    relatedList.innerHTML = '<div class="glass rounded-xl border border-dark-border p-8 text-center text-gray-400"><p>暂无相关资讯</p></div>';
+                    return;
+                  }
+                  
+                  let html = '';
+                  relatedArticles.forEach(article => {
+                    const date = new Date(article.published_time || article.created_at || article.archived_at).toLocaleDateString('zh-CN');
+                    const categoryLabel = article.category === 'ai_news' ? 'AI资讯' : '编程资讯';
+                    
+                    html += `
+                      <article class="glass rounded-xl border border-dark-border p-6 card-hover">
+                        <div class="flex items-start gap-3 mb-2">
+                          <span class="text-sm px-2 py-1 glass border border-neon-cyan/30 text-neon-cyan rounded">${categoryLabel}</span>
+                          <span class="text-xs text-gray-400">${date}</span>
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-100 mb-2 hover:text-neon-cyan cursor-pointer transition-colors">
+                          <a href="${article.url}" target="_blank" rel="noopener noreferrer" onclick="recordArticleClick('${article.url.replace(/'/g, "\\'")}')">${article.title}</a>
+                        </h4>
+                        <div class="flex items-center gap-3 text-sm text-gray-400 mb-2">
+                          <span>${article.source || '未知来源'}</span>
+                        </div>
+                        <p class="text-sm text-gray-300 leading-relaxed mb-3">
+                          ${article.summary || ''}
+                        </p>
+                        ${article.tool_tags && article.tool_tags.length > 0 ? `
+                          <div class="flex items-center gap-2 flex-wrap">
+                            ${article.tool_tags.map(tag => 
+                              `<span class="px-2 py-1 glass text-neon-purple text-xs rounded border border-neon-purple/30 flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                                </svg>
+                                ${tag}
+                              </span>`
+                            ).join('')}
+                          </div>
+                        ` : ''}
+                      </article>
+                    `;
+                  });
+                  
+                  relatedList.innerHTML = html;
+                } catch (error) {
+                  console.error('刷新相关文章失败:', error);
+                }
+              }
+              
+              // 显示更多文章
+              function showMoreArticles(toolIdOrIdentifier) {
+                // TODO: 实现分页加载更多文章
+                console.log('显示更多文章:', toolIdOrIdentifier);
               }
               
               // 页面路由
@@ -791,7 +1063,7 @@ def create_app() -> FastAPI:
                   loadArticles('programming', 1);
                 } else if (route === 'ai-news') {
                   currentPage.category = null;
-                  loadArticles('ai_coding', 1);
+                  loadArticles('ai_news', 1);
                 } else if (route === 'tools') {
                   currentPage.category = null;
                   loadTools(true, null, 1);
@@ -813,7 +1085,17 @@ def create_app() -> FastAPI:
                 } else if (route.startsWith('category/')) {
                   const category = route.substring(9); // 'category/'.length = 9
                   currentPage.category = category;
+                  localStorage.setItem('last_category', `category/${category}`);
                   loadTools(false, category, 1);
+                } else if (route.startsWith('tool/')) {
+                  const toolIdOrIdentifier = route.substring(5); // 'tool/'.length = 5
+                  if (toolIdOrIdentifier) {
+                    showToolDetail(toolIdOrIdentifier);
+                  } else {
+                    // 默认显示热门工具
+                    currentPage.category = null;
+                    loadTools(true, null, 1);
+                  }
                 } else {
                   // 默认显示热门工具
                   currentPage.category = null;
@@ -872,7 +1154,7 @@ def create_app() -> FastAPI:
                   } else {
                     data.items.forEach(article => {
                       const date = new Date(article.archived_at || article.published_time || article.created_at).toLocaleDateString('zh-CN');
-                      const categoryLabel = article.category === 'ai_coding' ? 'AI资讯' : '编程资讯';
+                      const categoryLabel = article.category === 'ai_news' ? 'AI资讯' : '编程资讯';
                       
                       html += `
                         <article class="glass rounded-xl border border-dark-border p-6 card-hover">
@@ -987,7 +1269,7 @@ def create_app() -> FastAPI:
                   articles.forEach(article => {
                     const date = new Date(article.archived_at || article.published_time || article.created_at).toLocaleDateString('zh-CN');
                     const viewCount = article.view_count || 0;
-                    const categoryLabel = article.category === 'ai_coding' ? 'AI资讯' : '编程资讯';
+                    const categoryLabel = article.category === 'ai_news' ? 'AI资讯' : '编程资讯';
                     
                     html += `
                       <article class="glass rounded-xl border border-dark-border p-6 card-hover">
@@ -1123,7 +1405,7 @@ def create_app() -> FastAPI:
                         <label class="block text-sm font-medium text-gray-300 mb-2">文章分类 <span class="text-red-400">*</span></label>
                         <select id="submit-category" class="w-full px-4 py-3 glass border border-dark-border rounded-lg text-gray-100 focus:outline-none focus:border-neon-cyan">
                           <option value="programming">编程资讯</option>
-                          <option value="ai_coding">AI资讯</option>
+                          <option value="ai_news">AI资讯</option>
                         </select>
                   </div>
                       <div>

@@ -40,7 +40,7 @@
 
 **后端需求：**
 - [ ] 创建 API 端点：`GET /api/ai-news`
-  - 与编程资讯类似，但筛选 `category = 'ai_coding'` 的文章
+  - 与编程资讯类似，但筛选 `category = 'ai_news'` 的文章
   - 支持AI相关标签筛选（如：LLM, GPT, AI工具等）
 
 **前端需求：**
@@ -49,7 +49,7 @@
   - AI标签高亮显示
 
 **数据来源：**
-- 复用现有的 `Article` 表，筛选 `category = 'ai_coding'`
+- 复用现有的 `Article` 表，筛选 `category = 'ai_news'`
 
 ---
 

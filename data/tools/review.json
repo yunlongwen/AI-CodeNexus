@@ -1,1 +1,80 @@
-[]
+[
+  {
+    "name": "qodo",
+    "url": "https://www.qodo.ai/",
+    "description": "Qodo（前称Codium）是一个智能代码完整性平台，旨在审查、测试和编写代码。它将人工智能整合到开发工作流中，以加强每个阶段的代码质量。Qodo提供人工智能驱动的代码审查、测试和代码生成功能，旨在提升生产力和代码质量。它支持多种编程语言，并可与VSCode和JetBrains等集成开发环境，以及GitHub和GitLab等Git提供商集成。",
+    "category": "review",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-09-18T17:39:29.164000Z",
+    "is_featured": false,
+    "id": 1,
+    "identifier": "qodo"
+  },
+  {
+    "name": "coderabbit",
+    "url": "https://www.coderabbit.ai/blog",
+    "description": "CodeRabbit 是一个由 AI 驱动的代码审查工具，可以在几分钟内为拉取请求提供上下文相关的反馈，大幅减少手动代码审查所需的时间和精力。",
+    "category": "review",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 2,
+    "identifier": "coderabbit"
+  },
+  {
+    "name": "CodeReviewBot",
+    "url": "https://codereviewbot.ai/",
+    "description": "CodeReviewBot是一款自动化代码审查机器人，能够在代码提交时自动进行审查，提供改进建议。它支持多种编程语言，旨在提高代码审查的效率和一致性。",
+    "category": "review",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 3,
+    "identifier": "codereviewbot"
+  },
+  {
+    "name": "CodeDog",
+    "url": "https://www.codedog.ai/",
+    "description": "CodeDog是一款AI驱动的代码审查工具，旨在通过自动化的方式提高代码质量和开发效率。它能够检测代码中的潜在问题、风格违规和安全漏洞，并提供修复建议，帮助开发者在早期阶段发现并解决问题。",
+    "category": "review",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 4,
+    "identifier": "codedog"
+  },
+  {
+    "name": "Bito",
+    "url": "https://bito.ai/",
+    "description": "Bito.ai\n 提供基于 AI 的代码审查服务，能结合整个代码库理解代码，在 GitLab、GitHub 等平台及 VS Code 等 IDE 中使用，支持自定义审查规则，可追踪 PR 数据，助力团队快速合并 PR、减少回归问题，且保障代码安全，帮团队提升开发效率。",
+    "category": "review",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 5,
+    "identifier": "bito"
+  },
+  {
+    "name": "AI Code Reviewer",
+    "url": "https://github.com/buxuku/ai-code-reviewer",
+    "description": "一个利用 openai api 对 gitlab 提交的 merge request 进行 code review 的小工具",
+    "category": "review",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 6,
+    "identifier": "aicodereviewer"
+  }
+]

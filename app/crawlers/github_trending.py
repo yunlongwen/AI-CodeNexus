@@ -64,7 +64,7 @@ async def fetch_github_trending(language: str = "python", max_items: int = 10) -
             articles.append({
                 "title": repo_name,
                 "url": repo_url,
-                "source": "GitHub Trending",
+                "source": "100kwhy",  # 爬取的资讯统一使用"100kwhy"作为来源
                 "summary": summary or "GitHub 热门项目",
             })
         

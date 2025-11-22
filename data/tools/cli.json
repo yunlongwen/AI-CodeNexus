@@ -1,1 +1,142 @@
-[]
+[
+  {
+    "name": "warp",
+    "url": "https://www.warp.dev/",
+    "description": "Warp Dev 工具是一款面向开发者的现代终端，核心特点包括：采用 Rust 开发，性能高效；支持块状命令输出，便于阅读和交互；内置 AI 助手，可智能补全、生成命令和脚本；提供命令搜索、历史管理、快捷片段等功能；支持团队协作与共享，提高开发效率；界面现代化，兼顾命令行的灵活性与图形化的易用性。",
+    "category": "cli",
+    "tags": [
+      "hot"
+    ],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-09-06T08:54:28.860000Z",
+    "is_featured": false,
+    "id": 1,
+    "identifier": "warp"
+  },
+  {
+    "name": "qwen-code",
+    "url": "https://github.com/QwenLM/qwen-code",
+    "description": "Qwen Code 是阿里巴巴通义实验室基于 Qwen3-Coder 模型优化的 AI 编程工具，专为开发者设计的命令行（CLI）工作流工具，旨在通过 AI 能力提升代码开发全流程效率。",
+    "category": "cli",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 1,
+    "created_at": "2025-07-25T00:00:00Z",
+    "is_featured": false,
+    "id": 2,
+    "identifier": "qwen-code"
+  },
+  {
+    "name": "iflow",
+    "url": "https://github.com/iflow-ai/iflow-cli",
+    "description": "iFlow CLI 是阿里心流团队开发的终端级 AI 智能体，支持自然语言交互，可执行代码分析、文档生成、调试排错、文件管理等任务。它内置 Qwen3-Coder、Kimi K2 等免费模型，能理解项目上下文并调用本地或云端工具，实现从简单脚本到复杂 DevOps 流程的自动化",
+    "category": "cli",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-08-31T00:00:00Z",
+    "is_featured": false,
+    "id": 3,
+    "identifier": "iflow"
+  },
+  {
+    "name": "gemini-cli",
+    "url": "https://github.com/google-gemini/gemini-cli",
+    "description": "Gemini CLI 是谷歌推出的开源AI编程工具，基于Gemini 2.5 Pro多模态模型，支持自然语言交互，可直接在终端中实现代码生成、调试、文件操作和命令执行，免费且跨平台，极大提升开发者效率。",
+    "category": "cli",
+    "tags": [
+      "hot"
+    ],
+    "icon": "🔧",
+    "view_count": 2,
+    "created_at": "2025-06-30T00:00:00Z",
+    "is_featured": false,
+    "id": 4,
+    "identifier": "gemini-cli"
+  },
+  {
+    "name": "crush",
+    "url": "https://github.com/charmbracelet/crush",
+    "description": "开源的终端开发工具",
+    "category": "cli",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-06-30T00:00:00Z",
+    "is_featured": false,
+    "id": 5,
+    "identifier": "crush"
+  },
+  {
+    "name": "copilot-cli",
+    "url": "https://github.com/github/copilot-cli",
+    "description": "github copilot 对应的终端开发工具，类似 claude-code",
+    "category": "cli",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-10-15T00:00:00Z",
+    "is_featured": false,
+    "id": 6,
+    "identifier": "copilot-cli"
+  },
+  {
+    "name": "Codex",
+    "url": "https://openai.com/codex/",
+    "description": "openAI 出品，Codex 可以并行处理多项任务，例如编写功能、回答代码库问题、运行测试以及提交 PR 以供审查。每项任务都在其自己的安全云沙箱中运行，并预加载了您的代码库",
+    "category": "cli",
+    "tags": [
+      "hot",
+      "star"
+    ],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-06-21T00:00:00Z",
+    "is_featured": false,
+    "id": 7,
+    "identifier": "codex"
+  },
+  {
+    "name": "Claude-Code",
+    "url": "https://www.anthropic.com/claude-code",
+    "description": "Claude Code 是 Anthropic 推出的终端原生 AI 编程助手，能通过自然语言交互生成代码、调试修复，以代理式搜索深度感知项目结构，支持跨文件批量编辑与重构，无缝集成 Git、测试套件等开发工具，改动需用户确认，兼具企业级安全与可脚本化特性，适配多系统与 IDE。",
+    "category": "cli",
+    "tags": [
+      "hot",
+      "star"
+    ],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-06-21T00:00:00Z",
+    "is_featured": false,
+    "id": 8,
+    "identifier": "claude-code"
+  },
+  {
+    "name": "Auto-coder",
+    "url": "https://auto-coder.chat/",
+    "description": "命令行 AI 编程工具，AI-powered interactive coding assistant",
+    "category": "cli",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 9,
+    "identifier": "auto-coder"
+  },
+  {
+    "name": "Aider",
+    "url": "https://aider.chat/",
+    "description": "终端内的 AI 编程助手，Aider is AI pair programming in your terminal",
+    "category": "cli",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 10,
+    "identifier": "aider"
+  }
+]

@@ -21,6 +21,9 @@ from ..config_loader import (
     save_wecom_template,
     load_env_var,
     save_env_var,
+    load_tool_keywords,
+    save_tool_keywords,
+    add_tool_keyword,
 )
 from ..notifier.wecom import build_wecom_digest_markdown, send_markdown_to_wecom
 from ..notifier.wechat_mp import WeChatMPClient
@@ -38,6 +41,7 @@ from ..crawlers.github_trending import fetch_github_trending
 from ..crawlers.hackernews import fetch_hackernews_articles
 from ..sources.article_crawler import fetch_article_info
 from ..crawlers.sogou_wechat import search_articles_by_keyword
+from ..crawlers.devmaster import fetch_tools_from_api
 from ..sources.ai_candidates import (
     add_candidates_to_pool,
     clear_candidate_pool,
@@ -101,7 +105,7 @@ class CandidateActionRequest(BaseModel):
 
 class ArchiveArticleRequest(BaseModel):
     url: str
-    category: str  # 分类名称，如 programming, ai_coding
+    category: str  # 分类名称，如 programming, ai_news
     tool_tags: Optional[list[str]] = []  # 工具标签列表，可为空
 
 
@@ -252,7 +256,20 @@ async def list_candidate_articles(admin: None = Depends(_require_admin)):
 
 @router.post("/accept-candidate")
 async def accept_candidate(request: CandidateActionRequest, admin: None = Depends(_require_admin)):
-    """采纳一篇文章，从候选池移动到正式文章池"""
+    """
+    采纳一篇文章，从候选池移动到正式文章池
+    
+    重要说明：
+    1. 工具关键字爬取的资讯（crawled_from 以 "tool_keyword:" 开头）：
+       - 采纳后自动归档到"编程资讯"（programming.json）
+       - 不会进入推送列表，不能用于定时推送
+       - 只能手动触发爬取，不能定时自动爬取
+    
+    2. 推送定时爬取的资讯（crawled_from 以 "sogou_wechat:" 开头）：
+       - 采纳后添加到推送列表（ai_articles.json），用于定时推送
+       - 不会自动归档到资讯模块
+       - 可以通过 archive-candidate API 手动归档到"AI资讯"或"编程资讯"
+    """
     url = request.url.strip()
     if not url:
         raise HTTPException(status_code=400, detail="URL不能为空")
@@ -261,13 +278,26 @@ async def accept_candidate(request: CandidateActionRequest, admin: None = Depend
     
     article_to_accept = None
     remaining_candidates = []
+    is_tool_related = False
+    candidate_to_accept = None
+    
     for candidate in candidates:
         if candidate.url == url:
+            candidate_to_accept = candidate
+            # 自动从 crawled_from 中提取工具名称（如果是工具相关资讯）
+            tool_tags = []
+            if candidate.crawled_from and candidate.crawled_from.startswith("tool_keyword:"):
+                is_tool_related = True
+                tool_name = candidate.crawled_from.replace("tool_keyword:", "").strip()
+                if tool_name:
+                    tool_tags.append(tool_name)
+            
             article_to_accept = {
                 "title": candidate.title,
                 "url": candidate.url,
-                "source": candidate.source,
-                "summary": candidate.summary,
+                "source": "100kwhy",  # 爬取的资讯统一使用"100kwhy"作为来源
+                "summary": candidate.summary or "",
+                "tool_tags": tool_tags,  # 添加工具标签，用于工具详情页关联
             }
         else:
             remaining_candidates.append(candidate)
@@ -278,14 +308,34 @@ async def accept_candidate(request: CandidateActionRequest, admin: None = Depend
     # 1. 从候选池中移除
     save_candidate_pool(remaining_candidates)
     
-    # 2. 添加到正式文章池
-    success = save_article_to_config(article_to_accept)
-    if not success:
-        # 如果添加失败（比如已存在），也算操作成功，只是不做添加
-        logger.warning(f"Article already exists in main pool, but accepting from candidate: {url}")
-        return {"ok": True, "message": "文章已存在于正式池中，已从候选池移除。"}
-
-    return {"ok": True, "message": "文章已成功采纳到正式池。"}
+    # 2. 根据资讯来源类型进行不同处理
+    from ..services.data_loader import DataLoader
+    
+    if is_tool_related:
+        # 工具关键字爬取的资讯：归档到编程资讯（programming.json）
+        # 注意：工具关键字资讯只能手动触发爬取，采纳后只归档到编程资讯，不进入推送列表
+        # category="programming" -> 文件: programming.json -> UI显示: "编程资讯"
+        success = DataLoader.archive_article_to_category(
+            article_to_accept, 
+            category="programming",  # Category值，对应文件: programming.json
+            tool_tags=article_to_accept.get("tool_tags", [])
+        )
+        if not success:
+            # 如果归档失败，恢复候选池
+            remaining_candidates.append(candidate_to_accept)
+            save_candidate_pool(candidates)
+            raise HTTPException(status_code=500, detail="归档文章失败")
+        return {"ok": True, "message": "文章已成功归档到编程资讯。"}
+    else:
+        # 推送定时爬取的资讯：添加到推送列表（ai_articles.json）
+        # 注意：推送定时爬取的资讯采纳后只进入推送列表，不自动归档
+        # 如需归档到资讯模块，请使用 archive-candidate API
+        success = save_article_to_config(article_to_accept)
+        if not success:
+            # 如果添加失败（比如已存在），也算操作成功，只是不做添加
+            logger.warning(f"Article already exists in main pool, but accepting from candidate: {url}")
+            return {"ok": True, "message": "文章已存在于正式池中，已从候选池移除。"}
+        return {"ok": True, "message": "文章已成功采纳到正式池。"}
 
 
 @router.post("/reject-candidate")
@@ -310,7 +360,15 @@ async def reject_candidate(request: CandidateActionRequest, admin: None = Depend
 
 @router.post("/archive-candidate")
 async def archive_candidate(request: ArchiveArticleRequest, admin: None = Depends(_require_admin)):
-    """归档一篇文章到指定分类的JSON文件（归档后文章仍保留在候选池中）"""
+    """
+    归档一篇文章到指定分类的JSON文件（归档后文章仍保留在候选池中）
+    
+    重要说明：
+    - 此接口主要用于归档推送定时爬取的资讯
+    - 工具关键字爬取的资讯采纳时会自动归档，通常不需要使用此接口
+    - 归档后文章仍保留在候选池中，可以继续采纳用于推送
+    - 支持归档到"AI资讯"（ai_news.json）或"编程资讯"（programming.json）
+    """
     url = request.url.strip()
     category = request.category.strip()
     tool_tags = request.tool_tags or []
@@ -322,7 +380,11 @@ async def archive_candidate(request: ArchiveArticleRequest, admin: None = Depend
         raise HTTPException(status_code=400, detail="分类不能为空")
     
     # 验证分类是否有效
-    valid_categories = ["programming", "ai_coding"]
+    # 
+    # 分类映射关系：
+    # - "programming" -> 文件: programming.json -> UI显示: "编程资讯"
+    # - "ai_news" -> 文件: ai_news.json -> UI显示: "AI资讯"
+    valid_categories = ["programming", "ai_news"]
     if category not in valid_categories:
         raise HTTPException(status_code=400, detail=f"无效的分类，支持的分类：{', '.join(valid_categories)}")
     
@@ -332,14 +394,27 @@ async def archive_candidate(request: ArchiveArticleRequest, admin: None = Depend
     article_to_archive = None
     for candidate in candidates:
         if candidate.url == url:
+            # 自动从 crawled_from 中提取工具名称（如果是工具相关资讯）
+            auto_tool_tags = []
+            if candidate.crawled_from and candidate.crawled_from.startswith("tool_keyword:"):
+                tool_name = candidate.crawled_from.replace("tool_keyword:", "").strip()
+                if tool_name:
+                    auto_tool_tags.append(tool_name)
+            
+            # 合并手动输入的工具标签和自动提取的标签
+            final_tool_tags = list(set(tool_tags + auto_tool_tags))
+            
             # 转换为文章格式
+            # 如果是爬取的资讯（有crawled_from字段），统一使用"100kwhy"作为来源
+            source = "100kwhy" if candidate.crawled_from else (candidate.source or "")
+            
             article_to_archive = {
                 "title": candidate.title,
                 "url": candidate.url,
-                "source": candidate.source or "",
+                "source": source,
                 "summary": candidate.summary or "",
-                "tags": tool_tags,  # 使用工具标签
-                "tool_tags": tool_tags,  # 单独存储工具标签，方便查询
+                "tags": final_tool_tags,  # 使用工具标签
+                "tool_tags": final_tool_tags,  # 单独存储工具标签，方便查询
                 "score": getattr(candidate, 'score', 8.0)
             }
             break
@@ -434,6 +509,12 @@ async def accept_tool_candidate(request: dict, admin: None = Depends(_require_ad
             save_tool_candidate_pool(remaining_candidates)
             raise HTTPException(status_code=500, detail="保存工具失败")
         
+        # 3. 自动添加工具名称到关键字配置
+        tool_name = tool_to_accept.name.strip()
+        if tool_name:
+            add_tool_keyword(tool_name)
+            logger.info(f"已添加工具名称 '{tool_name}' 到关键字配置")
+        
         return {"ok": True, "message": f"工具已成功采纳到 {category or tool_to_accept.category} 分类。"}
     except HTTPException:
         raise
@@ -465,15 +546,277 @@ async def reject_tool_candidate(request: dict, admin: None = Depends(_require_ad
         raise HTTPException(status_code=500, detail=f"忽略工具失败: {str(e)}")
 
 
+class CrawlToolsRequest(BaseModel):
+    """工具爬取请求"""
+    source_url: str  # 爬取源URL（API端点，如 http://example.com/api/tools）
+    category: Optional[str] = None  # 指定分类，不传则爬取所有分类
+    max_items: Optional[int] = 100  # 最多爬取数量
+
+
+@router.post("/crawl-tools")
+async def crawl_tools(request: CrawlToolsRequest, admin: None = Depends(_require_admin)):
+    """
+    差量爬取工具：只爬取本地没有的工具，添加到候选池
+    
+    Args:
+        request: 爬取请求，包含分类和最大数量
+    """
+    try:
+        from ..services.data_loader import DataLoader
+        
+        # 获取所有已存在的工具URL（包括正式工具库和候选池）
+        # 使用规范化后的URL进行对比，避免因URL格式差异导致的重复
+        def normalize_url(url: str) -> str:
+            """规范化URL：统一小写、去除尾随斜杠、统一协议"""
+            if not url:
+                return ""
+            url = url.strip().lower()
+            # 统一协议（http和https视为相同，统一为https）
+            if url.startswith("http://"):
+                url = "https://" + url[7:]
+            elif not url.startswith("http"):
+                # 如果没有协议，添加https://
+                url = "https://" + url
+            # 去除尾随斜杠（但保留协议后的双斜杠）
+            # 例如：https://example.com/ -> https://example.com
+            #      https://example.com/path/ -> https://example.com/path
+            if url.endswith("/"):
+                # 去除尾随斜杠，但保留协议后的双斜杠
+                url = url.rstrip("/")
+            return url
+        
+        existing_urls = set()
+        
+        # 1. 从正式工具库获取所有URL（直接读取文件，避免分页和去重问题）
+        from pathlib import Path
+        tools_dir = Path(__file__).resolve().parent.parent.parent / "data" / "tools"
+        tool_count = 0
+        for tool_file in tools_dir.glob("*.json"):
+            if tool_file.name == "tool_candidates.json":
+                continue
+            tools = DataLoader._load_json_file(tool_file)
+            tool_count += len(tools)
+            for tool in tools:
+                url = tool.get("url", "").strip()
+                if url:
+                    normalized = normalize_url(url)
+                    if normalized:
+                        existing_urls.add(normalized)
+        
+        logger.info(f"正式工具库: {tool_count} 个工具，{len(existing_urls)} 个唯一URL")
+        
+        # 2. 从候选池获取所有URL
+        existing_candidates = load_tool_candidate_pool()
+        candidate_url_count = 0
+        for candidate in existing_candidates:
+            url = candidate.url.strip()
+            if url:
+                normalized = normalize_url(url)
+                if normalized:
+                    existing_urls.add(normalized)
+                    candidate_url_count += 1
+        
+        logger.info(f"候选池: {len(existing_candidates)} 个工具，{candidate_url_count} 个URL")
+        logger.info(f"总计已存在工具URL数量（已规范化）: {len(existing_urls)}")
+        
+        # 3. 爬取工具
+        source_url = request.source_url.strip()
+        if not source_url:
+            raise HTTPException(status_code=400, detail="爬取源URL不能为空")
+        
+        # 验证URL格式
+        if not source_url.startswith(("http://", "https://")):
+            raise HTTPException(status_code=400, detail="URL格式不正确，必须以 http:// 或 https:// 开头")
+        
+        category = request.category if request.category else None
+        max_items = request.max_items if request.max_items else 100
+        
+        logger.info(f"开始爬取工具: source_url={source_url}, category={category}, max_items={max_items}")
+        
+        # 从自定义URL爬取工具
+        # 如果用户输入的是完整API URL，直接使用；否则拼接 /api/tools
+        if "/api/" in source_url or source_url.endswith("/tools"):
+            api_url = source_url
+        else:
+            # 如果只是基础URL，拼接 /api/tools
+            api_url = f"{source_url.rstrip('/')}/api/tools"
+        
+        crawled_tools = await fetch_tools_from_api(api_url=api_url)
+        
+        # 如果指定了分类，进行筛选
+        if category:
+            crawled_tools = [t for t in crawled_tools if t.get("category") == category]
+        
+        # 限制数量
+        if max_items:
+            crawled_tools = crawled_tools[:max_items * 2]  # 多爬取一些，因为会有重复
+        
+        logger.info(f"爬取到 {len(crawled_tools)} 个工具")
+        
+        # 4. 筛选新工具（差量）- 使用规范化URL对比
+        new_tools = []
+        for tool in crawled_tools:
+            tool_url = tool.get("url", "").strip()
+            if not tool_url:
+                continue
+            
+            # 规范化URL后对比
+            normalized_url = normalize_url(tool_url)
+            if normalized_url and normalized_url not in existing_urls:
+                new_tools.append(tool)
+                existing_urls.add(normalized_url)  # 避免同一批次重复
+            else:
+                logger.debug(f"跳过已存在的工具: {tool_url} (规范化后: {normalized_url})")
+        
+        duplicate_count = len(crawled_tools) - len(new_tools)
+        logger.info(f"爬取结果: 共 {len(crawled_tools)} 个工具，其中 {duplicate_count} 个已存在，发现 {len(new_tools)} 个新工具")
+        
+        # 5. 转换为候选工具并添加到候选池
+        from datetime import datetime
+        current_candidates = load_tool_candidate_pool()
+        added_count = 0
+        skipped_count = 0
+        
+        for tool in new_tools:
+            tool_url = tool.get("url", "").strip()
+            normalized_url = normalize_url(tool_url)
+            
+            # 再次检查候选池（使用规范化URL）
+            if any(normalize_url(c.url) == normalized_url for c in current_candidates):
+                skipped_count += 1
+                logger.debug(f"工具已在候选池中，跳过: {tool_url}")
+                continue
+            
+            # 创建候选工具
+            candidate = CandidateTool(
+                name=tool.get("name", ""),
+                url=tool_url,
+                description=tool.get("description", ""),
+                category=tool.get("category", "other"),
+                tags=tool.get("tags", []) or [],
+                icon=tool.get("icon", "🔧"),
+                submitted_by="系统爬取",
+                submitted_at=datetime.now().isoformat() + "Z"
+            )
+            current_candidates.append(candidate)
+            added_count += 1
+        
+        # 6. 保存候选池
+        if added_count > 0:
+            save_tool_candidate_pool(current_candidates)
+        
+        return {
+            "ok": True,
+            "message": f"爬取完成：发现 {len(new_tools)} 个新工具，添加 {added_count} 个到候选池，跳过 {skipped_count} 个重复项",
+            "crawled_count": len(crawled_tools),
+            "new_count": len(new_tools),
+            "added_count": added_count,
+            "skipped_count": skipped_count
+        }
+    except Exception as e:
+        logger.error(f"爬取工具失败: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"爬取工具失败: {str(e)}")
+
+
+@router.post("/crawl-tool-articles")
+async def crawl_tool_articles(request: dict, admin: None = Depends(_require_admin)):
+    """
+    手动触发工具相关资讯爬取
+    
+    重要说明：
+    - 此接口只能手动触发，不能定时自动执行
+    - 爬取的资讯会设置 crawled_from="tool_keyword:工具名称"
+    - 采纳后会自动归档到"编程资讯"（programming.json），不会进入推送列表
+    - 用于在工具详情页展示相关资讯
+    
+    Args:
+        request: 包含 keyword 的请求体，如果未提供则爬取所有工具关键字
+    
+    Returns:
+        爬取结果
+    """
+    keyword = request.get("keyword", "").strip()
+    
+    # 1. 读取工具关键字
+    if keyword:
+        keywords = [keyword]
+    else:
+        keywords = load_tool_keywords()
+        if not keywords:
+            raise HTTPException(status_code=400, detail="没有可用的工具关键字，请先添加工具")
+    
+    # 2. 获取所有已存在的 URL 用于去重
+    existing_urls = set()
+    # 来自正式文章池
+    main_pool_articles = get_all_articles()
+    for article in main_pool_articles:
+        if article.get("url"):
+            existing_urls.add(article["url"])
+    # 来自现有候选池
+    candidate_pool_articles = load_candidate_pool()
+    for article in candidate_pool_articles:
+        if article.url:
+            existing_urls.add(article.url)
+    
+    logger.info(f"Found {len(existing_urls)} existing URLs to skip.")
+    
+    # 3. 遍历关键字并抓取（每个关键字只抓取1篇）
+    all_new_candidates = []
+    for kw in keywords:
+        try:
+            logger.info(f"Crawling tool keyword '{kw}' for 1 article...")
+            found_candidates = await search_articles_by_keyword(kw, pages=1)
+            
+            # 只取第一篇
+            if found_candidates:
+                candidate = found_candidates[0]
+                # 添加工具名称标签（格式：tool_keyword:工具名称）
+                # 这样在归档时可以自动提取工具名称作为 tool_tags
+                candidate.crawled_from = f"tool_keyword:{kw}"
+                all_new_candidates.append(candidate)
+                logger.info(f"Found article for keyword '{kw}': {candidate.title[:50]}")
+        except Exception as e:
+            logger.error(f"Error crawling for tool keyword '{kw}': {e}")
+            # 单个关键字失败不中断整个任务
+            continue
+    
+    # 4. 添加到候选池并去重
+    if not all_new_candidates:
+        return {"ok": True, "message": "抓取完成，但未发现任何新文章。", "added_count": 0}
+    
+    added_count = add_candidates_to_pool(all_new_candidates, existing_urls)
+    
+    return {
+        "ok": True, 
+        "message": f"抓取完成！共发现 {len(all_new_candidates)} 篇文章，成功添加 {added_count} 篇新文章到候选池。",
+        "added_count": added_count,
+        "keywords_processed": len(keywords)
+    }
+
+
+@router.get("/tool-keywords")
+async def list_tool_keywords(admin: None = Depends(_require_admin)):
+    """获取所有工具关键字列表"""
+    keywords = load_tool_keywords()
+    return {"ok": True, "keywords": keywords, "count": len(keywords)}
+
+
 @router.post("/crawl-articles")
 async def crawl_articles(admin: None = Depends(_require_admin)):
     """
-    触发一次文章抓取任务。
+    触发一次文章抓取任务（用于定时推送）。
+
+    重要说明：
+    - 此接口用于定时自动爬取，从 `config/crawler_keywords.json` 读取关键词
+    - 爬取的资讯会设置 crawled_from="sogou_wechat:关键词"
+    - 采纳后会添加到推送列表（ai_articles.json），用于定时推送
+    - 不会自动归档到资讯模块，如需归档请使用 archive-candidate API
+    - 归档时可以选择归档到"AI资讯"或"编程资讯"
 
     - 从 `config/crawler_keywords.json` 读取关键词。
     - 使用搜狗微信搜索爬虫抓取文章。
     - 对比现有文章池和候选池，进行去重。
-    - 将新文章存入候选池 `data/ai_candidates.json`。
+    - 将新文章存入候选池 `data/articles/ai_candidates.json`。
     """
     # 1. 读取关键词
     keywords_path = Path(__file__).resolve().parents[2] / "config" / "crawler_keywords.json"
@@ -1291,6 +1634,28 @@ async def digest_panel():
               <button id="crawl-btn" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">开始自动抓取</button>
             </div>
             <div class="text-sm mb-4" id="crawl-status"></div>
+            
+            <!-- 工具相关资讯爬取 -->
+            <div class="border-t border-gray-200 pt-4 mt-4">
+              <h3 class="text-sm font-semibold text-gray-700 mb-3">工具相关资讯爬取</h3>
+              <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3">
+                <p class="text-xs text-yellow-800">
+                  <strong>说明：</strong>工具相关资讯只能手动触发，每个工具关键字每次爬取1篇当天的文章。爬取到的文章会带有工具名称标签，可在工具详情页查看。
+                </p>
+              </div>
+              <div class="flex gap-2 mb-3">
+                <select id="tool-keyword-select" class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">-- 选择工具关键字 --</option>
+                </select>
+                <button id="crawl-tool-article-btn" class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">爬取该工具资讯</button>
+                <button id="crawl-all-tool-articles-btn" class="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">爬取所有工具资讯</button>
+              </div>
+              <div class="text-sm mb-3" id="crawl-tool-article-status"></div>
+              <div class="text-xs text-gray-500">
+                当前工具关键字数量: <span id="tool-keyword-count">0</span>
+              </div>
+            </div>
+            
             <div class="mt-4" id="candidate-list">加载中...</div>
           </div>
         </div>
@@ -1299,9 +1664,49 @@ async def digest_panel():
         <div class="mb-6">
           <h2 class="text-lg font-semibold text-gray-900 mb-4">工具候选池</h2>
           <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <!-- 工具爬取区域 -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <h3 class="text-sm font-semibold text-blue-900 mb-3">工具爬取</h3>
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-xs text-blue-800 mb-1">爬取源URL（API端点）<span class="text-red-500">*</span></label>
+                  <input type="text" id="crawl-tool-url" placeholder="例如: http://example.com/api/tools" class="w-full px-3 py-2 text-sm border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                  <p class="text-xs text-blue-600 mt-1">请输入工具API的完整URL地址</p>
+                </div>
+                <div class="flex flex-wrap gap-3 items-end">
+                  <div class="flex-1 min-w-[200px]">
+                    <label class="block text-xs text-blue-800 mb-1">分类（可选，不选则爬取所有）</label>
+                    <select id="crawl-tool-category" class="w-full px-3 py-2 text-sm border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <option value="">全部分类</option>
+                      <option value="ide">开发IDE</option>
+                      <option value="plugin">IDE插件</option>
+                      <option value="cli">命令行工具</option>
+                      <option value="codeagent">CodeAgent</option>
+                      <option value="ai-test">AI测试</option>
+                      <option value="review">代码审查</option>
+                      <option value="devops">DevOps工具</option>
+                      <option value="doc">文档相关</option>
+                      <option value="design">设计工具</option>
+                      <option value="ui">UI生成</option>
+                      <option value="mcp">MCP工具</option>
+                    </select>
+                  </div>
+                  <div class="min-w-[120px]">
+                    <label class="block text-xs text-blue-800 mb-1">最大数量</label>
+                    <input type="number" id="crawl-tool-max" value="100" min="1" max="500" class="w-full px-3 py-2 text-sm border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  </div>
+                  <button onclick="crawlTools()" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    🕷️ 开始爬取
+                  </button>
+                </div>
+              </div>
+              <div id="crawl-tool-status" class="mt-3 text-xs text-blue-700"></div>
+            </div>
+            
             <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
               <h3 class="text-sm font-semibold text-purple-900 mb-2">操作说明</h3>
               <ul class="text-xs text-purple-800 space-y-1">
+                <li><strong>爬取</strong>：差量爬取工具，只添加本地没有的工具到候选池。</li>
                 <li><strong>采纳</strong>：将工具添加到正式工具池，选择分类后保存到对应的JSON文件。采纳后工具会从候选池移除。</li>
                 <li><strong>忽略</strong>：从候选池中删除工具，不再显示。</li>
               </ul>
@@ -1457,7 +1862,7 @@ async def digest_panel():
             <label class="block text-sm font-medium text-gray-700 mb-2">资讯分类 <span class="text-red-500">*</span></label>
             <select id="archive-category" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="programming">编程资讯</option>
-              <option value="ai_coding">AI资讯</option>
+              <option value="ai_news">AI资讯</option>
             </select>
           </div>
           
@@ -1614,6 +2019,141 @@ async def digest_panel():
             }
         }
 
+        async function loadToolKeywords() {
+            try {
+                const adminCode = getAdminCode();
+                const res = await fetch("./tool-keywords", {
+                    headers: { "X-Admin-Code": adminCode || "" }
+                });
+                if (res.status === 401 || res.status === 403) {
+                    return;
+                }
+                const data = await res.json();
+                if (data.ok) {
+                    const select = document.getElementById("tool-keyword-select");
+                    const countEl = document.getElementById("tool-keyword-count");
+                    if (select) {
+                        // 保留第一个选项
+                        select.innerHTML = '<option value="">-- 选择工具关键字 --</option>';
+                        data.keywords.forEach(keyword => {
+                            const option = document.createElement("option");
+                            option.value = keyword;
+                            option.textContent = keyword;
+                            select.appendChild(option);
+                        });
+                    }
+                    if (countEl) {
+                        countEl.textContent = data.count || 0;
+                    }
+                }
+            } catch (err) {
+                console.error("加载工具关键字失败:", err);
+            }
+        }
+
+        async function crawlToolArticles(keyword = null) {
+            const btn = keyword 
+                ? document.getElementById("crawl-tool-article-btn")
+                : document.getElementById("crawl-all-tool-articles-btn");
+            const statusEl = document.getElementById("crawl-tool-article-status");
+
+            btn.disabled = true;
+            statusEl.textContent = keyword 
+                ? `正在爬取工具 "${keyword}" 的相关资讯，请稍候...`
+                : "正在爬取所有工具的相关资讯，请稍候...";
+            statusEl.className = "text-sm";
+
+            try {
+                const adminCode = getAdminCode();
+                const res = await fetch("./crawl-tool-articles", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Admin-Code": adminCode || ""
+                    },
+                    body: JSON.stringify({ keyword: keyword || "" })
+                });
+
+                if (res.status === 401 || res.status === 403) {
+                    handleAuthError(statusEl);
+                    return;
+                }
+
+                const data = await res.json();
+                if (data.ok) {
+                    statusEl.textContent = `✅ ${data.message}`;
+                    statusEl.className = "text-sm text-green-600";
+                    loadCandidateList(); // Refresh the list
+                } else {
+                    statusEl.textContent = `❌ ${data.message || "抓取失败"}`;
+                    statusEl.className = "text-sm text-red-600";
+                }
+            } catch (err) {
+                console.error(err);
+                statusEl.textContent = "❌ 请求失败，请查看浏览器控制台或服务器日志。";
+                statusEl.className = "text-sm text-red-600";
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // 爬取工具
+        async function crawlTools() {
+            const sourceUrl = document.getElementById("crawl-tool-url").value.trim();
+            const category = document.getElementById("crawl-tool-category").value;
+            const maxItems = parseInt(document.getElementById("crawl-tool-max").value) || 100;
+            const statusEl = document.getElementById("crawl-tool-status");
+            
+            // 验证URL
+            if (!sourceUrl) {
+                statusEl.innerHTML = '<span class="text-red-600">❌ 请输入爬取源URL</span>';
+                return;
+            }
+            
+            if (!sourceUrl.startsWith("http://") && !sourceUrl.startsWith("https://")) {
+                statusEl.innerHTML = '<span class="text-red-600">❌ URL格式不正确，必须以 http:// 或 https:// 开头</span>';
+                return;
+            }
+            
+            statusEl.innerHTML = '<span class="text-blue-600">🔄 正在爬取工具，请稍候...</span>';
+            
+            try {
+                const adminCode = getAdminCode();
+                const res = await fetch("./crawl-tools", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Admin-Code": adminCode || "",
+                    },
+                    body: JSON.stringify({
+                        source_url: sourceUrl,
+                        category: category || null,
+                        max_items: maxItems
+                    }),
+                });
+                
+                if (!res.ok) {
+                    const error = await res.json();
+                    throw new Error(error.detail || "爬取失败");
+                }
+                
+                const data = await res.json();
+                if (data.ok) {
+                    statusEl.innerHTML = `<span class="text-green-600">✅ ${data.message}</span>`;
+                    // 刷新工具候选池列表
+                    setTimeout(() => {
+                        loadToolCandidateList();
+                        statusEl.innerHTML = "";
+                    }, 1000);
+                } else {
+                    throw new Error(data.message || "爬取失败");
+                }
+            } catch (err) {
+                console.error("爬取工具失败:", err);
+                statusEl.innerHTML = `<span class="text-red-600">❌ 爬取失败: ${err.message}</span>`;
+            }
+        }
+        
         // 加载工具候选池
         async function loadToolCandidateList() {
             const listEl = document.getElementById("tool-candidate-list");
@@ -1823,6 +2363,9 @@ async def digest_panel():
                     groupContainer.appendChild(groupTitle);
 
                     articles.forEach((item, idx) => {
+                        // 保存候选文章信息，用于归档时自动填充工具标签
+                        candidateArticlesMap[item.url] = item;
+                        
                         const div = document.createElement("div");
                         div.className = "bg-white rounded-lg p-4 mb-3 border border-gray-200 shadow-sm";
                         const urlEscaped = item.url.replace(/'/g, "&#39;").replace(/"/g, "&quot;");
@@ -1959,6 +2502,7 @@ async def digest_panel():
         }
 
         let currentArchiveUrl = null;
+        let candidateArticlesMap = {}; // 存储候选文章信息，key为URL
 
         function showArchiveModal(url) {
             currentArchiveUrl = url;
@@ -1979,7 +2523,14 @@ async def digest_panel():
                 categorySelect.value = "programming";
             }
             if (toolTagsInput) {
-                toolTagsInput.value = "";
+                // 自动从候选文章信息中提取工具名称
+                const articleInfo = candidateArticlesMap[url];
+                if (articleInfo && articleInfo.crawled_from && articleInfo.crawled_from.startsWith("tool_keyword:")) {
+                    const toolName = articleInfo.crawled_from.replace("tool_keyword:", "").trim();
+                    toolTagsInput.value = toolName;
+                } else {
+                    toolTagsInput.value = "";
+                }
             }
         }
 
@@ -2201,7 +2752,7 @@ async def digest_panel():
 
             if (!data.articles || data.articles.length === 0) {
               console.log('[DEBUG] 预览中没有可用文章');
-              listEl.innerHTML = '<p class="text-gray-600">当前配置下没有可用文章，请在服务器的 data/ai_articles.json 中添加。</p>';
+              listEl.innerHTML = '<p class="text-gray-600">当前配置下没有可用文章，请在服务器的 data/articles/ai_articles.json 中添加。</p>';
               return;
             }
 
@@ -2337,6 +2888,18 @@ async def digest_panel():
         }
 
         document.getElementById("crawl-btn").addEventListener("click", crawlArticles);
+        document.getElementById("crawl-tool-article-btn").addEventListener("click", function() {
+            const select = document.getElementById("tool-keyword-select");
+            const keyword = select ? select.value : null;
+            if (!keyword) {
+                alert("请先选择工具关键字");
+                return;
+            }
+            crawlToolArticles(keyword);
+        });
+        document.getElementById("crawl-all-tool-articles-btn").addEventListener("click", function() {
+            crawlToolArticles(null);
+        });
         document.getElementById("add-article-btn").addEventListener("click", addArticle);
         document.getElementById("article-url").addEventListener("keypress", function(e) {
           if (e.key === "Enter") {
@@ -2379,7 +2942,8 @@ async def digest_panel():
               loadCandidateList(),
               loadToolCandidateList(),
               loadArticleList(),
-              loadPreview()
+              loadPreview(),
+              loadToolKeywords()
             ]);
             console.log('[DEBUG] 所有数据加载完成');
           } catch (err) {

@@ -1,1 +1,83 @@
-[]
+[
+  {
+    "name": "zread",
+    "url": "https://zread.ai/",
+    "description": "Zread能够把复杂的 GitHub 项目“翻译”成简单易懂的语言，包括快速生成结构化的 Wiki 文档，对代码进行梳理、总结，介绍项目的背景、口碑、团队等。有了这样的生产力工具，终于不用花好几天埋头研究代码，几分钟内就能掌握项目的核心内容。",
+    "category": "doc",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-08-16T00:00:00Z",
+    "is_featured": false,
+    "id": 1,
+    "identifier": "zread"
+  },
+  {
+    "name": "mappie",
+    "url": "https://www.mappie.ai/",
+    "description": "产品需求文档AI生成",
+    "category": "doc",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-03-01T00:00:00Z",
+    "is_featured": false,
+    "id": 2,
+    "identifier": "mappie"
+  },
+  {
+    "name": "deepwiki",
+    "url": "https://deepwiki.com/",
+    "description": "DeepWiki 是 Devin Wiki 和 Devin Search 的免费公共版本，可以将任何公共 GitHub 仓库快速转换成可对话的、类似维基式的文档界面",
+    "category": "doc",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-08-07T00:00:00Z",
+    "is_featured": false,
+    "id": 3,
+    "identifier": "deepwiki"
+  },
+  {
+    "name": "codewiki",
+    "url": "https://codewiki.google/",
+    "description": "Code Wiki 是 Google 推出的 Gemini 驱动 AI 代码文档工具，可深度扫描 GitHub 代码仓库，自动生成含系统概览、模块说明与可视化图表的结构化 Wiki，支持代码提交实时同步更新，集成交互式聊天问答与代码直达导航，助力开发者快速理解代码库、团队协作与新成员上手，解放文档撰写精力。",
+    "category": "doc",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-11-22T00:00:00Z",
+    "is_featured": false,
+    "id": 4,
+    "identifier": "codewiki"
+  },
+  {
+    "name": "codeguide",
+    "url": "https://www.codeguide.dev/",
+    "description": "您的 AI 开发伴侣，帮助您编写文档、规划，以便更好的使用cursor，windsurf等工具进行开发",
+    "category": "doc",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-11-27T00:00:00Z",
+    "is_featured": false,
+    "id": 5,
+    "identifier": "codeguide"
+  },
+  {
+    "name": "Spec-kit",
+    "url": "https://github.com/github/spec-kit",
+    "description": "Spec-Kit 是 GitHub 官方推出的开源规范驱动开发工具包，以 “规范即代码” 为核心，通过深度集成 Copilot、Claude 等 AI 编码助手，将清晰完整的需求规格直接转化为可执行代码，颠覆传统开发中规格与实现脱节的问题。它依托 “项目宪法” 建立统一标准，覆盖从项目初始化到代码生成的全流程，支持多技术栈，适配新项目开发、遗留系统现代化等场景，能显著提升开发效率、保证代码质量与合规性，降低维护成本。",
+    "category": "doc",
+    "tags": [
+      "star",
+      "hot"
+    ],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-10-15T00:00:00Z",
+    "is_featured": false,
+    "id": 6,
+    "identifier": "spec-kit"
+  }
+]

@@ -1,1 +1,239 @@
-[]
+[
+  {
+    "name": "trae.cn",
+    "url": "https://www.trae.cn/",
+    "description": "trae 国内版",
+    "category": "ide",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-06-21T00:00:00Z",
+    "is_featured": false,
+    "id": 1,
+    "identifier": "traecn"
+  },
+  {
+    "name": "joycode",
+    "url": "https://joycode.jd.com/?utm_source=ai-bot.cn",
+    "description": "JoyCode 是京东云推出的新一代智能编程 \nAI IDE\n ，通过 AI 技术为开发者提供高效、智能的编程体验。支持自然语言编程，开发者可以通过简单的语言描述需求， AI 自动生成代码，极大地提升了开发效率。JoyCode 配备了多智能体协作团队，智能体能协同工作，拆解复杂任务并高效执行，实现人机协同编程。JoyCode 基于代码仓库、Lint 错误、终端信息等上下文，提供更精准的代码生成和优化建议。全面支持云端开发，用户可以随时随地创建远程项目并进行自动化环境配置。开发完成后，JoyCode 支持一键部署和快速上线，打通了从开发到发布的全流程闭环。",
+    "category": "ide",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-10-13T00:00:00Z",
+    "is_featured": false,
+    "id": 2,
+    "identifier": "joycode"
+  },
+  {
+    "name": "catpaw",
+    "url": "https://catpaw.meituan.com/",
+    "description": "美团 CatPaw 是一款以 Agent 驱动的 AI 编程 IDE，依托自研 LongCat 大模型，支持 Python、Java 等主流编程语言，具备代码补全预测、智能问答生成、IDE 内预览调试及项目级分析等全链路功能，当前对用户免费开放（新用户享 500 次对话额度），能大幅提升开发效率。",
+    "category": "ide",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-11-11T00:00:00Z",
+    "is_featured": false,
+    "id": 3,
+    "identifier": "catpaw"
+  },
+  {
+    "name": "Zed",
+    "url": "https://zed.dev/",
+    "description": "Zed 是一款新一代代码编辑器，专为与人类和 AI 的高效协作而设计。",
+    "category": "ide",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 4,
+    "identifier": "zed"
+  },
+  {
+    "name": "Windsurf",
+    "url": "https://codeium.com/windsurf",
+    "description": "首个具备代理特性的集成开发环境 (IDE)。Windsurf Editor 是开发者与 AI 真正融为一体的工作场所，带来宛如魔法般的编码体验，让编程更流畅、更高效。",
+    "category": "ide",
+    "tags": [
+      "hot"
+    ],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 5,
+    "identifier": "windsurf"
+  },
+  {
+    "name": "Void",
+    "url": "https://voideditor.com/",
+    "description": "开源的 Cursor 替代品",
+    "category": "ide",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 6,
+    "identifier": "void"
+  },
+  {
+    "name": "Trae",
+    "url": "https://www.trae.ai/home",
+    "description": "Trae 是字节跳动 2025 年推出的首个 AI 原生 IDE，集成豆包、DeepSeek 等多模型，支持自然语言生成完整项目、Figma 设计稿秒转代码，能跨文件定位 Bug 并优化，更适配国产框架，通过 Builder、Chat 等模式实现从需求到部署的全流程开发，且免费开放核心功能，大幅提升开发效率。",
+    "category": "ide",
+    "tags": [
+      "hot",
+      "star"
+    ],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-01-20T00:00:00Z",
+    "is_featured": false,
+    "id": 7,
+    "identifier": "trae"
+  },
+  {
+    "name": "Qoder",
+    "url": "https://qoder.com/",
+    "description": "Qoder 是阿里推出的 Agent 级 AI 编程平台，通过 RepoWiki 把“祖传代码”变知识图谱，Quest 模式让 AI 按 Spec 自主拆任务、写代码、跑测试并实时透明展示，全程可追溯；配合长期记忆与模型自动路由，开发者只需验收，实现“写需求即可交付”的新范式",
+    "category": "ide",
+    "tags": [
+      "hot",
+      "star"
+    ],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-08-23T00:00:00Z",
+    "is_featured": false,
+    "id": 8,
+    "identifier": "qoder"
+  },
+  {
+    "name": "PearAI",
+    "url": "https://trypear.ai/",
+    "description": "VS Code 的开源分支，支持聊天与内联代码生成",
+    "category": "ide",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 9,
+    "identifier": "pearai"
+  },
+  {
+    "name": "Neovim",
+    "url": "https://github.com/yetone/avante.nvim",
+    "description": "Avante.nvim 插件模仿 Cursor IDE 的行为",
+    "category": "ide",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 10,
+    "identifier": "neovim"
+  },
+  {
+    "name": "Melty",
+    "url": "https://github.com/meltylabs/melty",
+    "description": "VS Code 的开源分支，内置聊天、变更预览、AI 生成提交信息",
+    "category": "ide",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 11,
+    "identifier": "melty"
+  },
+  {
+    "name": "LingmaIDE",
+    "url": "https://lingma.aliyun.com/lingma/download",
+    "description": "阿里的 AI IDE，对标 cursor",
+    "category": "ide",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-05-30T00:00:00Z",
+    "is_featured": false,
+    "id": 12,
+    "identifier": "lingmaide"
+  },
+  {
+    "name": "Kiro",
+    "url": "https://kiro.dev/",
+    "description": "亚马逊AWS正在研发的AI编程工具Kiro，通过多模态界面与AI Agent协同工作，实现代码的近乎实时生成，覆盖从技术设计到实现的完整流程，可能彻底改变软件开发的传统模式",
+    "category": "ide",
+    "tags": [
+      "hot",
+      "star"
+    ],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-07-16T00:00:00Z",
+    "is_featured": false,
+    "id": 13,
+    "identifier": "kiro"
+  },
+  {
+    "name": "Cursor",
+    "url": "https://www.cursor.com/",
+    "description": "Cursor是一款基于AI的智能代码编辑器，旨在通过集成大型语言模型（如GPT-4o和Claude 3.5等）来提升开发者的编码效率和体验。它不仅是一个文本编辑器，更是一个能够理解和生成代码的智能助手，具备多种强大的功能。",
+    "category": "ide",
+    "tags": [
+      "hot",
+      "star"
+    ],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 14,
+    "identifier": "cursor"
+  },
+  {
+    "name": "CodeStory",
+    "url": "https://codestory.ai/",
+    "description": "基于 VSCodium 的 IDE，支持聊天、代码解释、自动生成提交和 PR 概述， Aide编辑器",
+    "category": "ide",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 15,
+    "identifier": "codestory"
+  },
+  {
+    "name": "CodeBuddy",
+    "url": "https://www.codebuddy.ai/",
+    "description": "CodeBuddy IDE 是腾讯云推出的革命性 AI 编程工具，旨在通过自然语言交互和 AI 驱动技术彻底改变传统软件开发流程。CodeBuddy IDE的核心优势在于：全流程AI驱动：通过四大智能体（Plan/Design/Coding/Deploy Agent）实现从需求分析到部署的一站式开发，效率提升10倍（如电商页面开发从2天压缩至2小时）",
+    "category": "ide",
+    "tags": [
+      "hot"
+    ],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-08-08T00:00:00Z",
+    "is_featured": false,
+    "id": 16,
+    "identifier": "codebuddy"
+  },
+  {
+    "name": "Antigravity",
+    "url": "https://antigravity.google/",
+    "description": "Google 推出的 AI 原生 IDE，集成代理管理器、编辑器与浏览器，以 AI 驱动打通开发全流程，支持多模型免费使用",
+    "category": "ide",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-11-20T00:00:00Z",
+    "is_featured": false,
+    "id": 17,
+    "identifier": "antigravity"
+  }
+]

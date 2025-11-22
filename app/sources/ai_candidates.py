@@ -1,5 +1,5 @@
 """
-管理待审核的文章候选池（`data/ai_candidates.json`）
+管理待审核的文章候选池（`data/articles/ai_candidates.json`）
 """
 import json
 import random
@@ -23,7 +23,7 @@ class CandidateArticle:
 
 def _candidate_data_path() -> Path:
     """获取候选池数据文件的路径"""
-    return Path(__file__).resolve().parents[2] / "data" / "ai_candidates.json"
+    return Path(__file__).resolve().parents[2] / "data" / "articles" / "ai_candidates.json"
 
 
 def load_candidate_pool() -> List[CandidateArticle]:

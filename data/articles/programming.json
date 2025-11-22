@@ -1,1 +1,92 @@
-[]
+[
+  {
+    "title": "Cursor 2.1发布:计划更清晰、审查更直接、搜索更迅速",
+    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1763831283&ver=6374&signature=Xy3t*XboKMtsZ53V3LqPnsVGiGZdYKNSrMD*y4ABV5kHmR1qS2mP7Sr*xxPDdZTMP3ovbvtrlWFynLGP1zyYAdnBppUzjDOX9JztWtFKKWOez5U5JWjm21bLhB929e6R&new=1",
+    "source": "100kwhy",
+    "summary": "导读: Cursor 迎来 2.1 版本更新,本次重点提升了三块能力:更互动的计划流程、直接在编辑器里做代码审查,以及几乎秒开的 ...",
+    "tool_tags": [
+      "Cursor"
+    ],
+    "id": 1,
+    "created_at": "2025-11-23T01:15:58.701757Z",
+    "published_time": "2025-11-23T01:15:58.701757Z",
+    "archived_at": "2025-11-23T01:15:58.701757Z",
+    "view_count": 0,
+    "category": "programming",
+    "tags": [
+      "Cursor"
+    ]
+  },
+  {
+    "title": "CodeWiki大型代码库整体文档生成思辨分析",
+    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1763831446&ver=6374&signature=cY*CjeV-5Zn9DbvQ6-6YlY-GVvH2NykPChhnFVGUblimggjdoElncxcjtnE5hZ3alTU-axVEc*Ir9U2ZEgMQ2UtErwJ3-tkIEE2UxE3HHdYgYNWtvzTwfIQbwoD1ZuHF&new=1",
+    "source": "100kwhy",
+    "summary": "CodeWiki 论文中提取核心事实、数据和声明,并对其来源、有效性和一致性进行严格的审视.这一过程如同为一座宏伟的建筑勘验地...",
+    "tool_tags": [
+      "codewiki"
+    ],
+    "id": 2,
+    "created_at": "2025-11-23T01:16:15.480879Z",
+    "published_time": "2025-11-23T01:16:15.480879Z",
+    "archived_at": "2025-11-23T01:16:15.480879Z",
+    "view_count": 0,
+    "category": "programming",
+    "tags": [
+      "codewiki"
+    ]
+  },
+  {
+    "title": "MCP管理手忙脚乱?claude code搭配MCP Router,只要配置一次就行",
+    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1763831507&ver=6374&signature=JH7N1*dIbVhc5mcmHk-g4okBA1T4Ly1qOYg9wzakehj-loThAoaIfM3-A8REOt6CsN9W04dmRuJ2TEZajisXbbErG*Lf-GGOuqsHbmE3B*cb*xuSaVTX071jixtGVsuS&new=1",
+    "source": "100kwhy",
+    "summary": "以这个bing cn mcp为例子还是点击这个MCP服务,在配置菜单中的工具标签里,我们可以看到它有bing_search和fetch_webpage两个...",
+    "tool_tags": [
+      "mcpcn"
+    ],
+    "id": 3,
+    "created_at": "2025-11-23T01:16:29.960192Z",
+    "published_time": "2025-11-23T01:16:29.960192Z",
+    "archived_at": "2025-11-23T01:16:29.960192Z",
+    "view_count": 1,
+    "category": "programming",
+    "tags": [
+      "mcpcn"
+    ]
+  },
+  {
+    "title": "VS Code 使用国产代码大杀器 MiniMax M2",
+    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1763831441&ver=6374&signature=TbVQBYj4gw*cqFIB5FpqUrJWFSoKipDP1I46fNfuFRWcEma7l-u7*jn9YHBzVUjMXA3sArV*RRo5jI7BPVn*dTYQGI1L5bXSszz7Moa5HeAIPi21nPJ54MLC3m2XNE7F&new=1",
+    "source": "100kwhy",
+    "summary": "提交代码让CodeRabbit自动审核你 commit 后,兔子会弹窗问:“要审查吗?” → 点 ️→ 它扫描改动 → 输出结构化建议(含文件路...",
+    "tool_tags": [
+      "coderabbit"
+    ],
+    "id": 4,
+    "created_at": "2025-11-23T01:16:33.813858Z",
+    "published_time": "2025-11-23T01:16:33.813858Z",
+    "archived_at": "2025-11-23T01:16:33.813858Z",
+    "view_count": 0,
+    "category": "programming",
+    "tags": [
+      "coderabbit"
+    ]
+  },
+  {
+    "title": "CodexField:当AI遇见DeFi,内容创作迎来黄金时代!一年37倍",
+    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1763831265&ver=6374&signature=8BQr3*adF47zIQJXXRiEcebN9c3OrBCQl*2dP-huKusm3WKwox2*CM10ZuZ2Qu5DhXTBOyl9AGoVp4181o0JFJ-POtqw3yFVTZpIkd5N3uIs6bsYYNO3o3xtwdyiYmea&new=1",
+    "source": "100kwhy",
+    "summary": "$CODEX代币扮演着不可或缺的角色:它不仅是系统内统一的支付与结算工具-还是参与治理的通行证——持币者可以通过质押参与关...",
+    "tool_tags": [
+      "Codex"
+    ],
+    "id": 5,
+    "created_at": "2025-11-23T01:16:44.125674Z",
+    "published_time": "2025-11-23T01:16:44.125674Z",
+    "archived_at": "2025-11-23T01:16:44.125674Z",
+    "view_count": 0,
+    "category": "programming",
+    "tags": [
+      "Codex"
+    ]
+  }
+]

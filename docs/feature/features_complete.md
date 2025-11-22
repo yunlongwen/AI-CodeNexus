@@ -77,7 +77,7 @@
 **功能描述**：展示AI相关的文章和资讯
 
 **数据来源**：
-- 存储位置：`data/articles/ai.json`
+- 存储位置：`data/articles/ai_news.json`
 - 数据格式：与编程资讯相同
 
 **功能特性**：
@@ -131,8 +131,8 @@
    - 推荐理由（可选）
 2. 系统处理：
    - 检查URL是否重复
-   - 随机分配关键词（从 `config/crawler_keywords.json`）
-   - 保存到候选池（`data/ai_candidates.json`）
+   - 随机分配关键词（从 `config/crawler_keywords.json`，用于分类标记）
+   - 保存到候选池（`data/articles/ai_candidates.json`）
    - 等待管理员审核
 3. 用户提示：
    - 显示"提交成功"消息
@@ -231,7 +231,7 @@
    - 工具图标（可选，URL或emoji）
 2. 系统处理：
    - 检查URL是否重复（候选池和正式工具池）
-   - 保存到工具候选池（`data/tool_candidates.json`）
+   - 保存到工具候选池（`data/tools/tool_candidates.json`）
    - 等待管理员审核
 3. 用户提示：
    - 显示"提交成功"消息
@@ -268,7 +268,7 @@
 - `GET /api/admin/verify-code?code={admin_code}` - 验证授权码
 
 ### 2. 文章候选池管理 (`/digest/panel`)
-**功能描述**：管理用户提交和自动抓取的文章候选
+**功能描述**：管理用户提交和系统获取的文章候选
 
 **操作功能**：
 
@@ -337,11 +337,56 @@
 - `POST /digest/accept-tool-candidate` - 采纳工具
 - `POST /digest/reject-tool-candidate` - 忽略工具
 
-### 4. 配置管理
+### 4. 工具相关资讯获取
+**功能描述**：为每个工具手动触发相关资讯的获取，获取到的资讯会自动关联到对应工具
+
+**核心特性**：
+- **工具关键字自动管理**：工具被采纳时，自动将工具名称添加到关键字配置
+- **手动触发获取**：支持单个工具或批量获取所有工具的相关资讯
+- **当天内容**：只获取当天的资讯内容，确保内容时效性
+- **自动标签关联**：获取到的资讯自动带有工具名称标签，归档或采纳时自动提取
+
+**操作功能**：
+
+#### 单个工具获取
+- **功能**：选择特定工具关键字，每次获取1篇当天的相关资讯
+- **操作**：
+  1. 在"工具相关资讯获取"区域选择工具关键字
+  2. 点击"获取该工具资讯"按钮
+  3. 系统获取1篇当天的相关资讯并进入候选池
+
+#### 批量获取
+- **功能**：一次性获取所有工具的相关资讯
+- **操作**：点击"获取所有工具资讯"按钮，系统遍历所有工具关键字，每个关键字获取1篇资讯
+
+**功能特性**：
+- ✅ 工具关键字自动管理（采纳工具时自动添加）
+- ✅ 工具关键字列表显示（显示当前关键字数量）
+- ✅ 单个工具获取（每次1篇）
+- ✅ 批量获取（所有工具）
+- ✅ 自动标签提取（归档/采纳时自动提取工具名称）
+- ✅ 工具标签自动填充（归档对话框自动填充）
+
+**数据流程**：
+1. 工具采纳 → 自动添加工具名称到关键字配置
+2. 手动触发获取 → 使用工具关键字获取相关资讯
+3. 资讯进入候选池 → 带有 `tool_keyword:工具名称` 标识
+4. 归档/采纳 → 自动提取工具名称作为 `tool_tags`
+5. 工具详情页 → 通过 `tool_tags` 匹配显示相关资讯
+
+**API接口**：
+- `GET /digest/tool-keywords` - 获取工具关键字列表
+- `POST /digest/crawl-tool-articles` - 获取工具相关资讯
+  - Body: `{"keyword": "Cursor"}` - 可选，不提供则爬取所有工具
+
+**配置文件**：
+- `config/tool_keywords.json` - 工具关键字列表（自动管理）
+
+### 5. 配置管理
 **功能描述**：在管理面板中配置系统参数
 
 **配置项**：
-- **关键词配置**：设置抓取关键词，每行一个
+- **关键词配置**：设置数据获取关键词，每行一个
 - **调度配置**：设置推送时间（Cron表达式或小时+分钟）和数量控制
 - **企业微信模板**：自定义推送消息的Markdown格式
 - **系统配置**：配置管理员验证码和企业微信推送地址
@@ -609,12 +654,13 @@ Content-Type: application/json
 ```
 data/
 ├── config.json              # 页面和分类配置
-├── ai_candidates.json        # 文章候选池
-├── tool_candidates.json     # 工具候选池
-├── articles/                 # 正式文章池
+├── articles/                 # 文章相关
+│   ├── ai_candidates.json   # 文章候选池
+│   ├── ai_articles.json     # 资讯推送列表
 │   ├── programming.json     # 编程资讯
-│   └── ai.json              # AI资讯
+│   └── ai_news.json          # AI资讯
 └── tools/                    # 正式工具池
+    ├── tool_candidates.json # 工具候选池
     ├── featured.json        # 热门工具
     ├── ide.json             # 开发IDE
     ├── plugin.json          # IDE插件
@@ -651,7 +697,7 @@ data/
 ```
 
 #### `config/crawler_keywords.json`
-包含抓取关键词列表，也用于随机分配给用户提交的文章。
+包含关键词列表，用于随机分配给用户提交的文章进行分类标记。
 
 ---
 
@@ -801,18 +847,35 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 ## 📚 相关文档
 
+**功能文档**:
 - [功能开发计划](feature_plan.md)
 - [多资讯源使用指南](multi_sources_guide.md)
 - [测试指南](test_sources.md)
-- [微信公众号发布指南](wechat_mp_guide.md)
-- [Python环境部署](deploy_python.md)
-- [Windows部署](deploy_windows.md)
+- [工具详情功能](tool_detail_feature.md)
+- [工具相关资讯爬取功能](tool_article_crawling_feature.md)
+
+**部署文档**:
+- [Python环境部署](../deploy/deploy_python.md)
+- [Windows部署](../deploy/deploy_windows.md)
+- [宝塔部署](../deploy/deploy_baota.md)
+- [微信公众号发布指南](../deploy/wechat_mp_guide.md)
 
 ---
 
 ## 📄 更新日志
 
-### v2.0（当前版本）
+### v3.0（当前版本）
+- ✅ 工具相关资讯获取功能
+  - 工具关键字自动管理
+  - 手动触发单个或批量获取
+  - 自动标签关联
+  - 工具详情页展示相关资讯
+- ✅ 工具数据录入和整理
+  - 完善工具分类体系
+  - 工具标识符（identifier）支持
+  - 工具详情页功能
+
+### v2.0
 - ✅ 完整的资讯和工具聚合平台
 - ✅ 用户提交功能
 - ✅ 管理员审核功能

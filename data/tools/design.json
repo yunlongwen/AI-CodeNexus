@@ -1,1 +1,41 @@
-[]
+[
+  {
+    "name": "superdesign",
+    "url": "https://www.superdesign.dev/",
+    "description": "SuperDesign 是一个面向开发者的AI 设计助手，其核心理念是：让设计回归代码工作流，让开发者零门槛做设计。 它通过插件形式无缝嵌入到开发者日常使用的IDE 中，使你可以在写代码的同时完成界面设计、组件复用和快速迭代。",
+    "category": "design",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-08-11T00:00:00Z",
+    "is_featured": false,
+    "id": 1,
+    "identifier": "superdesign"
+  },
+  {
+    "name": "motiff",
+    "url": "https://motiff.com/",
+    "description": "AI设计，一句话生成设计稿",
+    "category": "design",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-02T00:00:00Z",
+    "is_featured": false,
+    "id": 2,
+    "identifier": "motiff"
+  },
+  {
+    "name": "lovart",
+    "url": "https://www.lovart.ai/",
+    "description": "Lovart 是一个跨模态的 AI 设计代理工具，它不仅能将自然语言文本转换为专业级视觉设计（如图像、视频、音频、3D 等），还能自主策划、执行并协同多种 AI 模型，像一个完整的设计团队一样帮你完成创意项目",
+    "category": "design",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-08-07T00:00:00Z",
+    "is_featured": false,
+    "id": 3,
+    "identifier": "lovart"
+  }
+]

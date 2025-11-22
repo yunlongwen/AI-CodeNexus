@@ -67,7 +67,7 @@ async def _fetch_story_detail(client: httpx.AsyncClient, story_id: int) -> Dict[
         return {
             "title": data.get("title", "无标题"),
             "url": data.get("url", ""),
-            "source": "Hacker News",
+            "source": "100kwhy",  # 爬取的资讯统一使用"100kwhy"作为来源
             "summary": f"分数: {data.get('score', 0)} points | 评论: {data.get('descendants', 0)}",
             "points": data.get("score", 0),
         }

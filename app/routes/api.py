@@ -88,32 +88,66 @@ async def get_featured_tools(
     )
 
 
-@router.get("/tools/{tool_id}")
-async def get_tool_detail(tool_id: int):
-    """获取工具详情"""
-    tool = DataLoader.get_tool_by_id(tool_id)
+@router.get("/tools/{tool_id_or_identifier}")
+async def get_tool_detail(tool_id_or_identifier: str):
+    """
+    获取工具详情（支持通过ID或identifier查找）
+    
+    Args:
+        tool_id_or_identifier: 工具ID（数字）或identifier（字符串）
+    """
+    tool = None
+    tool_id = None
+    
+    # 尝试按ID查找（如果是数字）
+    try:
+        tool_id = int(tool_id_or_identifier)
+        tool = DataLoader.get_tool_by_id(tool_id=tool_id)
+    except ValueError:
+        # 如果不是数字，则按identifier查找
+        tool = DataLoader.get_tool_by_id(tool_identifier=tool_id_or_identifier)
+    
     if not tool:
         raise HTTPException(status_code=404, detail="工具不存在")
     
-    # 获取相关文章
+    # 获取实际使用的ID（用于记录点击）
+    actual_tool_id = tool.get("id")
+    if actual_tool_id:
+        tool_id = actual_tool_id
+    
+    # 获取相关文章（优先使用 identifier，如果没有则使用工具名称）
     tool_name = tool.get("name", "")
-    related_articles, _ = DataLoader.get_articles_by_tool(tool_name, page=1, page_size=10)
+    tool_identifier = tool.get("identifier")
+    related_articles, total_articles = DataLoader.get_articles_by_tool(
+        tool_name=tool_name,
+        tool_id=tool_id,
+        tool_identifier=tool_identifier,
+        page=1,
+        page_size=10
+    )
     
     return {
         **tool,
-        "related_articles": related_articles
+        "related_articles": related_articles,
+        "related_articles_count": total_articles
     }
 
 
 @router.get("/news", response_model=PaginatedResponse)
 async def get_news(
-    category: Optional[str] = Query(None, description="文章分类，不传则获取所有文章"),
+    category: Optional[str] = Query(None, description="文章分类，不传则获取所有文章。支持的值：programming(编程资讯), ai_news(AI资讯)"),
     page: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(20, ge=1, le=100, description="每页数量"),
     search: Optional[str] = Query(None, description="搜索关键词"),
     sort_by: str = Query("archived_at", description="排序字段：archived_at(归档时间，默认), published_time, score(热度), created_at")
 ):
-    """获取资讯列表（不传category则获取所有文章）"""
+    """
+    获取资讯列表（不传category则获取所有文章）
+    
+    分类映射关系：
+    - category="programming" -> 文件: programming.json -> UI显示: "编程资讯"
+    - category="ai_news" -> 文件: ai_news.json -> UI显示: "AI资讯"
+    """
     try:
         articles, total = DataLoader.get_articles(
             category=category,
@@ -144,9 +178,14 @@ async def get_ai_news(
     search: Optional[str] = Query(None, description="搜索关键词"),
     sort_by: str = Query("archived_at", description="排序字段：archived_at(归档时间，默认), published_time, score(热度), created_at")
 ):
-    """获取AI资讯列表"""
+    """
+    获取AI资讯列表
+    
+    注意：此端点内部调用 get_news(category="ai_news")
+    - category="ai_news" -> 文件: ai_news.json -> UI显示: "AI资讯"
+    """
     return await get_news(
-        category="ai_coding",
+        category="ai_news",
         page=page,
         page_size=page_size,
         search=search,
@@ -370,11 +409,26 @@ async def verify_admin_code(code: str = Query(..., description="授权码")):
         return {"ok": False, "valid": False}
 
 
-@router.post("/tools/{tool_id}/click")
-async def record_tool_click(tool_id: int):
-    """记录工具点击，增加热度"""
+@router.post("/tools/{tool_id_or_identifier}/click")
+async def record_tool_click(tool_id_or_identifier: str):
+    """
+    记录工具点击，增加热度（支持通过ID或identifier查找）
+    
+    Args:
+        tool_id_or_identifier: 工具ID（数字）或identifier（字符串）
+    """
     try:
-        success = DataLoader.increment_tool_view_count(tool_id)
+        # 尝试按ID查找（如果是数字）
+        tool_id = None
+        tool_identifier = None
+        
+        try:
+            tool_id = int(tool_id_or_identifier)
+        except ValueError:
+            # 如果不是数字，则按identifier查找
+            tool_identifier = tool_id_or_identifier
+        
+        success = DataLoader.increment_tool_view_count(tool_id=tool_id, tool_identifier=tool_identifier)
         if success:
             return {"ok": True, "message": "点击已记录"}
         else:
@@ -435,7 +489,7 @@ async def submit_article(request: dict):
         
         # 创建候选文章
         source = "用户提交"
-        if category == "ai_coding":
+        if category == "ai_news":
             source = "用户提交-AI资讯"
         elif category == "programming":
             source = "用户提交-编程资讯"

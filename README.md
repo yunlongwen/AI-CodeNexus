@@ -87,16 +87,17 @@ data/
   config.json           # 页面和分类配置
   articles/             # 正式文章池
     programming.json   # 编程资讯
-    ai.json            # AI资讯
+    ai_news.json       # AI资讯
   tools/                # 正式工具池
     featured.json      # 热门工具
     {category}.json   # 各分类工具
-  ai_candidates.json    # 文章候选池
-  tool_candidates.json  # 工具候选池
+  articles/ai_candidates.json    # 文章候选池
+  articles/ai_articles.json      # 资讯推送列表
+  tools/tool_candidates.json  # 工具候选池
 docs/
-  features_complete.md  # 完整功能文档 ⭐
-  feature_plan.md       # 功能开发计划
-  deploy_python.md     # Python环境部署
+  deploy/               # 部署相关文档
+  feature/              # 功能描述文档
+  ADR/                  # 技术决策文档
 requirements.txt        # 依赖清单
 ```
 
@@ -140,8 +141,8 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 - **API文档**：`http://localhost:8000/docs`
 
 > 🌐 **在线体验**：访问 [https://aicoding.100kwhy.fun/](https://aicoding.100kwhy.fun/) 立即使用我们的平台  
-> 📖 **详细文档**：请查看 [完整功能文档](docs/features_complete.md)  
-> 🚀 **部署指南**：请参考 [Python环境部署](docs/deploy_python.md) 或 [Windows部署](docs/deploy_windows.md)
+> 📖 **详细文档**：请查看 [完整功能文档](docs/feature/features_complete.md)  
+> 🚀 **部署指南**：请参考 [Python环境部署](docs/deploy/deploy_python.md) 或 [Windows部署](docs/deploy/deploy_windows.md)
 
 ### 快速开始
 
@@ -219,13 +220,18 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 ## 📚 文档
 
-- **[完整功能文档](docs/features_complete.md)** ⭐ - 详细的功能说明和使用指南
-- [功能开发计划](docs/feature_plan.md) - 功能规划文档
-- [多资讯源使用指南](docs/multi_sources_guide.md) - 多资讯源配置
-- [测试指南](docs/test_sources.md) - 测试方法
-- [微信公众号发布指南](docs/wechat_mp_guide.md) - 公众号发布配置
-- [Python环境部署](docs/deploy_python.md) - 生产环境部署
-- [Windows部署](docs/deploy_windows.md) - Windows本地部署
+**功能文档** (docs/feature/):
+- **[完整功能文档](docs/feature/features_complete.md)** ⭐ - 详细的功能说明和使用指南
+- [功能开发计划](docs/feature/feature_plan.md) - 功能规划文档
+- [多资讯源使用指南](docs/feature/multi_sources_guide.md) - 多资讯源配置
+- [测试指南](docs/feature/test_sources.md) - 测试方法
+- [工具详情功能](docs/feature/tool_detail_feature.md) - 工具详情页功能说明
+
+**部署文档** (docs/deploy/):
+- [Python环境部署](docs/deploy/deploy_python.md) - 生产环境部署
+- [Windows部署](docs/deploy/deploy_windows.md) - Windows本地部署
+- [宝塔部署](docs/deploy/deploy_baota.md) - 宝塔面板部署
+- [微信公众号发布指南](docs/deploy/wechat_mp_guide.md) - 公众号发布配置
 
 ---
 

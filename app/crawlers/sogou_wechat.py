@@ -132,7 +132,7 @@ async def search_articles_by_keyword(
                                 CandidateArticle(
                                     title=title,
                                     url=real_url,
-                                    source=source,
+                                    source="100kwhy",  # 爬取的资讯统一使用"100kwhy"作为来源
                                     summary=summary,
                                     crawled_from=f"sogou_wechat:{keyword}",
                                 )

@@ -1,5 +1,5 @@
 """
-管理待审核的工具候选池（`data/tool_candidates.json`）
+管理待审核的工具候选池（`data/tools/tool_candidates.json`）
 """
 import json
 from dataclasses import dataclass, asdict
@@ -24,7 +24,7 @@ class CandidateTool:
 
 def _candidate_data_path() -> Path:
     """获取工具候选池数据文件的路径"""
-    return Path(__file__).resolve().parents[2] / "data" / "tool_candidates.json"
+    return Path(__file__).resolve().parents[2] / "data" / "tools" / "tool_candidates.json"
 
 
 def load_candidate_pool() -> List[CandidateTool]:

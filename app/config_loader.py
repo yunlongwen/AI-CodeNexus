@@ -148,6 +148,63 @@ def save_crawler_keywords(keywords: List[str]) -> bool:
         return False
 
 
+def _tool_keywords_path() -> Path:
+    return _project_root() / "config" / "tool_keywords.json"
+
+
+def load_tool_keywords() -> List[str]:
+    """加载工具关键字列表"""
+    path = _tool_keywords_path()
+    if not path.exists():
+        logger.warning(f"Tool keywords config not found at {path}.")
+        return []
+
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, list):
+            raise ValueError("tool keywords file must be a JSON array")
+
+        return [str(item).strip() for item in data if str(item).strip()]
+    except Exception as exc:  # noqa: BLE001
+        logger.error(f"Failed to load tool keywords: {exc}.")
+        return []
+
+
+def save_tool_keywords(keywords: List[str]) -> bool:
+    """保存工具关键字列表"""
+    path = _tool_keywords_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    clean_keywords = [str(item).strip() for item in keywords if str(item).strip()]
+    try:
+        with path.open("w", encoding="utf-8") as f:
+            json.dump(clean_keywords, f, ensure_ascii=False, indent=2)
+        logger.info(f"Saved {len(clean_keywords)} tool keywords.")
+        return True
+    except Exception as exc:  # noqa: BLE001
+        logger.error(f"Failed to save tool keywords: {exc}.")
+        return False
+
+
+def add_tool_keyword(tool_name: str) -> bool:
+    """添加工具名称到关键字配置（如果不存在）"""
+    keywords = load_tool_keywords()
+    tool_name = tool_name.strip()
+    
+    if not tool_name:
+        return False
+    
+    # 检查是否已存在
+    if tool_name in keywords:
+        logger.debug(f"Tool keyword '{tool_name}' already exists")
+        return True
+    
+    # 添加到列表
+    keywords.append(tool_name)
+    return save_tool_keywords(keywords)
+
+
 def save_digest_schedule(schedule: Dict[str, Any]) -> bool:
     path = _digest_schedule_path()
     path.parent.mkdir(parents=True, exist_ok=True)

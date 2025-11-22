@@ -1,1 +1,192 @@
-[]
+[
+  {
+    "name": "tabby",
+    "url": "https://www.tabbyml.com/",
+    "description": "免费开源的自托管AI编程助手",
+    "category": "plugin",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-01-07T00:00:00Z",
+    "is_featured": false,
+    "id": 1,
+    "identifier": "tabby"
+  },
+  {
+    "name": "supermaven",
+    "url": "https://supermaven.com/",
+    "description": "Supermaven通过100万个token的超大上下文窗口和极低的延迟，提升代码生成的精准性和速度，并结合上下文感知技术增强开发体验。",
+    "category": "plugin",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 2,
+    "identifier": "supermaven"
+  },
+  {
+    "name": "roo-code",
+    "url": "https://github.com/RooVetGit/Roo-Code",
+    "description": "Roo Code (prev. Roo Cline) gives you a whole dev team of AI agents in your code editor.",
+    "category": "plugin",
+    "tags": [
+      "open-source"
+    ],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-05-12T00:00:00Z",
+    "is_featured": false,
+    "id": 3,
+    "identifier": "roo-code"
+  },
+  {
+    "name": "lingma",
+    "url": "https://tongyi.aliyun.com/lingma",
+    "description": "阿里巴巴的 AI 编程工具，通义灵码",
+    "category": "plugin",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 4,
+    "identifier": "lingma"
+  },
+  {
+    "name": "junie",
+    "url": "https://www.jetbrains.com/zh-cn/junie/",
+    "description": "jetbrains 出品，您的智能编码智能体,不仅提高工作效率 – 一种新的编码方式",
+    "category": "plugin",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-06-21T00:00:00Z",
+    "is_featured": false,
+    "id": 5,
+    "identifier": "junie"
+  },
+  {
+    "name": "javaAI",
+    "url": "https://www.feisuanyz.com/home",
+    "description": "不仅仅是一个代码生成工具，引导式开发，辅助需求细化和功能设计精准生成完整工程源码",
+    "category": "plugin",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-03-01T00:00:00Z",
+    "is_featured": false,
+    "id": 6,
+    "identifier": "javaai"
+  },
+  {
+    "name": "Tabnine",
+    "url": "https://www.tabnine.com/",
+    "description": "Tabnine 的 AI 代码助手帮助您更快地交付更高质量的软件",
+    "category": "plugin",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-04T00:00:00Z",
+    "is_featured": false,
+    "id": 7,
+    "identifier": "tabnine"
+  },
+  {
+    "name": "GitHub-Copilot",
+    "url": "https://github.com/features/copilot",
+    "description": "AI 编程辅助插件",
+    "category": "plugin",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 8,
+    "identifier": "github-copilot"
+  },
+  {
+    "name": "Continue",
+    "url": "https://www.continue.dev/",
+    "description": "Continue 是一款开源免费的 AI 编程助手插件，支持 VS Code 和 JetBrains IDE，核心特点包括灵活配置多种 AI 模型（如 GPT-4、Claude 等）、本地化部署保障数据隐私，以及智能代码补全、自然语言交互和上下文感知编辑功能。其开源特性与高度可定制化（如自定义模型、上下文工具）显著区别于闭源工具如 GitHub Copilot 和 Cursor，尤其适合对安全性和扩展性要求高的开发者",
+    "category": "plugin",
+    "tags": [
+      "hot"
+    ],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 9,
+    "identifier": "continue"
+  },
+  {
+    "name": "Comate",
+    "url": "https://comate.baidu.com/zh",
+    "description": "百度的 AI 编程插件",
+    "category": "plugin",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 10,
+    "identifier": "comate"
+  },
+  {
+    "name": "Codium",
+    "url": "https://www.codium.ai/",
+    "description": "AI 辅助代码生成和优化",
+    "category": "plugin",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 1,
+    "created_at": "2024-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 11,
+    "identifier": "codium"
+  },
+  {
+    "name": "CodeBuddy",
+    "url": "https://copilot.tencent.com/",
+    "description": "腾讯云代码助手，兼容 Visual Studio Code、Visual Studio、JetBrains IDEs 等主流编程工具， 为你提供高效、流畅的智能编码体验",
+    "category": "plugin",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-06-21T00:00:00Z",
+    "is_featured": false,
+    "id": 12,
+    "identifier": "codebuddy"
+  },
+  {
+    "name": "Cline",
+    "url": "https://github.com/cline/cline",
+    "description": "Cline是一款开源的VS Code AI编程助手，通过多模型支持（如DeepSeek、Claude等）实现智能代码生成、错误修复及终端命令执行，其核心特点是灵活可控的AI协作：所有操作需用户确认确保安全，支持本地模型降低成本，并能通过无头浏览器等扩展功能处理复杂任务，区别于收费工具（如Cursor）的封闭性",
+    "category": "plugin",
+    "tags": [
+      "hot"
+    ],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 13,
+    "identifier": "cline"
+  },
+  {
+    "name": "Augment",
+    "url": "https://www.augmentcode.com/",
+    "description": "Augment 是一个 AI 驱动的开发辅助工具，能在 IDE 中为代码提供实时解释、上下文搜索、调试建议和架构可视化，帮助开发者更快理解和维护大型代码库。",
+    "category": "plugin",
+    "tags": [
+      "hot"
+    ],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2024-12-07T00:00:00Z",
+    "is_featured": false,
+    "id": 14,
+    "identifier": "augment"
+  }
+]

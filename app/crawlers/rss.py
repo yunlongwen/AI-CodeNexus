@@ -59,7 +59,7 @@ async def fetch_rss_articles(feed_url: str, max_items: int = 10) -> List[Dict[st
             articles.append({
                 "title": entry.title if hasattr(entry, 'title') else "无标题",
                 "url": entry.link if hasattr(entry, 'link') else "",
-                "source": feed.feed.title if hasattr(feed.feed, 'title') else urlparse(feed_url).netloc,
+                "source": "100kwhy",  # 爬取的资讯统一使用"100kwhy"作为来源
                 "summary": summary,
                 "published_time": published_time.isoformat() if published_time else None,
             })

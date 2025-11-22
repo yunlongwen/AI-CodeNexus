@@ -80,7 +80,7 @@ source venv/bin/activate
 /www/server/pyporject_evn/versions/3.13.7/bin/pip3.13 install -r requirements.txt
 ```
 
-#### 4.2 安装 Playwright（如果需要爬虫功能）
+#### 4.2 安装 Playwright（如果需要数据获取功能）
 
 ```bash
 /www/server/pyporject_evn/versions/3.13.7/bin/playwright install
