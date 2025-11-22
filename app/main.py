@@ -124,8 +124,12 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     app = FastAPI(
-        title="100kwhy WeChat MP Backend",
+        title="Daily Digest API",
+        description="每日新闻精选 - 自动抓取、筛选、推送系统",
+        version="2.0.0",
         lifespan=lifespan,
+        docs_url="/docs",
+        redoc_url="/redoc",
     )
 
     # 挂载静态资源目录，用于提供公众号二维码等图片

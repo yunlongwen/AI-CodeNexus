@@ -1,0 +1,73 @@
+# Daily Digest v2.0 新功能说明
+
+## ✅ 已完成功能
+
+### 1. 多资讯源支持
+- **RSS/Atom Feed**：支持批量添加 RSS 源，自动抓取当天文章
+- **GitHub Trending**：支持按编程语言抓取热门项目
+- **Hacker News**：支持抓取高分文章（可配置最低分数阈值）
+- **统一资讯源管理器**：`app/sources/article_sources.py` 统一管理所有资讯源
+
+### 2. 文章智能排序
+- **热度分计算**：综合考虑来源权重、时效性、标题长度、摘要等因素
+- **自动排序**：抓取的文章按热度分自动排序
+- **支持按热度/时效排序**：候选池支持多种排序方式
+
+### 3. 微信公众号渠道
+- **Access Token 管理**：自动获取和刷新 access_token
+- **素材上传**：支持上传图片等素材
+- **草稿创建**：支持创建图文草稿
+- **一键发布**：支持将草稿发布到公众号
+
+### 4. SQLite 持久化
+- **数据库模型**：Article、Candidate、Config、Statistic 表
+- **异步数据库操作**：使用 SQLAlchemy + aiosqlite
+- **数据迁移**：支持从 JSON 迁移到 SQLite（待实现迁移脚本）
+
+### 5. 测试和 CI/CD
+- **单元测试框架**：pytest + pytest-asyncio
+- **GitHub Actions**：自动化测试和 Lint 检查
+- **测试覆盖**：爬虫模块基础测试
+
+### 6. API 文档
+- **OpenAPI/Swagger**：FastAPI 自动生成 API 文档
+- **访问地址**：`/docs` (Swagger UI) 和 `/redoc` (ReDoc)
+
+## 🚧 待完善功能
+
+### 1. 多频道推送策略
+- [ ] 支持配置多个企业微信机器人
+- [ ] 每个渠道关联不同的关键词和推送时间
+- [ ] 渠道管理界面
+
+### 2. 管理面板增强
+- [ ] 文章批注功能（数据库已支持，需添加 UI）
+- [ ] 批量操作（一键采纳/忽略某个关键词下的所有文章）
+- [ ] 数据统计（抓取量、采纳率等）
+
+### 3. 数据迁移
+- [ ] JSON 到 SQLite 的迁移脚本
+- [ ] 向后兼容（支持 JSON 和 SQLite 双模式）
+
+## 📝 使用说明
+
+### 配置 RSS Feed
+在配置文件中添加 RSS Feed URL 列表，系统会自动抓取。
+
+### 配置 GitHub Trending
+在配置中指定要抓取的编程语言列表（如：python, javascript, go）。
+
+### 配置 Hacker News
+设置最低分数阈值，只抓取高分文章。
+
+### 微信公众号发布
+配置 `WECHAT_MP_APPID` 和 `WECHAT_MP_SECRET` 环境变量，即可使用公众号发布功能。
+
+## 🔧 技术栈更新
+
+新增依赖：
+- `feedparser`：RSS/Atom Feed 解析
+- `sqlalchemy`：ORM 框架
+- `aiosqlite`：异步 SQLite 驱动
+- `pytest`：测试框架
+
