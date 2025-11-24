@@ -5,6 +5,7 @@ from typing import List, Dict, Optional, Tuple
 from datetime import datetime
 from loguru import logger
 import os
+from urllib.parse import urlparse, parse_qs
 
 # 数据目录路径（指向项目根目录的data文件夹）
 # app/services/data_loader.py -> app/services -> app -> 项目根目录 -> data
@@ -528,6 +529,58 @@ class DataLoader:
         return paginated_articles, total
     
     @staticmethod
+    def _normalize_url(url: str) -> str:
+        """
+        规范化URL，用于比较
+        对于微信文章URL，提取基础路径和关键参数进行比较
+        
+        Args:
+            url: 原始URL
+        
+        Returns:
+            规范化后的URL字符串（用于比较）
+        """
+        if not url or not url.strip():
+            return ""
+        
+        url = url.strip()
+        
+        try:
+            parsed = urlparse(url)
+            # 对于微信文章URL (mp.weixin.qq.com)，提取基础路径
+            if "mp.weixin.qq.com" in parsed.netloc:
+                # 微信文章URL格式: https://mp.weixin.qq.com/s?__biz=xxx&mid=xxx&idx=xxx&sn=xxx
+                # 或者: https://mp.weixin.qq.com/s?src=11&timestamp=xxx&ver=xxx&signature=xxx
+                # 提取关键参数进行比较
+                query_params = parse_qs(parsed.query)
+                # 优先使用 __biz, mid, idx, sn 这些稳定参数（这些是微信文章的稳定标识）
+                if "__biz" in query_params or "mid" in query_params:
+                    key_params = []
+                    for key in ["__biz", "mid", "idx", "sn"]:
+                        if key in query_params:
+                            key_params.append(f"{key}={query_params[key][0]}")
+                    if key_params:
+                        return f"{parsed.scheme}://{parsed.netloc}{parsed.path}?{'&'.join(sorted(key_params))}"
+                # 如果只有动态参数（src, timestamp, ver, signature），这些参数会变化
+                # 这种情况下，无法通过URL规范化来准确判断是否为同一篇文章
+                # 因为timestamp和signature每次抓取都可能不同
+                # 所以对于只有动态参数的URL，返回None表示无法规范化，只能进行精确匹配
+                if "src" in query_params and "signature" in query_params:
+                    # 对于只有动态参数的URL，返回None表示无法规范化
+                    # 这样在is_article_archived中只会进行精确匹配，不会进行规范化匹配
+                    return None
+                # 如果没有稳定参数，使用完整URL（去除可能的尾随空格）
+                return url
+            else:
+                # 对于其他URL，去除尾随斜杠和空格
+                normalized = url.rstrip('/').strip()
+                return normalized
+        except Exception as e:
+            logger.warning(f"URL规范化失败: {url}, 错误: {e}")
+            # 如果解析失败，返回去除空格后的原始URL
+            return url.strip()
+    
+    @staticmethod
     def is_article_archived(url: str) -> bool:
         """
         检查文章是否已归档
@@ -539,12 +592,42 @@ class DataLoader:
             是否已归档
         """
         try:
+            if not url or not url.strip():
+                return False
+            
+            url = url.strip()
+            
             # 遍历所有文章文件，检查URL是否存在
+            # 注意：只检查正式归档的文章文件，不包括候选池文件
             for article_file in ARTICLES_DIR.glob("*.json"):
+                # 排除候选池文件
+                if article_file.name in ["ai_candidates.json"]:
+                    continue
+                
                 articles = DataLoader._load_json_file(article_file)
                 for article in articles:
-                    if article.get("url", "").strip() == url.strip():
+                    article_url = article.get("url", "")
+                    if not article_url:
+                        continue
+                    
+                    article_url = article_url.strip()
+                    
+                    # 首先尝试精确匹配（最可靠）
+                    if article_url == url:
+                        logger.debug(f"文章已归档（精确匹配）: {url[:80]}...")
                         return True
+                    
+                    # 如果精确匹配失败，尝试规范化后比较
+                    # 注意：对于只有动态参数的微信URL，规范化可能返回None，此时跳过规范化匹配
+                    normalized_input_url = DataLoader._normalize_url(url)
+                    normalized_article_url = DataLoader._normalize_url(article_url)
+                    
+                    # 只有当两个URL都能成功规范化时，才进行规范化匹配
+                    if normalized_input_url is not None and normalized_article_url is not None:
+                        if normalized_article_url == normalized_input_url:
+                            logger.debug(f"文章已归档（规范化匹配）: {url[:80]}...")
+                            return True
+                    
             return False
         except Exception as e:
             logger.error(f"检查文章归档状态失败: {e}")

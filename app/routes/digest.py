@@ -158,19 +158,47 @@ async def trigger_digest(admin: None = Depends(_require_admin)):
     """
     手动触发一次企业微信推送，并返回本次发送的内容。
     """
-    digest = _build_digest()
-    content = build_wecom_digest_markdown(
-        date_str=digest["date"],
-        theme=digest["theme"],
-        items=digest["articles"],
-    )
-    if not digest["articles"]:
-        raise HTTPException(status_code=400, detail="文章池为空，请先添加或抓取文章。")
+    try:
+        logger.info("[手动推送] 开始执行手动推送任务")
+        schedule = load_digest_schedule()
+        articles = pick_daily_ai_articles(k=schedule.count)
+        
+        # 如果文章池为空，尝试从候选池提升
+        if not articles:
+            logger.info("[手动推送] 文章池为空，尝试从候选池提升文章...")
+            promoted = promote_candidates_to_articles(per_keyword=2)
+            if promoted:
+                logger.info(f"[手动推送] 从候选池提升了 {promoted} 篇文章")
+                articles = pick_daily_ai_articles(k=schedule.count)
+        
+        if not articles:
+            logger.warning("[手动推送] 文章池为空且无法从候选池提升文章")
+            raise HTTPException(status_code=400, detail="文章池为空，请先添加或抓取文章。")
 
-    logger.info("Manual trigger: sending digest to WeCom group...")
-    await send_markdown_to_wecom(content)
-    _clear_content_pools()
-    return {"ok": True, **digest}
+        digest = _build_digest()
+        content = build_wecom_digest_markdown(
+            date_str=digest["date"],
+            theme=digest["theme"],
+            items=digest["articles"],
+        )
+        
+        logger.info(f"[手动推送] 准备推送 {len(digest['articles'])} 篇文章")
+        logger.info("[手动推送] 正在发送到企业微信群...")
+        success = await send_markdown_to_wecom(content)
+        
+        if not success:
+            logger.error("[手动推送] 推送失败")
+            raise HTTPException(status_code=500, detail="推送失败，请检查企业微信配置和网络连接。")
+        
+        logger.info("[手动推送] 推送成功，正在清理文章池和候选池...")
+        _clear_content_pools()
+        logger.info("[手动推送] 手动推送任务执行成功")
+        return {"ok": True, **digest}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[手动推送] 手动推送任务执行失败: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"推送失败: {str(e)}")
 
 
 @router.get("/articles")

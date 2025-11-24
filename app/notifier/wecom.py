@@ -9,30 +9,39 @@ from ..config_loader import load_wecom_template
 WECOM_WEBHOOK = os.getenv("WECOM_WEBHOOK", "")
 
 
-async def send_markdown_to_wecom(content: str) -> None:
+async def send_markdown_to_wecom(content: str) -> bool:
     """
     Send a markdown message to Enterprise WeChat group via robot webhook.
 
     Docs (CN): https://developer.work.weixin.qq.com/document/path/91770
+    
+    Returns:
+        bool: 是否发送成功
     """
     if not WECOM_WEBHOOK:
         logger.warning("WECOM_WEBHOOK not set, skip sending message.")
-        return
+        return False
 
     payload = {"msgtype": "markdown", "markdown": {"content": content}}
 
-    async with httpx.AsyncClient(timeout=10) as client:
-        resp = await client.post(WECOM_WEBHOOK, json=payload)
-        try:
-            data = resp.json()
-        except Exception as exc:  # noqa: BLE001
-            logger.error(f"Failed to parse WeCom response: {exc}")
-            return
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(WECOM_WEBHOOK, json=payload)
+            try:
+                data = resp.json()
+            except Exception as exc:  # noqa: BLE001
+                logger.error(f"Failed to parse WeCom response: {exc}, response text: {resp.text[:200]}")
+                return False
 
-        if data.get("errcode") != 0:
-            logger.error(f"WeCom robot send failed: {data}")
-        else:
-            logger.info("WeCom robot message sent successfully.")
+            if data.get("errcode") != 0:
+                logger.error(f"WeCom robot send failed: {data}")
+                return False
+            else:
+                logger.info("WeCom robot message sent successfully.")
+                return True
+    except Exception as exc:  # noqa: BLE001
+        logger.error(f"Failed to send message to WeCom: {exc}")
+        return False
 
 
 def build_wecom_digest_markdown(

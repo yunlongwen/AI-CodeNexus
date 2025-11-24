@@ -28,46 +28,160 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from loguru import logger
 
-from .config_loader import load_digest_schedule
+from .config_loader import load_digest_schedule, load_crawler_keywords
 from .notifier.wecom import build_wecom_digest_markdown, send_markdown_to_wecom
 from .routes import wechat, digest
-from .sources.ai_articles import pick_daily_ai_articles, todays_theme, clear_articles
+from .sources.ai_articles import pick_daily_ai_articles, todays_theme, clear_articles, save_article_to_config, get_all_articles
 from .sources.ai_candidates import promote_candidates_to_articles, clear_candidate_pool
+from .crawlers.sogou_wechat import search_articles_by_keyword
+import random
 
 # 全局 scheduler 实例
 scheduler: Optional[AsyncIOScheduler] = None
 
 
+async def crawl_and_pick_articles_by_keywords() -> int:
+    """
+    按关键字抓取文章，每个关键字随机选一篇，直接放到文章列表。
+    
+    Returns:
+        成功添加到文章列表的文章数量
+    """
+    try:
+        # 1. 读取关键词
+        keywords = load_crawler_keywords()
+        if not keywords:
+            logger.warning("[自动抓取] 关键词列表为空，无法抓取文章")
+            return 0
+        
+        logger.info(f"[自动抓取] 开始按关键字抓取文章，关键词数量: {len(keywords)}")
+        
+        # 2. 获取所有已存在的 URL 用于去重
+        existing_urls = set()
+        main_pool_articles = get_all_articles()
+        for article in main_pool_articles:
+            if article.get("url"):
+                existing_urls.add(article["url"].strip())
+        
+        logger.info(f"[自动抓取] 已存在 {len(existing_urls)} 篇文章，用于去重")
+        
+        # 3. 遍历关键词并抓取，每个关键词随机选一篇
+        selected_articles = []
+        for keyword in keywords:
+            try:
+                logger.info(f"[自动抓取] 正在抓取关键词 '{keyword}' 的文章...")
+                found_candidates = await search_articles_by_keyword(keyword, pages=1)
+                
+                if not found_candidates:
+                    logger.warning(f"[自动抓取] 关键词 '{keyword}' 未找到文章")
+                    continue
+                
+                # 过滤掉已存在的URL
+                new_candidates = [
+                    c for c in found_candidates 
+                    if c.url.strip() not in existing_urls
+                ]
+                
+                if not new_candidates:
+                    logger.info(f"[自动抓取] 关键词 '{keyword}' 的文章都已存在，跳过")
+                    continue
+                
+                # 随机选择一篇
+                selected = random.choice(new_candidates)
+                selected_articles.append({
+                    "title": selected.title,
+                    "url": selected.url,
+                    "source": selected.source,
+                    "summary": selected.summary,
+                })
+                
+                # 添加到已存在URL集合，避免同一批次重复
+                existing_urls.add(selected.url.strip())
+                
+                logger.info(f"[自动抓取] 关键词 '{keyword}' 已选择文章: {selected.title[:50]}...")
+                
+            except Exception as e:
+                logger.error(f"[自动抓取] 抓取关键词 '{keyword}' 失败: {e}")
+                # 单个关键词失败不中断整个任务
+                continue
+        
+        if not selected_articles:
+            logger.warning("[自动抓取] 未找到新文章")
+            return 0
+        
+        # 4. 直接保存到文章列表
+        saved_count = 0
+        for article in selected_articles:
+            if save_article_to_config(article):
+                saved_count += 1
+        
+        logger.info(f"[自动抓取] 成功抓取并保存 {saved_count} 篇文章到文章列表")
+        return saved_count
+        
+    except Exception as e:
+        logger.error(f"[自动抓取] 抓取文章失败: {e}", exc_info=True)
+        return 0
+
+
 async def job_send_daily_ai_digest(digest_count: int) -> None:
     """Send AI coding articles digest to WeCom group."""
-    now = datetime.now()
-    articles = pick_daily_ai_articles(k=digest_count)
-    if not articles:
-        logger.info("Article pool is empty before scheduled push, promoting from candidates...")
-        promoted = promote_candidates_to_articles(per_keyword=2)
-        if promoted:
-            articles = pick_daily_ai_articles(k=digest_count)
-        else:
-            logger.warning("No candidates available to promote, skip sending.")
+    try:
+        now = datetime.now()
+        logger.info(f"[定时推送] 开始执行定时推送任务，时间: {now.strftime('%Y-%m-%d %H:%M:%S')}, 目标篇数: {digest_count}")
+        
+        articles = pick_daily_ai_articles(k=digest_count)
+        if not articles:
+            logger.info("[定时推送] 文章池为空，尝试从候选池提升文章...")
+            promoted = promote_candidates_to_articles(per_keyword=2)
+            if promoted:
+                logger.info(f"[定时推送] 从候选池提升了 {promoted} 篇文章")
+                articles = pick_daily_ai_articles(k=digest_count)
+        
+        # 如果文章池和候选池都为空，按关键字抓取文章
+        if not articles:
+            logger.info("[定时推送] 文章池和候选池都为空，开始按关键字自动抓取文章...")
+            crawled_count = await crawl_and_pick_articles_by_keywords()
+            if crawled_count > 0:
+                logger.info(f"[定时推送] 自动抓取成功，获得 {crawled_count} 篇文章")
+                articles = pick_daily_ai_articles(k=digest_count)
+            else:
+                logger.warning("[定时推送] 自动抓取失败或未找到新文章，跳过推送")
+                return
+
+        if not articles:
+            logger.warning("[定时推送] 文章池为空且无法获取文章，跳过推送")
             return
 
-    theme = todays_theme(now)
-    date_str = now.strftime("%Y-%m-%d")
-    items = [
-        {
-            "title": a.title,
-            "url": a.url,
-            "source": a.source,
-            "summary": a.summary,
-        }
-        for a in articles
-    ]
+        logger.info(f"[定时推送] 准备推送 {len(articles)} 篇文章")
+        theme = todays_theme(now)
+        date_str = now.strftime("%Y-%m-%d")
+        items = [
+            {
+                "title": a.title,
+                "url": a.url,
+                "source": a.source,
+                "summary": a.summary,
+            }
+            for a in articles
+        ]
 
-    content = build_wecom_digest_markdown(date_str=date_str, theme=theme, items=items)
-    logger.info("Sending daily AI digest to WeCom group...")
-    await send_markdown_to_wecom(content)
-    clear_articles()
-    clear_candidate_pool()
+        content = build_wecom_digest_markdown(date_str=date_str, theme=theme, items=items)
+        logger.info("[定时推送] 正在发送到企业微信群...")
+        success = await send_markdown_to_wecom(content)
+        if not success:
+            logger.error("[定时推送] 推送失败，但继续清理文章池和候选池")
+        else:
+            logger.info("[定时推送] 推送成功")
+        
+        logger.info("[定时推送] 正在清理文章池和候选池...")
+        clear_articles()
+        clear_candidate_pool()
+        if success:
+            logger.info("[定时推送] 定时推送任务执行成功")
+        else:
+            logger.warning("[定时推送] 定时推送任务完成，但推送失败")
+    except Exception as e:
+        logger.error(f"[定时推送] 定时推送任务执行失败: {e}", exc_info=True)
 
 
 @asynccontextmanager
@@ -95,7 +209,7 @@ async def lifespan(app: FastAPI):
             replace_existing=True,
         )
         logger.info(
-            "Scheduler started with cron=%r, count=%d.",
+            "[调度器] 已启动，使用 cron 表达式: %r, 每次推送 %d 篇文章",
             schedule.cron,
             digest_count,
         )
@@ -110,14 +224,15 @@ async def lifespan(app: FastAPI):
             replace_existing=True,
         )
         logger.info(
-            "Scheduler started. Daily digest will be sent at %02d:%02d (Asia/Shanghai), "
-            "with up to %d articles.",
+            "[调度器] 已启动，每日推送时间: %02d:%02d (Asia/Shanghai), "
+            "每次推送 %d 篇文章",
             digest_hour,
             digest_minute,
             digest_count,
         )
 
     scheduler.start()
+    logger.info("[调度器] 调度器已启动，等待触发定时任务...")
 
     yield  # 应用运行期间
 
