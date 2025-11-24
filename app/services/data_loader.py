@@ -23,10 +23,16 @@ class DataLoader:
         try:
             if file_path.exists():
                 with open(file_path, 'r', encoding='utf-8') as f:
-                    return json.load(f)
+                    data = json.load(f)
+                    if not isinstance(data, list):
+                        logger.warning(f"文件 {file_path} 不是列表格式，返回空列表")
+                        return []
+                    return data
+            else:
+                logger.debug(f"文件不存在: {file_path}")
             return []
         except Exception as e:
-            logger.error(f"加载文件失败 {file_path}: {e}")
+            logger.error(f"加载文件失败 {file_path}: {e}", exc_info=True)
             return []
     
     @staticmethod
@@ -67,50 +73,69 @@ class DataLoader:
         # 加载所有工具文件
         all_tools = []
         
-        # 如果只需要热门工具，只加载 featured.json
-        if featured is True:
-            featured_file = TOOLS_DIR / "featured.json"
-            featured_tools = DataLoader._load_json_file(featured_file)
-            all_tools.extend(featured_tools)
-        else:
-            # 加载热门工具
-            featured_file = TOOLS_DIR / "featured.json"
-            featured_tools = DataLoader._load_json_file(featured_file)
-            all_tools.extend(featured_tools)
-            
-            # 按分类加载工具（如果有分类文件）
-            if category:
-                category_file = TOOLS_DIR / f"{category}.json"
-                category_tools = DataLoader._load_json_file(category_file)
-                all_tools.extend(category_tools)
-            else:
-                # 加载所有分类文件
-                for category_file in TOOLS_DIR.glob("*.json"):
-                    if category_file.name != "featured.json":
-                        category_tools = DataLoader._load_json_file(category_file)
-                        all_tools.extend(category_tools)
+        logger.debug(f"TOOLS_DIR: {TOOLS_DIR}, exists: {TOOLS_DIR.exists()}")
         
-        # 去重（基于id），保留第一次出现的工具（featured.json 中的工具优先）
-        seen_ids = set()
-        unique_tools = []
-        for tool in all_tools:
-            tool_id = tool.get("id")
-            if tool_id and tool_id not in seen_ids:
-                seen_ids.add(tool_id)
-                unique_tools.append(tool)
+        # 加载热门工具（featured.json）
+        featured_file = TOOLS_DIR / "featured.json"
+        featured_tools = DataLoader._load_json_file(featured_file)
+        logger.debug(f"Loaded {len(featured_tools)} tools from featured.json")
+        all_tools.extend(featured_tools)
+        
+        # 按分类加载工具（如果有分类文件）
+        if category:
+            category_file = TOOLS_DIR / f"{category}.json"
+            category_tools = DataLoader._load_json_file(category_file)
+            logger.debug(f"Loaded {len(category_tools)} tools from {category}.json")
+            all_tools.extend(category_tools)
+        else:
+            # 加载所有分类文件
+            category_files = list(TOOLS_DIR.glob("*.json"))
+            logger.debug(f"Found {len(category_files)} JSON files in tools directory")
+            for category_file in category_files:
+                if category_file.name not in ["featured.json", "tool_candidates.json"]:
+                    category_tools = DataLoader._load_json_file(category_file)
+                    logger.debug(f"Loaded {len(category_tools)} tools from {category_file.name}")
+                    all_tools.extend(category_tools)
+        
+        logger.debug(f"Total tools loaded before deduplication: {len(all_tools)}")
+        
+        # 去重逻辑：
+        # 1. 对于热门工具（featured=True），不去重，显示所有工具按访问量排序
+        # 2. 对于其他情况，基于URL去重（更可靠，因为URL是唯一的）
+        if featured is True:
+            # 热门工具：不去重，显示所有工具
+            unique_tools = all_tools
+            logger.debug(f"热门工具模式，不去重，工具总数: {len(unique_tools)}")
+        else:
+            # 其他情况：基于URL去重（URL比ID更可靠，因为不同分类可能有相同ID）
+            seen_urls = set()
+            unique_tools = []
+            for tool in all_tools:
+                tool_url = tool.get("url", "").strip()
+                if tool_url and tool_url not in seen_urls:
+                    seen_urls.add(tool_url)
+                    unique_tools.append(tool)
+            logger.debug(f"去重后工具总数: {len(unique_tools)} (基于URL去重)")
         
         logger.debug(f"加载工具总数: {len(unique_tools)}, featured参数: {featured}")
         
         # 筛选
         filtered_tools = unique_tools
         
-        if featured is not None:
-            # 确保工具有 is_featured 字段，如果没有则默认为 False
+        # 注意：当 featured=True 时，表示要获取"热门工具"（按访问量排序），
+        # 而不是筛选 is_featured=true 的工具。热门工具的定义是按访问量排序的所有工具。
+        # 只有当 featured=False 时，才筛选 is_featured=false 的工具。
+        if featured is False:
+            # 筛选出非热门工具（is_featured=false 或不存在）
             filtered_tools = [
                 t for t in filtered_tools 
-                if t.get("is_featured", False) == featured
+                if not t.get("is_featured", False)
             ]
             logger.debug(f"筛选后工具数量 (featured={featured}): {len(filtered_tools)}")
+        elif featured is True:
+            # featured=True 表示热门工具，不进行 is_featured 筛选
+            # 热门工具的定义是按访问量排序的所有工具
+            logger.debug(f"热门工具模式，不进行 is_featured 筛选，工具数量: {len(filtered_tools)}")
         
         if category:
             filtered_tools = [t for t in filtered_tools if t.get("category") == category]

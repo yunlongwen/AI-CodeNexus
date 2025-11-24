@@ -20,7 +20,7 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
-python -m playwright install
+playwright install
 ```
 
 > 如果 PowerShell 报 `运行脚本已被禁用`，临时执行 `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`，然后再 `Activate.ps1`。

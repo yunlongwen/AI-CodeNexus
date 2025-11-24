@@ -81,9 +81,11 @@ async def get_featured_tools(
 ):
     """获取热门工具列表（按点击量排序）"""
     return await get_tools(
+        category=None,  # 热门工具不限制分类
         featured=True,
         page=page,
         page_size=page_size,
+        search=None,  # 热门工具不搜索
         sort_by=sort_by  # 按点击量排序
     )
 

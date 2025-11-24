@@ -41,6 +41,7 @@ env.sh
 # Logs
 *.log
 .genlines
+debug/
 
 # OS
 .DS_Store

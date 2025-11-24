@@ -1731,12 +1731,47 @@ def create_app() -> FastAPI:
                     <p class="text-base text-gray-400 tech-font">${description}</p>
                   </div>
                   
-                  <div class="glass rounded-xl border border-dark-border p-8 max-w-md mx-auto text-center">
-                    <div class="mb-6">
-                      <img src="/static/wechat_mp_qr.jpg" alt="微信公众号二维码" class="w-64 h-64 mx-auto rounded-lg border border-dark-border" onerror="this.style.display='none'">
+                  <div class="flex flex-col items-center gap-6">
+                    <div class="glass rounded-xl border border-dark-border p-8 w-full max-w-md text-center">
+                      <div class="mb-6">
+                        <img src="/static/wechat_mp_qr.jpg" alt="微信公众号二维码" class="w-64 h-64 mx-auto rounded-lg border border-dark-border" onerror="this.style.display='none'">
+                      </div>
+                      <p class="text-gray-300 mb-4">扫描二维码关注我们的微信公众号</p>
+                      <p class="text-sm text-gray-400">获取最新的编程资讯、AI动态和开发工具推荐</p>
                     </div>
-                    <p class="text-gray-300 mb-4">扫描二维码关注我们的微信公众号</p>
-                    <p class="text-sm text-gray-400">获取最新的编程资讯、AI动态和开发工具推荐</p>
+                    
+                    <div class="glass rounded-xl border border-dark-border p-8 w-full max-w-2xl">
+                      <div class="flex items-center justify-center mb-4">
+                        <svg class="w-8 h-8 mr-3 text-gray-300" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path>
+                        </svg>
+                        <h2 class="text-2xl tech-font-bold text-neon-purple text-glow">开源项目</h2>
+                      </div>
+                      <p class="text-gray-300 mb-4 text-center">这个平台是开源的！欢迎访问我们的 GitHub 仓库</p>
+                      <div class="bg-dark-secondary rounded-lg p-4 mb-4 border border-dark-border">
+                        <div class="text-center">
+                          <a href="https://github.com/yunlongwen/AI-CodeNexus" target="_blank" rel="noopener noreferrer" class="text-neon-cyan hover:text-neon-green transition-colors text-lg font-medium inline-flex items-center justify-center">
+                            <svg class="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                              <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>yunlongwen/AI-CodeNexus</span>
+                            <svg class="w-4 h-4 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                            </svg>
+                          </a>
+                          <p class="text-sm text-gray-400 mt-1">编程资讯与工具聚合平台</p>
+                        </div>
+                      </div>
+                      <div class="text-center">
+                        <p class="text-gray-300 mb-3">⭐ 如果这个项目对你有帮助，欢迎给个 Star！</p>
+                        <a href="https://github.com/yunlongwen/AI-CodeNexus" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-neon-purple to-neon-cyan text-white rounded-lg font-medium hover:from-neon-cyan hover:to-neon-purple transition-all transform hover:scale-105 shadow-lg shadow-neon-purple/50">
+                          <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.29-1.552 3.297-1.23 3.297-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path>
+                          </svg>
+                          前往 GitHub 点 Star
+                        </a>
+                      </div>
+                    </div>
                   </div>
                 `;
               }
@@ -1881,17 +1916,50 @@ def create_app() -> FastAPI:
           
           <!-- 浮动按钮 -->
           <div class="fixed bottom-8 right-8 flex flex-col gap-3" style="z-index: 100;">
-            <button class="w-14 h-14 bg-gradient-to-br from-neon-cyan to-neon-blue text-dark-bg rounded-full shadow-lg hover:from-neon-blue hover:to-neon-cyan transition-all flex items-center justify-center neon-glow hover-glow">
+            <!-- 反馈/联系按钮 -->
+            <button id="feedback-btn" class="w-14 h-14 bg-gradient-to-br from-neon-cyan to-neon-blue text-dark-bg rounded-full shadow-lg hover:from-neon-blue hover:to-neon-cyan transition-all flex items-center justify-center neon-glow hover-glow" title="反馈/联系">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
             </button>
-            <button class="w-14 h-14 glass border border-dark-border text-neon-cyan rounded-full shadow-lg hover:bg-dark-card transition-all flex items-center justify-center hover:border-neon-cyan">
+            <!-- 回到顶部按钮 -->
+            <button id="scroll-top-btn" class="w-14 h-14 glass border border-dark-border text-neon-cyan rounded-full shadow-lg hover:bg-dark-card transition-all flex items-center justify-center hover:border-neon-cyan opacity-0 pointer-events-none" title="回到顶部">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
               </svg>
             </button>
           </div>
+          
+          <script>
+            // 反馈/联系按钮功能
+            document.getElementById('feedback-btn')?.addEventListener('click', function() {
+              // 跳转到提交资讯页面
+              window.location.href = '/submit';
+            });
+            
+            // 回到顶部按钮功能
+            const scrollTopBtn = document.getElementById('scroll-top-btn');
+            if (scrollTopBtn) {
+              // 监听滚动，显示/隐藏按钮
+              window.addEventListener('scroll', function() {
+                if (window.pageYOffset > 300) {
+                  scrollTopBtn.classList.remove('opacity-0', 'pointer-events-none');
+                  scrollTopBtn.classList.add('opacity-100');
+                } else {
+                  scrollTopBtn.classList.add('opacity-0', 'pointer-events-none');
+                  scrollTopBtn.classList.remove('opacity-100');
+                }
+              });
+              
+              // 点击回到顶部
+              scrollTopBtn.addEventListener('click', function() {
+                window.scrollTo({
+                  top: 0,
+                  behavior: 'smooth'
+                });
+              });
+            }
+          </script>
         </body>
         </html>
         """
