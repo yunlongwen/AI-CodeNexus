@@ -13,7 +13,7 @@
 ## 克隆项目 & 环境准备
 
 ```powershell
-cd D:\study\github
+cd xxx
 git clone https://github.com/yunlongwen/100kwhy_wechat_mp.git
 cd 100kwhy_wechat_mp
 python -m venv .venv

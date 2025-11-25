@@ -583,7 +583,12 @@ async def lifespan(app: FastAPI):
     # 验证任务是否已正确添加
     job = scheduler.get_job("daily_ai_digest")
     if job:
-        logger.info(f"[调度器] 推送任务已确认添加，下次执行时间: {job.next_run_time}")
+        # 调度器启动前，next_run_time 可能不可用
+        next_run = getattr(job, 'next_run_time', None)
+        if next_run:
+            logger.info(f"[调度器] 推送任务已确认添加，下次执行时间: {next_run}")
+        else:
+            logger.info("[调度器] 推送任务已确认添加（启动后显示执行时间）")
     else:
         logger.error("[调度器] 警告：推送任务添加失败，未找到任务！")
 
@@ -605,7 +610,12 @@ async def lifespan(app: FastAPI):
     all_jobs = scheduler.get_jobs()
     logger.info(f"[调度器] 当前共有 {len(all_jobs)} 个定时任务:")
     for job in all_jobs:
-        logger.info(f"[调度器]   - {job.id}: 下次执行时间 = {job.next_run_time}")
+        # 安全获取 next_run_time，可能在某些版本中属性名不同
+        next_run = getattr(job, 'next_run_time', None) or getattr(job, 'next_run', None)
+        if next_run:
+            logger.info(f"[调度器]   - {job.id}: 下次执行时间 = {next_run}")
+        else:
+            logger.info(f"[调度器]   - {job.id}: 已添加（执行时间待计算）")
     logger.info("[调度器] 调度器已启动，等待触发定时任务...")
 
     yield  # 应用运行期间
