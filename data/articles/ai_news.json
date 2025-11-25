@@ -36,5 +36,43 @@
     "archived_at": "2025-11-24T09:26:38.809205Z",
     "view_count": 2,
     "category": "ai_news"
+  },
+  {
+    "title": "Qwen-Code实战:多Agent AI数据分析师,全自动报告生成",
+    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1764032747&ver=6379&signature=LfuPg*tv1pc*emzkx1PlLtwFvUKsXDyRQVCkyXzt1ew7ixNJMeQImM7DzSieXDiMo0jjTAhVX*aQ4lqowOnpzckBudbPGkqD1Z*m*jmltVxVCy-jiAjKcTbmAJfjpcPY&new=1",
+    "source": "100kwhy",
+    "summary": "——基于Qwen-Code大模型构建的多Agent数据分析师.它能自动完成从数据提取、清洗、分析到可视化报告生成的全流程,让数据分...",
+    "tags": [
+      "qwen-code"
+    ],
+    "tool_tags": [
+      "qwen-code"
+    ],
+    "score": 8.0,
+    "id": 12,
+    "created_at": "2025-11-25T09:18:53.737419Z",
+    "published_time": "2025-11-25T09:18:53.737419Z",
+    "archived_at": "2025-11-25T09:18:53.737419Z",
+    "view_count": 0,
+    "category": "ai_news"
+  },
+  {
+    "title": "已接入Gemini 3 工具大汇总,可免费使用Gemini 3 pro.",
+    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1764032798&ver=6379&signature=TqVpjF622BVV5rgGogVHxlHPw-lmi*LnxtuGpRdsa03Jfi7EHsHhWUV0uy*pYp2QMgEhcexgMzSfAL0Ys7cDmYyMkSzdIX1sJvmvTrwsI9mdKN4lfzik*R0hub-fmfFO&new=1",
+    "source": "100kwhy",
+    "summary": "前几天给大家分享了谷歌antigravity的安装方式,发现很多小伙伴反馈使用遇到了困难.很正常,毕竟软件还在测试阶段,总是避免不...",
+    "tags": [
+      "youware"
+    ],
+    "tool_tags": [
+      "youware"
+    ],
+    "score": 8.0,
+    "id": 13,
+    "created_at": "2025-11-25T09:19:25.179793Z",
+    "published_time": "2025-11-25T09:19:25.179793Z",
+    "archived_at": "2025-11-25T09:19:25.179793Z",
+    "view_count": 0,
+    "category": "ai_news"
   }
 ]

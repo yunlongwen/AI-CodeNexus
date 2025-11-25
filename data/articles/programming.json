@@ -83,7 +83,7 @@
     "created_at": "2025-11-23T01:16:44.125674Z",
     "published_time": "2025-11-23T01:16:44.125674Z",
     "archived_at": "2025-11-23T01:16:44.125674Z",
-    "view_count": 4,
+    "view_count": 5,
     "category": "programming",
     "tags": [
       "Codex"
@@ -143,6 +143,26 @@
     "created_at": "2025-11-24T09:27:04.539335Z",
     "published_time": "2025-11-24T09:27:04.539335Z",
     "archived_at": "2025-11-24T09:27:04.539335Z",
+    "view_count": 3,
+    "category": "programming"
+  },
+  {
+    "title": "Cursor2.1 正式发布:Composer 1 模型可以免费使用!",
+    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1764032371&ver=6379&signature=ORM2INVXXxwadkQ7PDir5riAu*d0hyp7ngPV5UFhHBhoR33fPDFLuo*qafmbZfYP5dl95wxVprqNSksV9*u3Pu*d7jLEX6VE*HRcF8CH4PkKXCMh6xxu1Bl4UDPBi5x5&new=1",
+    "source": "100kwhy",
+    "summary": "AI Code Review(+ Bugbot 云端联动)即时反馈,本地-云端双保险��️ 代码检索grep 慢、正则难、上下文割裂 Instant Grep(即时全局...",
+    "tags": [
+      "CodeReviewBot",
+      "Cursor"
+    ],
+    "tool_tags": [
+      "Cursor"
+    ],
+    "score": 8.0,
+    "id": 11,
+    "created_at": "2025-11-25T09:17:34.412566Z",
+    "published_time": "2025-11-25T09:17:34.412566Z",
+    "archived_at": "2025-11-25T09:17:34.412566Z",
     "view_count": 3,
     "category": "programming"
   }
