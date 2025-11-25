@@ -871,6 +871,256 @@ def create_app() -> FastAPI:
             .top-nav-item.active {
               color: #00f0ff;
             }
+            
+            /* 移动端响应式样式 */
+            @media (max-width: 768px) {
+              /* 移动端隐藏顶部导航的所有链接 */
+              .top-nav-item {
+                display: none !important;
+              }
+              
+              /* 移动端隐藏主导航容器 */
+              nav.flex.items-center {
+                display: none !important;
+              }
+              
+              /* 移动端显示汉堡菜单按钮 */
+              .mobile-menu-btn {
+                display: block !important;
+                margin-right: 0.75rem;
+              }
+              
+              /* 移动端侧边栏默认隐藏，可以滑动显示 */
+              .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                width: 280px;
+                max-width: 80vw;
+                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+              }
+              
+              .sidebar.open {
+                transform: translateX(0);
+              }
+              
+              /* 移动端侧边栏内容区域 */
+              .sidebar .flex-1 {
+                padding: 1rem;
+              }
+              
+              /* 移动端导航项样式优化 */
+              .sidebar .nav-item {
+                padding: 0.875rem 1rem;
+                font-size: 0.9375rem;
+                margin-bottom: 0.25rem;
+              }
+              
+              /* 移动端主内容区域不需要左边距 - 使用更具体的选择器覆盖Tailwind类 */
+              main.main-content {
+                margin-left: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+              }
+              
+              main.main-content > div {
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+                padding-top: 1rem !important;
+                padding-bottom: 1rem !important;
+              }
+              
+              /* 移动端顶部导航栏调整 */
+              header {
+                padding: 0 1rem;
+                height: 70px !important;
+              }
+              
+              header .max-w-7xl {
+                padding-left: 1rem;
+                padding-right: 1rem;
+              }
+              
+              /* Logo区域调整 */
+              .logo-area {
+                flex: 1;
+                min-width: 0;
+              }
+              
+              .logo-area h1 {
+                font-size: 1.25rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+              }
+              
+              .logo-area p {
+                display: none !important;
+              }
+              
+              /* 遮罩层 */
+              .sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.6);
+                z-index: 15;
+                display: none;
+                backdrop-filter: blur(2px);
+              }
+              
+              .sidebar-overlay.show {
+                display: block;
+              }
+              
+              /* 移动端内容区域顶部间距调整 */
+              main.main-content {
+                margin-top: 70px !important;
+                padding-top: 0 !important;
+              }
+              
+              /* 确保侧边栏在移动端不占据布局空间 */
+              .sidebar {
+                position: fixed !important;
+              }
+              
+              /* 移动端主容器不需要为侧边栏留空间 */
+              .main-container {
+                margin-left: 0 !important;
+              }
+              
+              /* 确保主内容区域在移动端占满宽度 */
+              main.main-content {
+                left: 0 !important;
+                right: 0 !important;
+              }
+              
+              /* 移动端侧边栏顶部位置调整 */
+              .sidebar {
+                top: 70px !important;
+                height: calc(100vh - 70px) !important;
+              }
+            }
+            
+            /* 桌面端样式 */
+            @media (min-width: 769px) {
+              .mobile-menu-btn {
+                display: none !important;
+              }
+              
+              .sidebar {
+                transform: translateX(0) !important;
+              }
+              
+              .sidebar-overlay {
+                display: none !important;
+              }
+            }
+            
+            /* 汉堡菜单按钮样式 */
+            .mobile-menu-btn {
+              display: none;
+              background: transparent;
+              border: none;
+              color: #00f0ff;
+              font-size: 1.5rem;
+              cursor: pointer;
+              padding: 0.5rem;
+              transition: all 0.3s ease;
+              line-height: 1;
+            }
+            
+            .mobile-menu-btn:hover {
+              color: #a855f7;
+              transform: scale(1.1);
+            }
+            
+            .mobile-menu-btn:active {
+              transform: scale(0.95);
+            }
+            
+            /* 移动端关闭按钮样式 */
+            .mobile-close-btn {
+              background: transparent;
+              border: none;
+              cursor: pointer;
+              padding: 0.25rem 0.5rem;
+              transition: all 0.3s ease;
+              line-height: 1;
+            }
+            
+            .mobile-close-btn:hover {
+              transform: scale(1.1);
+            }
+            
+            .mobile-close-btn:active {
+              transform: scale(0.95);
+            }
+            
+            /* 移动端顶部导航菜单按钮 */
+            .mobile-top-nav-btn {
+              display: none;
+              background: transparent;
+              border: none;
+              color: #00f0ff;
+              font-size: 1.25rem;
+              cursor: pointer;
+              padding: 0.5rem;
+              transition: all 0.3s ease;
+              line-height: 1;
+            }
+            
+            .mobile-top-nav-btn:hover {
+              color: #a855f7;
+              transform: scale(1.1);
+            }
+            
+            /* 移动端顶部导航下拉菜单 */
+            .mobile-top-nav-menu {
+              position: fixed;
+              top: 70px;
+              left: 0;
+              right: 0;
+              background: rgba(17, 24, 39, 0.95);
+              backdrop-filter: blur(10px);
+              border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+              z-index: 19;
+              max-height: 0;
+              overflow: hidden;
+              transition: max-height 0.3s ease-in-out;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            }
+            
+            .mobile-top-nav-menu.open {
+              max-height: 500px;
+            }
+            
+            .mobile-top-nav-menu .mobile-nav-link {
+              display: block;
+              padding: 1rem 1.5rem;
+              color: #d1d5db;
+              text-decoration: none;
+              border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+              transition: all 0.3s ease;
+              font-size: 0.9375rem;
+            }
+            
+            .mobile-top-nav-menu .mobile-nav-link:hover {
+              background: rgba(0, 240, 255, 0.1);
+              color: #00f0ff;
+              padding-left: 2rem;
+            }
+            
+            .mobile-top-nav-menu .mobile-nav-link:active {
+              background: rgba(0, 240, 255, 0.15);
+            }
+            
+            @media (max-width: 768px) {
+              .mobile-top-nav-btn {
+                display: block !important;
+              }
+            }
           </style>
         </head>
         <body class="tech-bg text-gray-100" style="position: relative; z-index: 1;">
@@ -880,7 +1130,11 @@ def create_app() -> FastAPI:
               <div class="max-w-7xl mx-auto px-6 h-full">
                 <div class="flex items-center justify-between h-full w-full">
               <!-- Logo -->
-                  <div class="flex items-center flex-shrink-0">
+                  <div class="flex items-center flex-shrink-0 logo-area">
+                    <!-- 移动端汉堡菜单按钮 -->
+                    <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="打开菜单">
+                      ☰
+                    </button>
                     <h1 class="text-2xl tech-font-bold text-neon-cyan text-glow">AI-CodeNexus</h1>
                     <p class="text-sm text-gray-400 ml-4 hidden md:block tech-font">AI · 编程 · 工具聚合</p>
               </div>
@@ -912,14 +1166,40 @@ def create_app() -> FastAPI:
                   <a href="/digest/panel" id="admin-entry" class="top-nav-item px-5 py-3 text-base tech-font-nav text-gray-300 hover:text-neon-purple rounded-lg transition-all hidden whitespace-nowrap ml-2" style="display: none;">
                     🔐 管理员入口
                   </a>
+                  
+                  <!-- 移动端顶部导航菜单按钮 -->
+                  <button class="mobile-top-nav-btn" id="mobile-top-nav-btn" aria-label="打开导航菜单">
+                    ⋮
+                  </button>
               </div>
                 </div>
               </div>
             </header>
             
-            <div class="flex flex-1" style="margin-top: 80px;">
+            <!-- 移动端顶部导航下拉菜单 -->
+            <div class="mobile-top-nav-menu" id="mobile-top-nav-menu">
+              <a href="/news" class="mobile-nav-link">📰 编程资讯</a>
+              <a href="/ai-news" class="mobile-nav-link">🤖 AI资讯</a>
+              <a href="/hot-news" class="mobile-nav-link">🔥 热门资讯</a>
+              <a href="/recent" class="mobile-nav-link">⏰ 最新资讯</a>
+              <a href="/submit" class="mobile-nav-link">✍️ 提交资讯</a>
+              <a href="/wechat-mp" class="mobile-nav-link">📱 微信公众号</a>
+              <a href="/digest/panel" id="mobile-admin-entry" class="mobile-nav-link hidden" style="display: none;">🔐 管理员入口</a>
+            </div>
+            
+            <!-- 移动端遮罩层 -->
+            <div class="sidebar-overlay" id="sidebar-overlay"></div>
+            
+            <div class="flex flex-1 main-container" style="margin-top: 80px;">
               <!-- 左侧边栏 -->
-              <aside class="w-64 glass border-r border-dark-border flex flex-col fixed" style="top: 80px; height: calc(100vh - 80px); z-index: 10;">
+              <aside class="sidebar w-64 glass border-r border-dark-border flex flex-col fixed" style="top: 80px; height: calc(100vh - 80px); z-index: 16;">
+              
+              <!-- 移动端侧边栏关闭按钮 -->
+              <div class="md:hidden flex justify-end p-4 border-b border-dark-border">
+                <button class="mobile-close-btn text-gray-400 hover:text-neon-cyan text-2xl transition-colors" id="mobile-close-btn" aria-label="关闭菜单">
+                  ✕
+                </button>
+              </div>
               
               <!-- 工具分类 -->
                 <div class="flex-1 p-5 overflow-y-auto">
@@ -969,7 +1249,7 @@ def create_app() -> FastAPI:
             </aside>
             
             <!-- 主内容区域 -->
-              <main class="flex-1 ml-64 pt-20" style="position: relative; z-index: 1;">
+              <main class="main-content flex-1 ml-64 pt-20" style="position: relative; z-index: 1;">
               <div class="max-w-6xl mx-auto p-8">
                 <!-- 动态内容区域 -->
                 <div id="main-content">
@@ -2231,8 +2511,146 @@ def create_app() -> FastAPI:
                 }
               });
               
+              // 移动端顶部导航菜单控制
+              function initMobileTopNav() {
+                const topNavBtn = document.getElementById('mobile-top-nav-btn');
+                const topNavMenu = document.getElementById('mobile-top-nav-menu');
+                const adminEntry = document.getElementById('admin-entry');
+                const mobileAdminEntry = document.getElementById('mobile-admin-entry');
+                
+                if (!topNavBtn || !topNavMenu) return;
+                
+                // 同步管理员入口的显示状态
+                function syncAdminEntry() {
+                  if (adminEntry && mobileAdminEntry) {
+                    if (adminEntry.style.display !== 'none' && !adminEntry.classList.contains('hidden')) {
+                      mobileAdminEntry.style.display = 'block';
+                      mobileAdminEntry.classList.remove('hidden');
+                    } else {
+                      mobileAdminEntry.style.display = 'none';
+                      mobileAdminEntry.classList.add('hidden');
+                    }
+                  }
+                }
+                
+                // 打开/关闭顶部导航菜单
+                topNavBtn.addEventListener('click', function(e) {
+                  e.stopPropagation();
+                  topNavMenu.classList.toggle('open');
+                });
+                
+                // 点击菜单项后关闭菜单
+                const navLinks = topNavMenu.querySelectorAll('.mobile-nav-link');
+                navLinks.forEach(link => {
+                  link.addEventListener('click', function() {
+                    topNavMenu.classList.remove('open');
+                  });
+                });
+                
+                // 点击外部区域关闭菜单
+                document.addEventListener('click', function(e) {
+                  if (!topNavMenu.contains(e.target) && !topNavBtn.contains(e.target)) {
+                    topNavMenu.classList.remove('open');
+                  }
+                });
+                
+                // 窗口大小改变时关闭菜单
+                window.addEventListener('resize', function() {
+                  if (window.innerWidth > 768) {
+                    topNavMenu.classList.remove('open');
+                  }
+                });
+                
+                // 初始化时同步管理员入口
+                syncAdminEntry();
+                
+                // 监听管理员入口的变化（使用MutationObserver）
+                if (adminEntry) {
+                  const observer = new MutationObserver(syncAdminEntry);
+                  observer.observe(adminEntry, {
+                    attributes: true,
+                    attributeFilter: ['style', 'class']
+                  });
+                }
+              }
+              
+              // 移动端侧边栏菜单控制
+              function initMobileMenu() {
+                const menuBtn = document.getElementById('mobile-menu-btn');
+                const closeBtn = document.getElementById('mobile-close-btn');
+                const sidebar = document.querySelector('.sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+                
+                if (!menuBtn || !sidebar || !overlay) return;
+                
+                // 打开菜单
+                function openMenu() {
+                  sidebar.classList.add('open');
+                  overlay.classList.add('show');
+                  document.body.style.overflow = 'hidden'; // 防止背景滚动
+                }
+                
+                // 关闭菜单
+                function closeMenu() {
+                  sidebar.classList.remove('open');
+                  overlay.classList.remove('show');
+                  document.body.style.overflow = ''; // 恢复滚动
+                }
+                
+                // 点击汉堡菜单按钮
+                menuBtn.addEventListener('click', function(e) {
+                  e.stopPropagation();
+                  if (sidebar.classList.contains('open')) {
+                    closeMenu();
+                  } else {
+                    openMenu();
+                  }
+                });
+                
+                // 点击关闭按钮
+                if (closeBtn) {
+                  closeBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    closeMenu();
+                  });
+                }
+                
+                // 点击遮罩层关闭菜单
+                overlay.addEventListener('click', closeMenu);
+                
+                // 点击侧边栏内的链接后关闭菜单（移动端）
+                const sidebarLinks = sidebar.querySelectorAll('a');
+                sidebarLinks.forEach(link => {
+                  link.addEventListener('click', function() {
+                    if (window.innerWidth <= 768) {
+                      closeMenu();
+                    }
+                  });
+                });
+                
+                // 窗口大小改变时，如果是桌面端则关闭菜单
+                window.addEventListener('resize', function() {
+                  if (window.innerWidth > 768) {
+                    closeMenu();
+                  }
+                });
+                
+                // ESC键关闭菜单
+                document.addEventListener('keydown', function(e) {
+                  if (e.key === 'Escape' && sidebar.classList.contains('open')) {
+                    closeMenu();
+                  }
+                });
+              }
+              
               // 初始化
               document.addEventListener('DOMContentLoaded', async function() {
+                // 初始化移动端顶部导航菜单
+                initMobileTopNav();
+                
+                // 初始化移动端侧边栏菜单
+                initMobileMenu();
+                
                 // 先加载配置文件
                 await loadConfig();
                 
