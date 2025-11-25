@@ -4035,11 +4035,6 @@ async def digest_panel():
         // 确保 DOM 加载完成后再执行
         if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', function() {
-            // 初始化加载所有数据
-            loadCandidateList();
-            loadToolCandidateList();
-            loadArticleList();
-            loadPreview();
             console.log('[DEBUG] DOM 加载完成，开始初始化面板');
             initializePanel();
           });

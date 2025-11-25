@@ -2,6 +2,13 @@ import asyncio
 import os
 import sys
 import subprocess
+from pathlib import Path
+
+# Windows 和 Linux 的文件锁
+if sys.platform == "win32":
+    import msvcrt
+else:
+    import fcntl
 
 # On Windows, the default asyncio event loop (ProactorEventLoop) does not support
 # subprocesses, which Playwright needs to launch browsers.
@@ -108,8 +115,87 @@ import random
 # 全局 scheduler 实例
 scheduler: Optional[AsyncIOScheduler] = None
 
-# 任务执行锁，防止并发执行
+# 任务执行锁，防止并发执行（进程内）
 _digest_job_lock = asyncio.Lock()
+
+# 文件锁路径，用于跨进程锁
+_lock_file_path: Optional[Path] = None
+
+
+def _get_lock_file_path() -> Path:
+    """获取文件锁路径"""
+    global _lock_file_path
+    if _lock_file_path is None:
+        project_root = Path(__file__).resolve().parent.parent
+        lock_dir = project_root / "data" / ".locks"
+        lock_dir.mkdir(parents=True, exist_ok=True)
+        _lock_file_path = lock_dir / "digest_job.lock"
+    return _lock_file_path
+
+
+# 全局变量保存文件描述符，用于释放锁
+_lock_fd: Optional[int] = None
+
+
+def _acquire_file_lock(timeout: float = 0.1) -> bool:
+    """
+    尝试获取文件锁（跨进程锁）
+    返回 True 如果成功获取锁，False 如果锁已被其他进程占用
+    """
+    global _lock_fd
+    lock_file = _get_lock_file_path()
+    try:
+        # 尝试以独占模式打开文件
+        if sys.platform == "win32":
+            # Windows 使用 msvcrt
+            _lock_fd = os.open(str(lock_file), os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
+            try:
+                msvcrt.locking(_lock_fd, msvcrt.LK_NBLCK, 1)  # 非阻塞锁定
+                return True
+            except IOError:
+                os.close(_lock_fd)
+                _lock_fd = None
+                return False
+        else:
+            # Linux/Mac 使用 fcntl
+            _lock_fd = os.open(str(lock_file), os.O_CREAT | os.O_WRONLY | os.O_TRUNC)
+            try:
+                fcntl.flock(_lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                return True
+            except IOError:
+                os.close(_lock_fd)
+                _lock_fd = None
+                return False
+    except Exception as e:
+        logger.warning(f"[定时推送] 获取文件锁失败: {e}")
+        if _lock_fd is not None:
+            try:
+                os.close(_lock_fd)
+            except Exception:
+                pass
+            _lock_fd = None
+        return False
+
+
+def _release_file_lock():
+    """释放文件锁"""
+    global _lock_fd
+    try:
+        if _lock_fd is not None:
+            if sys.platform == "win32":
+                msvcrt.locking(_lock_fd, msvcrt.LK_UNLCK, 1)
+            else:
+                fcntl.flock(_lock_fd, fcntl.LOCK_UN)
+            os.close(_lock_fd)
+            _lock_fd = None
+        
+        # 删除锁文件
+        lock_file = _get_lock_file_path()
+        if lock_file.exists():
+            lock_file.unlink()
+    except Exception as e:
+        logger.warning(f"[定时推送] 释放文件锁失败: {e}")
+        _lock_fd = None
 
 
 async def crawl_and_pick_articles_by_keywords() -> int:
@@ -355,13 +441,19 @@ async def job_backup_data_to_github() -> None:
 
 async def job_send_daily_ai_digest(digest_count: int) -> None:
     """Send AI coding articles digest to WeCom group."""
-    # 使用锁防止并发执行
-    if _digest_job_lock.locked():
-        logger.warning("[定时推送] 检测到任务正在执行中，跳过本次执行以避免重复推送")
+    # 首先尝试获取文件锁（跨进程锁），防止多个进程同时执行
+    if not _acquire_file_lock():
+        logger.warning("[定时推送] 检测到其他进程正在执行推送任务，跳过本次执行以避免重复推送")
         return
     
-    async with _digest_job_lock:
-        try:
+    try:
+        # 使用进程内锁防止同一进程内的并发执行
+        if _digest_job_lock.locked():
+            logger.warning("[定时推送] 检测到任务正在执行中，跳过本次执行以避免重复推送")
+            _release_file_lock()
+            return
+        
+        async with _digest_job_lock:
             now = datetime.now()
             logger.info(f"[定时推送] 开始执行定时推送任务，时间: {now.strftime('%Y-%m-%d %H:%M:%S')}, 目标篇数: {digest_count}")
             
@@ -416,8 +508,11 @@ async def job_send_daily_ai_digest(digest_count: int) -> None:
                 logger.info("[定时推送] 定时推送任务执行成功")
             else:
                 logger.warning("[定时推送] 定时推送任务完成，但推送失败")
-        except Exception as e:
-            logger.error(f"[定时推送] 定时推送任务执行失败: {e}", exc_info=True)
+    except Exception as e:
+        logger.error(f"[定时推送] 定时推送任务执行失败: {e}", exc_info=True)
+    finally:
+        # 确保释放文件锁
+        _release_file_lock()
 
 
 @asynccontextmanager
