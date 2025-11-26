@@ -88,6 +88,11 @@ class AddArticleRequest(BaseModel):
 class DeleteArticleRequest(BaseModel):
     url: str
 
+class ArchiveArticleFromPoolRequest(BaseModel):
+    url: str
+    category: str
+    tool_tags: Optional[list[str]] = None
+
 class KeywordsConfigRequest(BaseModel):
     keywords: list[str]
 
@@ -205,13 +210,29 @@ async def trigger_digest(admin: None = Depends(_require_admin)):
 @router.get("/articles")
 async def list_all_articles(admin: None = Depends(_require_admin)):
     """
-    获取配置文件中所有文章列表。
+    获取配置文件中所有文章列表，并检查归档状态。
     
     Returns:
-        dict: 包含所有文章的列表
+        dict: 包含所有文章的列表，每个文章包含 is_archived 字段
     """
+    from ..services.data_loader import DataLoader
+    
     articles = get_all_articles()
-    return {"ok": True, "articles": articles}
+    
+    # 检查每篇文章的归档状态
+    articles_with_status = []
+    for article in articles:
+        article_dict = article if isinstance(article, dict) else {
+            "title": article.title if hasattr(article, 'title') else article.get("title", ""),
+            "url": article.url if hasattr(article, 'url') else article.get("url", ""),
+            "source": article.source if hasattr(article, 'source') else article.get("source", ""),
+            "summary": article.summary if hasattr(article, 'summary') else article.get("summary", ""),
+        }
+        # 检查归档状态
+        article_dict["is_archived"] = DataLoader.is_article_archived(article_dict.get("url", ""))
+        articles_with_status.append(article_dict)
+    
+    return {"ok": True, "articles": articles_with_status}
 
 
 @router.post("/add-article")
@@ -951,6 +972,71 @@ async def delete_article(request: DeleteArticleRequest, admin: None = Depends(_r
     except Exception as e:
         logger.error(f"删除文章失败: {e}")
         raise HTTPException(status_code=500, detail=f"删除文章失败: {str(e)}")
+
+
+@router.post("/archive-article")
+async def archive_article_from_pool(request: ArchiveArticleFromPoolRequest, admin: None = Depends(_require_admin)):
+    """
+    从文章池归档一篇文章到指定分类的JSON文件
+    
+    重要说明：
+    - 此接口用于从文章池（ai_articles.json）归档文章到资讯列表
+    - 支持归档到"AI资讯"（ai_news.json）或"编程资讯"（programming.json）
+    - 归档后文章仍保留在文章池中，可以继续用于推送
+    - 如果文章已归档，会返回错误
+    """
+    url = request.url.strip()
+    category = request.category.strip()
+    tool_tags = request.tool_tags or []
+    
+    if not url:
+        raise HTTPException(status_code=400, detail="URL不能为空")
+    
+    if not category:
+        raise HTTPException(status_code=400, detail="分类不能为空")
+    
+    # 验证分类是否有效
+    valid_categories = ["programming", "ai_news"]
+    if category not in valid_categories:
+        raise HTTPException(status_code=400, detail=f"无效的分类，支持的分类：{', '.join(valid_categories)}")
+    
+    # 检查文章是否已归档
+    from ..services.data_loader import DataLoader
+    if DataLoader.is_article_archived(url):
+        raise HTTPException(status_code=400, detail="文章已归档，无法重复归档")
+    
+    # 从文章池中查找文章
+    articles = get_all_articles()
+    article_to_archive = None
+    
+    for article in articles:
+        article_url = article.url if hasattr(article, 'url') else article.get("url", "")
+        if article_url.strip() == url:
+            # 转换为归档格式
+            article_to_archive = {
+                "title": article.title if hasattr(article, 'title') else article.get("title", ""),
+                "url": article_url,
+                "source": article.source if hasattr(article, 'source') else article.get("source", "100kwhy"),
+                "summary": article.summary if hasattr(article, 'summary') else article.get("summary", ""),
+                "tags": tool_tags,
+                "tool_tags": tool_tags,
+                "score": 8.0  # 默认评分
+            }
+            break
+    
+    if not article_to_archive:
+        raise HTTPException(status_code=404, detail="在文章池中未找到该文章")
+    
+    # 使用DataLoader归档文章
+    success = DataLoader.archive_article_to_category(article_to_archive, category, tool_tags)
+    
+    if not success:
+        raise HTTPException(status_code=500, detail="归档失败，请查看服务器日志")
+    
+    # 更新周报
+    update_weekly_digest()
+    
+    return {"ok": True, "message": f"文章已成功归档到 {category} 分类。文章仍保留在文章池中，可继续用于推送。"}
 
 
 @router.get("/config/keywords")
@@ -2538,10 +2624,12 @@ async def digest_panel():
         }
 
         let currentArchiveUrl = null;
+        let archiveSource = null; // 'candidate' 或 'article'
         let candidateArticlesMap = {}; // 存储候选文章信息，key为URL
 
-        function showArchiveModal(url) {
+        function showArchiveModal(url, source = 'candidate') {
             currentArchiveUrl = url;
+            archiveSource = source; // 记录归档来源
             const modal = document.getElementById("archive-modal");
             const statusEl = document.getElementById("archive-status");
             const categorySelect = document.getElementById("archive-category");
@@ -2559,11 +2647,15 @@ async def digest_panel():
                 categorySelect.value = "programming";
             }
             if (toolTagsInput) {
-                // 自动从候选文章信息中提取工具名称
-                const articleInfo = candidateArticlesMap[url];
-                if (articleInfo && articleInfo.crawled_from && articleInfo.crawled_from.startsWith("tool_keyword:")) {
-                    const toolName = articleInfo.crawled_from.replace("tool_keyword:", "").trim();
-                    toolTagsInput.value = toolName;
+                // 如果是候选池归档，自动从候选文章信息中提取工具名称
+                if (source === 'candidate') {
+                    const articleInfo = candidateArticlesMap[url];
+                    if (articleInfo && articleInfo.crawled_from && articleInfo.crawled_from.startsWith("tool_keyword:")) {
+                        const toolName = articleInfo.crawled_from.replace("tool_keyword:", "").trim();
+                        toolTagsInput.value = toolName;
+                    } else {
+                        toolTagsInput.value = "";
+                    }
                 } else {
                     toolTagsInput.value = "";
                 }
@@ -2577,6 +2669,7 @@ async def digest_panel():
                 modal.classList.remove("flex");
             }
             currentArchiveUrl = null;
+            archiveSource = null;
         }
 
         async function archiveCandidate(url, category, toolTags) {
@@ -2619,6 +2712,60 @@ async def digest_panel():
                         hideArchiveModal();
                         loadCandidateList();
                         loadPreview();
+                    }, 1500);
+                } else {
+                    archiveStatusEl.textContent = `❌ ${data.message || "归档失败"}`;
+                    archiveStatusEl.className = "text-sm text-red-600";
+                }
+            } catch (err) {
+                console.error(err);
+                archiveStatusEl.textContent = "❌ 请求失败，请查看浏览器控制台。";
+                archiveStatusEl.className = "text-sm text-red-600";
+            }
+        }
+        
+        // 从文章池归档文章
+        async function archiveArticleFromPool(url, category, toolTags) {
+            const archiveStatusEl = document.getElementById("archive-status");
+            
+            if (!archiveStatusEl) {
+                console.error("archive-status 元素未找到");
+                return;
+            }
+            
+            archiveStatusEl.textContent = "正在归档文章...";
+            archiveStatusEl.className = "text-sm text-blue-600";
+
+            try {
+                const adminCode = getAdminCode();
+                const res = await fetch("./archive-article", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Admin-Code": adminCode || "",
+                    },
+                    body: JSON.stringify({ 
+                        url: url, 
+                        category: category,
+                        tool_tags: toolTags || []
+                    })
+                });
+
+                if (res.status === 401 || res.status === 403) {
+                    handleAuthError(archiveStatusEl);
+                    hideArchiveModal();
+                    return;
+                }
+
+                const data = await res.json();
+                if (data.ok) {
+                    archiveStatusEl.textContent = `✅ ${data.message}`;
+                    archiveStatusEl.className = "text-sm text-green-600";
+                    
+                    // 延迟关闭对话框，让用户看到成功消息，然后重新加载文章列表更新状态
+                    setTimeout(() => {
+                        hideArchiveModal();
+                        loadArticleList(); // 重新加载文章列表，更新归档状态
                     }, 1500);
                 } else {
                     archiveStatusEl.textContent = `❌ ${data.message || "归档失败"}`;
@@ -2679,25 +2826,55 @@ async def digest_panel():
               const titleEscaped = (item.title || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
               const sourceEscaped = (item.source || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
               const summaryEscaped = (item.summary || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+              
+              // 检查归档状态
+              const isArchived = item.is_archived || false;
+              let tagsHtml = '';
+              if (isArchived) {
+                tagsHtml = '<span class="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full font-medium mr-2">已归档</span>';
+              }
+              
+              // 归档按钮
+              let archiveButtonHtml = '';
+              if (isArchived) {
+                archiveButtonHtml = '<button class="px-3 py-1 bg-gray-400 text-white text-xs rounded-lg cursor-not-allowed opacity-50" disabled>已归档</button>';
+              } else {
+                archiveButtonHtml = `<button class="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors archive-article-btn" data-url="${urlEscaped}">归档</button>`;
+              }
+              
               div.innerHTML = `
                 <div class="flex justify-between items-start mb-2">
                   <div class="flex-1">
-                    <div class="font-semibold text-gray-900 mb-1">
+                    <div class="font-semibold text-gray-900 mb-1 flex items-center gap-2">
                       ${idx + 1}. <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-700">${titleEscaped}</a>
+                      ${tagsHtml}
                     </div>
                   </div>
-                  <div class="ml-4">
+                  <div class="ml-4 flex gap-2">
+                    ${archiveButtonHtml}
                     <button class="px-3 py-1 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors" data-url="${urlEscaped}">删除</button>
                   </div>
                 </div>
                 <div class="text-xs text-gray-600 mb-1">来源：${sourceEscaped}</div>
                 <div class="text-sm text-gray-700">${summaryEscaped}</div>
               `;
+              
               // 绑定删除按钮事件
               const deleteBtn = div.querySelector("button.bg-red-600");
               deleteBtn.addEventListener("click", function() {
                 deleteArticle(item.url);
               });
+              
+              // 绑定归档按钮事件
+              if (!isArchived) {
+                const archiveBtn = div.querySelector("button.archive-article-btn");
+                if (archiveBtn) {
+                  archiveBtn.addEventListener("click", function() {
+                    showArchiveModal(item.url, 'article'); // 标记为从文章池归档
+                  });
+                }
+              }
+              
               listEl.appendChild(div);
             });
             console.log('[DEBUG] 文章列表加载完成，共', data.articles.length, '篇');
@@ -3007,7 +3184,13 @@ async def digest_panel():
                 // 解析工具标签（逗号分隔，去除空格）
                 toolTags = toolTagsInput.value.split(',').map(tag => tag.trim()).filter(tag => tag);
               }
-              archiveCandidate(currentArchiveUrl, category, toolTags);
+              
+              // 根据归档来源调用不同的函数
+              if (archiveSource === 'article') {
+                archiveArticleFromPool(currentArchiveUrl, category, toolTags);
+              } else {
+                archiveCandidate(currentArchiveUrl, category, toolTags);
+              }
             }
           });
         }
