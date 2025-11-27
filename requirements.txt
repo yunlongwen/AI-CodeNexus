@@ -11,4 +11,6 @@ playwright==1.48.0
 feedparser==6.0.11
 sqlalchemy==2.0.35
 aiosqlite==0.20.0
+markdown==3.6
+html2text==2025.4.15
 
