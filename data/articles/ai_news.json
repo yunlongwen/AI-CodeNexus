@@ -136,7 +136,7 @@
     "created_at": "2025-11-27T09:02:09.009093Z",
     "published_time": "2025-11-27T09:02:09.009093Z",
     "archived_at": "2025-11-27T09:02:09.009093Z",
-    "view_count": 5,
+    "view_count": 6,
     "category": "ai_news"
   },
   {
@@ -166,7 +166,7 @@
     "created_at": "2025-11-28T08:45:29.369931Z",
     "published_time": "2025-11-28T08:45:29.369931Z",
     "archived_at": "2025-11-28T08:45:29.369931Z",
-    "view_count": 0,
+    "view_count": 5,
     "category": "ai_news"
   },
   {
@@ -196,6 +196,21 @@
     "created_at": "2025-11-28T08:50:34.414356Z",
     "published_time": "2025-11-28T08:50:34.414356Z",
     "archived_at": "2025-11-28T08:50:34.414356Z",
+    "view_count": 0,
+    "category": "ai_news"
+  },
+  {
+    "title": "查资料、劝老板、写周报，给上班人准备的大模型评测",
+    "url": "https://mp.weixin.qq.com/s/qvXJh-L-nytSH3qr1csUow",
+    "source": "晚点团队",
+    "summary": "晚点测评 14 款大模型。",
+    "tags": [],
+    "tool_tags": [],
+    "score": 8.0,
+    "id": 28,
+    "created_at": "2025-11-28T12:52:22.387238Z",
+    "published_time": "2025-11-28T12:52:22.387238Z",
+    "archived_at": "2025-11-28T12:52:22.387238Z",
     "view_count": 0,
     "category": "ai_news"
   }
