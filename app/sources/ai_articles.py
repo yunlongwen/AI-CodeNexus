@@ -7,6 +7,9 @@ from typing import List, Optional
 
 from loguru import logger
 
+# 导入URL规范化函数
+from .article_crawler import normalize_weixin_url
+
 
 @dataclass
 class AiArticle:
@@ -123,9 +126,21 @@ def save_article_to_config(article: dict) -> bool:
     
     # 检查是否已存在相同URL的文章
     article_url = article.get("url", "").strip()
+    
+    # 规范化微信链接，移除临时参数（双重保险）
+    if article_url and "mp.weixin.qq.com" in article_url:
+        normalized_url = normalize_weixin_url(article_url)
+        if normalized_url != article_url:
+            logger.debug(f"保存前规范化微信链接: {article_url} -> {normalized_url}")
+            article_url = normalized_url
+    
     if article_url:
         for item in existing_articles:
-            if item.get("url", "").strip() == article_url:
+            existing_url = item.get("url", "").strip()
+            # 规范化已存在的URL进行比较
+            if "mp.weixin.qq.com" in existing_url:
+                existing_url = normalize_weixin_url(existing_url)
+            if existing_url == article_url:
                 logger.warning(f"文章已存在，URL: {article_url}")
                 return False
     

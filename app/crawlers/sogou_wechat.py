@@ -14,6 +14,7 @@ from loguru import logger
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
 
 from ..sources.ai_candidates import CandidateArticle
+from ..sources.article_crawler import normalize_weixin_url
 
 def _parse_time_string(time_str: str) -> datetime:
     """
@@ -128,10 +129,15 @@ async def search_articles_by_keyword(
                         await redirect_page.close()
 
                         if "mp.weixin.qq.com" in real_url:
+                            # 规范化微信链接，移除临时参数
+                            normalized_url = normalize_weixin_url(real_url)
+                            if normalized_url != real_url:
+                                logger.debug(f"规范化微信链接: {real_url[:60]}... -> {normalized_url[:60]}...")
+                            
                             candidates.append(
                                 CandidateArticle(
                                     title=title,
-                                    url=real_url,
+                                    url=normalized_url,  # 使用规范化后的URL
                                     source="100kwhy",  # 爬取的资讯统一使用"100kwhy"作为来源
                                     summary=summary,
                                     crawled_from=f"sogou_wechat:{keyword}",

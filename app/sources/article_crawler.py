@@ -4,7 +4,7 @@
 import re
 from html.parser import HTMLParser
 from typing import Optional
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs, urlencode
 
 import httpx
 from loguru import logger
@@ -55,6 +55,136 @@ class ArticleInfoParser(HTMLParser):
     def handle_endtag(self, tag):
         if tag == "title":
             self.in_title = False
+
+
+def normalize_weixin_url(url: str) -> str:
+    """
+    规范化微信公众号文章链接，移除临时参数，保留永久链接格式
+    
+    微信链接格式：
+    1. 路径格式（永久链接）：https://mp.weixin.qq.com/s/JRSjbfTduWAYl1ig2uGpUw
+    2. 查询参数格式（可能带临时参数）：https://mp.weixin.qq.com/s?src=11&timestamp=...&signature=...
+    3. 查询参数格式（稳定参数）：https://mp.weixin.qq.com/s?__biz=xxx&mid=xxx&idx=xxx&sn=xxx
+    
+    临时参数（会过期）：src, timestamp, ver, signature
+    稳定参数（不会过期）：__biz, mid, idx, sn
+    
+    Args:
+        url: 原始微信文章URL
+        
+    Returns:
+        规范化后的URL，移除临时参数
+    """
+    if not url or "mp.weixin.qq.com" not in url:
+        return url
+    
+    try:
+        parsed = urlparse(url)
+        
+        # 如果是路径格式（/s/xxx），直接返回路径部分，移除所有查询参数
+        # 路径格式：https://mp.weixin.qq.com/s/JRSjbfTduWAYl1ig2uGpUw
+        # 这是最稳定的格式，不需要查询参数
+        if parsed.path.startswith("/s/") and len(parsed.path) > 3:
+            # 移除所有查询参数，只保留路径部分
+            return f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+        
+        # 如果是查询参数格式
+        if parsed.path == "/s" or parsed.path == "/s/":
+            query_params = parse_qs(parsed.query, keep_blank_values=False)
+            
+            # 提取稳定参数（不会过期的参数）
+            stable_params = {}
+            stable_keys = ["__biz", "mid", "idx", "sn"]
+            for key in stable_keys:
+                if key in query_params:
+                    value = query_params[key][0] if query_params[key] else None
+                    if value:
+                        stable_params[key] = value
+            
+            # 如果有稳定参数，使用稳定参数构建URL
+            if stable_params:
+                normalized_query = urlencode(stable_params, doseq=False)
+                return f"{parsed.scheme}://{parsed.netloc}{parsed.path}?{normalized_query}"
+            
+            # 如果没有稳定参数，但有临时参数，尝试提取路径格式
+            # 微信的临时链接可能包含路径信息在某个参数中
+            # 对于这种情况，我们需要从HTML中提取，但这里先返回原始URL去掉临时参数
+            # 移除临时参数
+            temp_keys = ["src", "timestamp", "ver", "signature", "new"]
+            cleaned_params = {k: v[0] for k, v in query_params.items() 
+                            if k not in temp_keys and v}
+            
+            if cleaned_params:
+                cleaned_query = urlencode(cleaned_params, doseq=False)
+                return f"{parsed.scheme}://{parsed.netloc}{parsed.path}?{cleaned_query}"
+        
+        # 如果无法规范化，返回原始URL（去掉临时参数）
+        return url
+        
+    except Exception as e:
+        logger.warning(f"规范化微信链接失败: {url}, 错误: {e}")
+        return url
+
+
+def extract_weixin_permanent_url(html_content: str, original_url: str) -> Optional[str]:
+    """
+    从HTML内容中提取微信公众号的永久链接
+    
+    尝试从以下位置提取：
+    1. og:url meta标签
+    2. canonical link标签
+    3. 从HTML中查找路径格式的链接
+    
+    Args:
+        html_content: HTML内容
+        original_url: 原始URL
+        
+    Returns:
+        永久链接，如果找不到则返回None
+    """
+    if "mp.weixin.qq.com" not in original_url:
+        return None
+    
+    try:
+        # 1. 尝试从 og:url 提取
+        og_url_match = re.search(
+            r'<meta[^>]*property=["\']og:url["\'][^>]*content=["\']([^"\']+)["\']',
+            html_content,
+            re.IGNORECASE
+        )
+        if og_url_match:
+            og_url = og_url_match.group(1).strip()
+            if "mp.weixin.qq.com/s/" in og_url:
+                # 提取路径格式的链接
+                match = re.search(r'https?://mp\.weixin\.qq\.com/s/[A-Za-z0-9_-]+', og_url)
+                if match:
+                    return match.group(0)
+        
+        # 2. 尝试从 canonical link 提取
+        canonical_match = re.search(
+            r'<link[^>]*rel=["\']canonical["\'][^>]*href=["\']([^"\']+)["\']',
+            html_content,
+            re.IGNORECASE
+        )
+        if canonical_match:
+            canonical_url = canonical_match.group(1).strip()
+            if "mp.weixin.qq.com/s/" in canonical_url:
+                match = re.search(r'https?://mp\.weixin\.qq\.com/s/[A-Za-z0-9_-]+', canonical_url)
+                if match:
+                    return match.group(0)
+        
+        # 3. 从HTML中搜索路径格式的链接
+        path_match = re.search(
+            r'https?://mp\.weixin\.qq\.com/s/[A-Za-z0-9_-]+',
+            html_content
+        )
+        if path_match:
+            return path_match.group(0)
+            
+    except Exception as e:
+        logger.warning(f"从HTML提取永久链接失败: {e}")
+    
+    return None
 
 
 async def fetch_article_info(url: str) -> dict:
@@ -166,9 +296,23 @@ async def fetch_article_info(url: str) -> dict:
     if not summary:
         summary = "暂无摘要"
     
+    # 规范化微信链接，移除临时参数，保留永久链接格式
+    normalized_url = url
+    if "mp.weixin.qq.com" in url:
+        # 首先尝试从HTML中提取永久链接（路径格式）
+        permanent_url = extract_weixin_permanent_url(html_content, url)
+        if permanent_url:
+            normalized_url = permanent_url
+            logger.debug(f"从HTML提取到永久链接: {permanent_url}")
+        else:
+            # 如果无法提取永久链接，则规范化URL，移除临时参数
+            normalized_url = normalize_weixin_url(url)
+            if normalized_url != url:
+                logger.debug(f"规范化微信链接: {url} -> {normalized_url}")
+    
     result = {
         "title": title,
-        "url": url,
+        "url": normalized_url,  # 使用规范化后的URL
         "source": source or "未知来源",
         "summary": summary,
     }

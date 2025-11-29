@@ -9,6 +9,9 @@ from typing import Dict, List
 
 from loguru import logger
 
+# 导入URL规范化函数
+from .article_crawler import normalize_weixin_url
+
 
 @dataclass
 class CandidateArticle:
@@ -54,8 +57,26 @@ def save_candidate_pool(candidates: List[CandidateArticle]) -> bool:
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         
+        # 规范化所有候选文章的URL（双重保险）
+        normalized_candidates = []
+        for candidate in candidates:
+            normalized_url = candidate.url
+            if candidate.url and "mp.weixin.qq.com" in candidate.url:
+                normalized_url = normalize_weixin_url(candidate.url)
+                if normalized_url != candidate.url:
+                    logger.debug(f"候选池保存前规范化URL: {candidate.url[:60]}... -> {normalized_url[:60]}...")
+                    # 创建新的候选文章对象，使用规范化后的URL
+                    candidate = CandidateArticle(
+                        title=candidate.title,
+                        url=normalized_url,
+                        source=candidate.source,
+                        summary=candidate.summary,
+                        crawled_from=candidate.crawled_from,
+                    )
+            normalized_candidates.append(candidate)
+        
         # 转换为字典列表
-        candidates_dict = [asdict(c) for c in candidates]
+        candidates_dict = [asdict(c) for c in normalized_candidates]
         logger.debug(f"转换后的候选文章数据: {candidates_dict[:2] if len(candidates_dict) > 0 else '[]'}")  # 只记录前2条
         
         with path.open("w", encoding="utf-8") as f:
@@ -92,9 +113,24 @@ def add_candidates_to_pool(new_candidates: List[CandidateArticle], existing_urls
     
     added_count = 0
     for candidate in new_candidates:
-        if candidate.url not in existing_urls:
+        # 规范化URL用于去重比较
+        normalized_url = candidate.url
+        if candidate.url and "mp.weixin.qq.com" in candidate.url:
+            normalized_url = normalize_weixin_url(candidate.url)
+            # 如果URL被规范化了，更新候选文章的URL
+            if normalized_url != candidate.url:
+                candidate = CandidateArticle(
+                    title=candidate.title,
+                    url=normalized_url,
+                    source=candidate.source,
+                    summary=candidate.summary,
+                    crawled_from=candidate.crawled_from,
+                )
+        
+        # 使用规范化后的URL进行去重检查
+        if normalized_url not in existing_urls:
             current_candidates.append(candidate)
-            existing_urls.add(candidate.url)  # 避免在同一批次中重复添加
+            existing_urls.add(normalized_url)  # 使用规范化后的URL避免重复添加
             added_count += 1
     
     if added_count > 0:

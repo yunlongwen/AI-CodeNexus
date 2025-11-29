@@ -1,81 +1,5 @@
 [
   {
-    "title": "谷歌预览Code Wiki:你能信任AI来记录你的代码库吗?",
-    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1763946620&ver=6377&signature=6DpwhWtCHkyzzUARMobbsqyGZJKJj5jnthkmjW8tjRuPB66EWmw3GU34zhnVsa05oG6LwvcVBA57vzlyEOx4j8fenHPs4z6xoQELtzzk8tcjBrOtPGhR2YYti4OYYcx3&new=1",
-    "source": "100kwhy",
-    "summary": "Code Wiki 专注于为代码库中的代码生成文档,而不是针对代码的输出生成文档.例如,我们看了该服务为微软 ASP.NET Core Web ...",
-    "tags": [
-      "codewiki"
-    ],
-    "tool_tags": [
-      "codewiki"
-    ],
-    "score": 8.0,
-    "id": 6,
-    "created_at": "2025-11-24T09:25:18.845965Z",
-    "published_time": "2025-11-24T09:25:18.845965Z",
-    "archived_at": "2025-11-24T09:25:18.845965Z",
-    "view_count": 2,
-    "category": "ai_news"
-  },
-  {
-    "title": "PearAI: Your LLM Pair, Powered by an LLM",
-    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1763946535&ver=6377&signature=w4KrBbkBFJFMlBby1rUhifm1klf1JqOC4IURYqBsBBfTGuX1QDwn-lP7xsJEvUa1aOC-2T2Gl20uBXE*S33c40AsurvoMFbXm*dBvG5xK1*kXVbw3VEA0oebjBegmFAN&new=1",
-    "source": "100kwhy",
-    "summary": "pearai.exe)传统路径:看到一长串软件列表,靠人脑记忆和经验猜测用户习惯.新路径:将列表直接丢给AI,让它进行多维度专业分...",
-    "tags": [
-      "PearAI"
-    ],
-    "tool_tags": [
-      "PearAI"
-    ],
-    "score": 8.0,
-    "id": 8,
-    "created_at": "2025-11-24T09:26:38.809205Z",
-    "published_time": "2025-11-24T09:26:38.809205Z",
-    "archived_at": "2025-11-24T09:26:38.809205Z",
-    "view_count": 2,
-    "category": "ai_news"
-  },
-  {
-    "title": "Qwen-Code实战:多Agent AI数据分析师,全自动报告生成",
-    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1764032747&ver=6379&signature=LfuPg*tv1pc*emzkx1PlLtwFvUKsXDyRQVCkyXzt1ew7ixNJMeQImM7DzSieXDiMo0jjTAhVX*aQ4lqowOnpzckBudbPGkqD1Z*m*jmltVxVCy-jiAjKcTbmAJfjpcPY&new=1",
-    "source": "100kwhy",
-    "summary": "——基于Qwen-Code大模型构建的多Agent数据分析师.它能自动完成从数据提取、清洗、分析到可视化报告生成的全流程,让数据分...",
-    "tags": [
-      "qwen-code"
-    ],
-    "tool_tags": [
-      "qwen-code"
-    ],
-    "score": 8.0,
-    "id": 12,
-    "created_at": "2025-11-25T09:18:53.737419Z",
-    "published_time": "2025-11-25T09:18:53.737419Z",
-    "archived_at": "2025-11-25T09:18:53.737419Z",
-    "view_count": 5,
-    "category": "ai_news"
-  },
-  {
-    "title": "已接入Gemini 3 工具大汇总,可免费使用Gemini 3 pro.",
-    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1764032798&ver=6379&signature=TqVpjF622BVV5rgGogVHxlHPw-lmi*LnxtuGpRdsa03Jfi7EHsHhWUV0uy*pYp2QMgEhcexgMzSfAL0Ys7cDmYyMkSzdIX1sJvmvTrwsI9mdKN4lfzik*R0hub-fmfFO&new=1",
-    "source": "100kwhy",
-    "summary": "前几天给大家分享了谷歌antigravity的安装方式,发现很多小伙伴反馈使用遇到了困难.很正常,毕竟软件还在测试阶段,总是避免不...",
-    "tags": [
-      "youware"
-    ],
-    "tool_tags": [
-      "youware"
-    ],
-    "score": 8.0,
-    "id": 13,
-    "created_at": "2025-11-25T09:19:25.179793Z",
-    "published_time": "2025-11-25T09:19:25.179793Z",
-    "archived_at": "2025-11-25T09:19:25.179793Z",
-    "view_count": 2,
-    "category": "ai_news"
-  },
-  {
     "title": "提效 50%！AI 时代 ToB 产品设计 4 大步骤：用意图原型解决需求错位难题",
     "url": "https://mp.weixin.qq.com/s/DwM19g8e6e9WV4LzLIOC6g",
     "source": "AI 博客精选",
@@ -103,21 +27,6 @@
     "published_time": "2025-11-26T08:57:52.227663Z",
     "archived_at": "2025-11-26T08:57:52.227663Z",
     "view_count": 4,
-    "category": "ai_news"
-  },
-  {
-    "title": "Gemini 3 实测:一个产品经理,能多出多少「影分身」?",
-    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1764203355&ver=6383&signature=QWtBI78c2YCzUWqXJCwA4LlpZv0vjwEb8L*o6Mq8R1Hmw4Yckc*6V4weSfmYroR**k-c8ZA5aY6auGnjTez7ZCyBppnrXj6g3C4lM6vu01Y*5TupgjOMnYLEbe81XPkW&new=1",
-    "source": "100kwhy",
-    "summary": "大家好,我是阿钱.Gemini 3 正式发布,这一代主打三件事:更强推理、更稳多模态(图文音视频)、更聪明的 Agent 能力.跑分、...",
-    "tags": [],
-    "tool_tags": [],
-    "score": 8.0,
-    "id": 19,
-    "created_at": "2025-11-27T08:48:15.344921Z",
-    "published_time": "2025-11-27T08:48:15.344921Z",
-    "archived_at": "2025-11-27T08:48:15.344921Z",
-    "view_count": 1,
     "category": "ai_news"
   },
   {

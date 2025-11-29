@@ -236,7 +236,7 @@ def generate_weekly_markdown(year: int, week: int) -> str:
 - 编程资讯：{len(programming)} 篇
 
 ---
-本报告由 AI-CodeNexus 自动生成
+本报告由 [AI-CodeNexus](https://aicoding.100kwhy.fun) 自动生成
 """
     
     return markdown
