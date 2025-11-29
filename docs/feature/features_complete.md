@@ -313,7 +313,52 @@
 - `POST /digest/reject-candidate` - 忽略文章
 - `POST /digest/archive-candidate` - 归档文章（包含工具标签）
 
-### 3. 工具候选池管理
+### 3. 文章删除功能
+**功能描述**：管理员登录后，可以在前端页面的任何文章列表页面删除文章
+
+**访问方式**：
+- 管理员使用暗码登录后（`localStorage` 中保存 `admin_verified: 'true'`）
+- 每个文章卡片的右上角会显示红色的"删除"按钮
+- 按钮仅在管理员登录后显示，普通用户不可见
+
+**删除范围**：
+删除操作会从以下所有数据源中移除文章：
+1. **文章池**（`data/articles/ai_articles.json`）- 推送列表
+2. **归档分类文件**：
+   - `data/articles/ai_news.json` - AI资讯
+   - `data/articles/programming.json` - 编程资讯
+   - `data/articles/ai_coding.json` - AI编程资讯
+3. **周报文件**（`data/weekly/` 目录下的Markdown文件）
+   - 自动从当前周报中删除文章条目
+   - 删除后自动更新周报统计信息
+   - 重新编号剩余文章
+
+**功能特性**：
+- ✅ 支持在所有文章列表页面删除（分类列表、工具详情页相关文章、热门资讯、最新资讯等）
+- ✅ 删除前确认提示，防止误操作
+- ✅ 删除后自动刷新页面，显示最新数据
+- ✅ 详细的删除结果反馈（显示从哪些位置删除了文章）
+- ✅ 自动更新周报统计信息
+
+**操作流程**：
+1. 管理员使用暗码登录（在网页上"盲敲"授权码）
+2. 登录成功后，每个文章卡片的右上角显示"删除"按钮
+3. 点击删除按钮，系统弹出确认对话框
+4. 确认后，系统从所有相关数据源删除文章
+5. 删除成功后，页面自动刷新，显示最新数据
+
+**API接口**：
+- `POST /digest/delete-article` - 删除文章（需要管理员权限）
+  - 请求体：`{ "url": "文章URL" }`
+  - 响应：`{ "ok": true, "message": "删除结果详情", "details": {...} }`
+
+**技术实现**：
+- 前端：`app/main.py` 中的 `deleteArticle()` 函数
+- 后端：`app/routes/digest.py` 中的 `delete_article()` API
+- 数据服务：`app/services/data_loader.py` 中的 `delete_article_from_all_categories()` 方法
+- 周报服务：`app/services/weekly_digest.py` 中的 `delete_article_from_weekly()` 方法
+
+### 4. 工具候选池管理
 **功能描述**：管理用户提交的工具候选
 
 **操作功能**：

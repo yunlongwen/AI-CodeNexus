@@ -1495,8 +1495,15 @@ def create_app() -> FastAPI:
                       allTags.push(...article.tags.map(tag => ({ tag, isTool: false })));
                     }
                     
+                    const isAdminUser = isAdmin();
+                    const urlEscaped = article.url.replace(/'/g, "\\'").replace(/"/g, "&quot;");
                     html += `
-                      <article class="glass rounded-xl border border-dark-border p-6 card-hover">
+                      <article class="glass rounded-xl border border-dark-border p-6 card-hover relative">
+                        ${isAdminUser ? `
+                        <button onclick="deleteArticle('${urlEscaped}', '${category}')" class="absolute top-4 right-4 px-2 py-1 bg-red-600/80 hover:bg-red-600 text-white text-xs rounded transition-colors" title="删除文章">
+                          删除
+                        </button>
+                        ` : ''}
                         <h4 class="text-lg font-semibold text-gray-100 mb-2 hover:text-neon-cyan cursor-pointer transition-colors">
                           <a href="${article.url}" target="_blank" rel="noopener noreferrer" onclick="recordArticleClick('${article.url.replace(/'/g, "\\'")}')">${article.title}</a>
                         </h4>
@@ -1710,9 +1717,17 @@ def create_app() -> FastAPI:
                   relatedArticles.forEach(article => {
                     const date = new Date(article.published_time || article.created_at || article.archived_at).toLocaleDateString('zh-CN');
                     const categoryLabel = article.category === 'ai_news' ? 'AI资讯' : '编程资讯';
+                    const isAdminUser = isAdmin();
+                    const urlEscaped = article.url.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                    const categoryValue = article.category || '';
                     
                     html += `
-                      <article class="glass rounded-xl border border-dark-border p-6 card-hover">
+                      <article class="glass rounded-xl border border-dark-border p-6 card-hover relative">
+                        ${isAdminUser ? `
+                        <button onclick="deleteArticle('${urlEscaped}', '${categoryValue}')" class="absolute top-4 right-4 px-2 py-1 bg-red-600/80 hover:bg-red-600 text-white text-xs rounded transition-colors" title="删除文章">
+                          删除
+                        </button>
+                        ` : ''}
                         <div class="flex items-start gap-3 mb-2">
                           <span class="text-sm px-2 py-1 glass border border-neon-cyan/30 text-neon-cyan rounded">${categoryLabel}</span>
                           <span class="text-xs text-gray-400">${date}</span>
@@ -1784,9 +1799,17 @@ def create_app() -> FastAPI:
                   relatedArticles.forEach(article => {
                     const date = new Date(article.published_time || article.created_at || article.archived_at).toLocaleDateString('zh-CN');
                     const categoryLabel = article.category === 'ai_news' ? 'AI资讯' : '编程资讯';
+                    const isAdminUser = isAdmin();
+                    const urlEscaped = article.url.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                    const categoryValue = article.category || '';
                     
                     html += `
-                      <article class="glass rounded-xl border border-dark-border p-6 card-hover">
+                      <article class="glass rounded-xl border border-dark-border p-6 card-hover relative">
+                        ${isAdminUser ? `
+                        <button onclick="deleteArticle('${urlEscaped}', '${categoryValue}')" class="absolute top-4 right-4 px-2 py-1 bg-red-600/80 hover:bg-red-600 text-white text-xs rounded transition-colors" title="删除文章">
+                          删除
+                        </button>
+                        ` : ''}
                         <div class="flex items-start gap-3 mb-2">
                           <span class="text-sm px-2 py-1 glass border border-neon-cyan/30 text-neon-cyan rounded">${categoryLabel}</span>
                           <span class="text-xs text-gray-400">${date}</span>
@@ -1934,9 +1957,17 @@ def create_app() -> FastAPI:
                     data.items.forEach(article => {
                       const date = new Date(article.archived_at || article.published_time || article.created_at).toLocaleDateString('zh-CN');
                       const categoryLabel = article.category === 'ai_news' ? 'AI资讯' : '编程资讯';
+                      const isAdminUser = isAdmin();
+                      const urlEscaped = article.url.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                      const categoryValue = article.category || '';
                       
                       html += `
-                        <article class="glass rounded-xl border border-dark-border p-6 card-hover">
+                        <article class="glass rounded-xl border border-dark-border p-6 card-hover relative">
+                          ${isAdminUser ? `
+                          <button onclick="deleteArticle('${urlEscaped}', '${categoryValue}')" class="absolute top-4 right-4 px-2 py-1 bg-red-600/80 hover:bg-red-600 text-white text-xs rounded transition-colors" title="删除文章">
+                            删除
+                          </button>
+                          ` : ''}
                           <div class="flex items-start gap-3 mb-2">
                             <span class="text-sm px-2 py-1 glass border border-neon-cyan/30 text-neon-cyan rounded">${categoryLabel}</span>
                             <span class="text-xs text-gray-400">${date}</span>
@@ -2049,9 +2080,17 @@ def create_app() -> FastAPI:
                     const date = new Date(article.archived_at || article.published_time || article.created_at).toLocaleDateString('zh-CN');
                     const viewCount = article.view_count || 0;
                     const categoryLabel = article.category === 'ai_news' ? 'AI资讯' : '编程资讯';
+                    const isAdminUser = isAdmin();
+                    const urlEscaped = article.url.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                    const categoryValue = article.category || '';
                     
                     html += `
-                      <article class="glass rounded-xl border border-dark-border p-6 card-hover">
+                      <article class="glass rounded-xl border border-dark-border p-6 card-hover relative">
+                        ${isAdminUser ? `
+                        <button onclick="deleteArticle('${urlEscaped}', '${categoryValue}')" class="absolute top-4 right-4 px-2 py-1 bg-red-600/80 hover:bg-red-600 text-white text-xs rounded transition-colors" title="删除文章">
+                          删除
+                        </button>
+                        ` : ''}
                         <div class="flex items-start gap-3 mb-2">
                           <span class="text-sm px-2 py-1 glass border border-neon-cyan/30 text-neon-cyan rounded">${categoryLabel}</span>
                           <span class="text-xs text-gray-400">${date}</span>
@@ -2071,7 +2110,7 @@ def create_app() -> FastAPI:
                             `<span class="px-2 py-1 glass text-neon-cyan text-xs rounded border border-neon-cyan/30">${tag}</span>`
                           ).join('')}
                       </div>
-                    </article>
+                      </article>
                     `;
                   });
                 }
@@ -2444,6 +2483,58 @@ def create_app() -> FastAPI:
               let adminCodeInput = '';
               let adminCodeTimeout = null;
               const ADMIN_CODE_MAX_LENGTH = 50; // 最大长度限制
+              
+              // 检查是否为管理员
+              function isAdmin() {
+                return localStorage.getItem('admin_verified') === 'true';
+              }
+              
+              // 获取管理员授权码（从digest面板）
+              function getAdminCode() {
+                return localStorage.getItem('aicoding_admin_code') || '';
+              }
+              
+              // 删除文章函数
+              async function deleteArticle(url, category) {
+                if (!confirm('确定要删除这篇文章吗？删除后将从所有相关数据源（文章池、归档分类、周报）中移除。')) {
+                  return;
+                }
+                
+                try {
+                  const adminCode = getAdminCode();
+                  // 删除API路径是 /digest/delete-article（不使用API_BASE前缀）
+                  const response = await fetch('/digest/delete-article', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'X-Admin-Code': adminCode || ''
+                    },
+                    body: JSON.stringify({ url: url })
+                  });
+                  
+                  if (response.status === 401 || response.status === 403) {
+                    alert('删除失败：需要管理员权限');
+                    return;
+                  }
+                  
+                  const data = await response.json();
+                  if (data.ok) {
+                    alert(data.message || '文章已成功删除');
+                    // 重新加载当前页面
+                    if (category) {
+                      loadArticles(category, 1);
+                    } else {
+                      // 根据当前路由重新加载
+                      handleRoute();
+                    }
+                  } else {
+                    alert(data.message || '删除失败');
+                  }
+                } catch (error) {
+                  console.error('删除文章失败:', error);
+                  alert('删除失败，请查看浏览器控制台');
+                }
+              }
               
               async function checkAdminCode(input) {
                 if (input.length < 3) return; // 至少3个字符才开始验证

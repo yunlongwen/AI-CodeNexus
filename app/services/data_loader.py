@@ -485,6 +485,69 @@ class DataLoader:
             return False
     
     @staticmethod
+    def delete_article_from_all_categories(url: str) -> Dict[str, bool]:
+        """
+        从所有归档分类文件中删除指定URL的文章
+        
+        Args:
+            url: 要删除的文章URL
+            
+        Returns:
+            Dict[str, bool]: 每个分类文件的删除结果，例如 {"ai_news.json": True, "programming.json": False}
+        """
+        results = {}
+        url_to_delete = url.strip()
+        
+        # 所有归档分类文件（排除候选池和文章池）
+        category_files = ["ai_news.json", "programming.json", "ai_coding.json"]
+        
+        for category_file_name in category_files:
+            category_file = ARTICLES_DIR / category_file_name
+            if not category_file.exists():
+                results[category_file_name] = False
+                continue
+            
+            try:
+                articles = DataLoader._load_json_file(category_file)
+                original_count = len(articles)
+                
+                # 规范化URL用于比较
+                normalized_target_url = DataLoader._normalize_url(url_to_delete)
+                
+                # 删除匹配的文章
+                filtered_articles = []
+                for article in articles:
+                    article_url = article.get("url", "").strip()
+                    
+                    # 精确匹配
+                    if article_url == url_to_delete:
+                        continue  # 跳过，不添加到新列表
+                    
+                    # 规范化匹配
+                    if normalized_target_url:
+                        normalized_article_url = DataLoader._normalize_url(article_url)
+                        if normalized_article_url and normalized_article_url == normalized_target_url:
+                            continue  # 跳过，不添加到新列表
+                    
+                    # 保留不匹配的文章
+                    filtered_articles.append(article)
+                
+                # 如果删除了文章，保存文件
+                if len(filtered_articles) < original_count:
+                    success = DataLoader._save_json_file(category_file, filtered_articles)
+                    results[category_file_name] = success
+                    if success:
+                        logger.info(f"从 {category_file_name} 删除文章: {url_to_delete[:60]}...")
+                else:
+                    results[category_file_name] = False
+                    
+            except Exception as e:
+                logger.error(f"从 {category_file_name} 删除文章失败: {e}")
+                results[category_file_name] = False
+        
+        return results
+    
+    @staticmethod
     def get_articles_by_tool(tool_name: str = None, tool_id: int = None, tool_identifier: str = None, page: int = 1, page_size: int = 20) -> Tuple[List[Dict], int]:
         """
         根据工具名称、ID或标识符获取相关文章

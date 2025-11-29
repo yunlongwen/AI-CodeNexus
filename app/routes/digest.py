@@ -945,32 +945,80 @@ async def crawl_articles(admin: None = Depends(_require_admin)):
 @router.post("/delete-article")
 async def delete_article(request: DeleteArticleRequest, admin: None = Depends(_require_admin)):
     """
-    从配置文件中删除指定URL的文章。
+    从所有相关数据源删除指定URL的文章，包括：
+    - 文章池 (ai_articles.json)
+    - 归档分类文件 (ai_news.json, programming.json, ai_coding.json)
+    - 周报文件
+    删除后自动更新周报。
     
     Args:
         request: 包含文章URL的请求体
         
     Returns:
-        dict: 包含成功状态的响应
+        dict: 包含成功状态和删除详情的响应
     """
+    from ..services.data_loader import DataLoader
+    
     url = request.url.strip()
     if not url:
         raise HTTPException(status_code=400, detail="URL不能为空")
     
     try:
+        deletion_results = {
+            "from_pool": False,
+            "from_categories": {},
+            "from_weekly": False,
+        }
+        
+        # 1. 从文章池删除
         success = delete_article_from_config(url)
-        if not success:
+        deletion_results["from_pool"] = success
+        
+        # 2. 从所有归档分类文件中删除
+        category_results = DataLoader.delete_article_from_all_categories(url)
+        deletion_results["from_categories"] = category_results
+        
+        # 3. 从周报中删除
+        from ..services.weekly_digest import delete_article_from_weekly
+        weekly_success = delete_article_from_weekly(url)
+        deletion_results["from_weekly"] = weekly_success
+        
+        # 4. 更新周报（重新生成）
+        update_weekly_digest()
+        
+        # 检查是否有任何删除成功
+        any_success = (
+            success or 
+            any(category_results.values()) or 
+            weekly_success
+        )
+        
+        if not any_success:
             return {
                 "ok": False,
                 "message": "文章不存在或删除失败",
+                "details": deletion_results,
             }
+        
+        # 生成成功消息
+        messages = []
+        if success:
+            messages.append("文章池")
+        deleted_categories = [cat for cat, result in category_results.items() if result]
+        if deleted_categories:
+            messages.append(f"归档分类 ({', '.join(deleted_categories)})")
+        if weekly_success:
+            messages.append("周报")
+        
+        message = f"文章已成功删除（{', '.join(messages)}）"
         
         return {
             "ok": True,
-            "message": "文章已成功删除",
+            "message": message,
+            "details": deletion_results,
         }
     except Exception as e:
-        logger.error(f"删除文章失败: {e}")
+        logger.error(f"删除文章失败: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"删除文章失败: {str(e)}")
 
 
@@ -2852,18 +2900,22 @@ async def digest_panel():
                   </div>
                   <div class="ml-4 flex gap-2">
                     ${archiveButtonHtml}
-                    <button class="px-3 py-1 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors" data-url="${urlEscaped}">删除</button>
+                    <button class="px-3 py-1 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors delete-article-btn" data-url="${urlEscaped}">删除</button>
                   </div>
                 </div>
                 <div class="text-xs text-gray-600 mb-1">来源：${sourceEscaped}</div>
                 <div class="text-sm text-gray-700">${summaryEscaped}</div>
               `;
               
-              // 绑定删除按钮事件
-              const deleteBtn = div.querySelector("button.bg-red-600");
-              deleteBtn.addEventListener("click", function() {
-                deleteArticle(item.url);
-              });
+              // 绑定删除按钮事件（使用更具体的class选择器）
+              const deleteBtn = div.querySelector("button.delete-article-btn");
+              if (deleteBtn) {
+                deleteBtn.addEventListener("click", function() {
+                  deleteArticle(item.url);
+                });
+              } else {
+                console.error('[DEBUG] 删除按钮未找到，URL:', item.url);
+              }
               
               // 绑定归档按钮事件
               if (!isArchived) {

@@ -3,6 +3,7 @@
 当有资讯被采纳或归档时，自动更新本周的Markdown文件
 """
 import json
+import re
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
@@ -240,6 +241,138 @@ def generate_weekly_markdown(year: int, week: int) -> str:
 """
     
     return markdown
+
+
+def delete_article_from_weekly(url: str) -> bool:
+    """
+    从当前周报中删除指定URL的文章
+    
+    Args:
+        url: 要删除的文章URL
+        
+    Returns:
+        是否成功删除
+    """
+    try:
+        year, week = get_week_number()
+        filepath = get_weekly_filepath(year, week)
+        
+        if not filepath.exists():
+            logger.warning(f"周报文件不存在: {filepath}")
+            return False
+        
+        # 读取周报内容
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        lines = content.split('\n')
+        url_to_delete = url.strip()
+        
+        # 查找并删除包含该URL的行
+        new_lines = []
+        skip_until_number = False
+        i = 0
+        
+        while i < len(lines):
+            line = lines[i]
+            
+            # 检查是否包含要删除的URL
+            if url_to_delete in line:
+                # 找到包含URL的行，需要删除整个条目
+                # 向上查找条目开始（数字开头的行）
+                start_idx = i
+                for j in range(i - 1, -1, -1):
+                    if re.match(r'^\d+\.\s+', lines[j]):
+                        start_idx = j
+                        break
+                    # 如果遇到空行，停止
+                    if lines[j].strip() == '' and j < i - 1:
+                        break
+                
+                # 向下查找条目结束（下一个数字开头的行或空行后的数字行）
+                end_idx = i + 1
+                for j in range(i + 1, len(lines)):
+                    if re.match(r'^\d+\.\s+', lines[j]):
+                        end_idx = j
+                        break
+                    # 如果遇到空行后跟数字行，也停止
+                    if lines[j].strip() == '' and j + 1 < len(lines):
+                        if re.match(r'^\d+\.\s+', lines[j + 1]):
+                            end_idx = j + 1
+                            break
+                    # 如果遇到分隔符或统计信息，也停止
+                    if lines[j].strip().startswith('---') or lines[j].strip().startswith('统计信息'):
+                        end_idx = j
+                        break
+                
+                # 跳过要删除的条目
+                i = end_idx
+                continue
+            
+            new_lines.append(line)
+            i += 1
+        
+        # 重新编号剩余的条目
+        current_category = None
+        item_num = 0
+        final_lines = []
+        
+        for line in new_lines:
+            # 检测分类标题
+            if '## 🤖 AI资讯' in line or '## 💻 编程资讯' in line:
+                current_category = line
+                item_num = 0
+                final_lines.append(line)
+                continue
+            
+            # 如果是数字开头的条目，重新编号
+            match = re.match(r'^(\d+)\.\s+(.+)', line)
+            if match:
+                item_num += 1
+                final_lines.append(f"{item_num}. {match.group(2)}")
+            else:
+                final_lines.append(line)
+        
+        # 更新统计信息
+        content_new = '\n'.join(final_lines)
+        
+        # 统计实际剩余的文章数量
+        ai_section_match = re.search(r'## 🤖 AI资讯\n\n(.*?)(?=\n\n---|\n\n##)', content_new, re.DOTALL)
+        programming_section_match = re.search(r'## 💻 编程资讯\n\n(.*?)(?=\n\n---|\n\n统计)', content_new, re.DOTALL)
+        
+        ai_count = len(re.findall(r'^\d+\.\s+', ai_section_match.group(1) if ai_section_match else "", re.MULTILINE))
+        programming_count = len(re.findall(r'^\d+\.\s+', programming_section_match.group(1) if programming_section_match else "", re.MULTILINE))
+        total_count = ai_count + programming_count
+        
+        # 更新总数
+        content_new = re.sub(
+            r'本周共推荐\s+\d+\s+篇优质资讯',
+            f'本周共推荐 {total_count} 篇优质资讯',
+            content_new
+        )
+        
+        # 更新分类统计
+        content_new = re.sub(
+            r'-\s+AI资讯：\d+\s+篇',
+            f'- AI资讯：{ai_count} 篇',
+            content_new
+        )
+        content_new = re.sub(
+            r'-\s+编程资讯：\d+\s+篇',
+            f'- 编程资讯：{programming_count} 篇',
+            content_new
+        )
+        
+        # 保存更新后的周报
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(content_new)
+        
+        logger.info(f"从周报中删除文章: {url_to_delete[:60]}...")
+        return True
+        
+    except Exception as e:
+        logger.error(f"从周报删除文章失败: {e}", exc_info=True)
+        return False
 
 
 def update_weekly_digest() -> bool:
