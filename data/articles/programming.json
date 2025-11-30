@@ -11,7 +11,7 @@
     "created_at": "2025-11-26T09:36:28.179960Z",
     "published_time": "2025-11-26T09:36:28.179960Z",
     "archived_at": "2025-11-26T09:36:28.179960Z",
-    "view_count": 49,
+    "view_count": 52,
     "category": "programming"
   },
   {
@@ -26,7 +26,7 @@
     "created_at": "2025-11-27T09:02:23.541259Z",
     "published_time": "2025-11-27T09:02:23.541259Z",
     "archived_at": "2025-11-27T09:02:23.541259Z",
-    "view_count": 21,
+    "view_count": 23,
     "category": "programming"
   },
   {
@@ -64,7 +64,7 @@
     "created_at": "2025-11-28T08:49:44.480854Z",
     "published_time": "2025-11-28T08:49:44.480854Z",
     "archived_at": "2025-11-28T08:49:44.480854Z",
-    "view_count": 14,
+    "view_count": 16,
     "category": "programming"
   },
   {
@@ -98,7 +98,7 @@
     "created_at": "2025-11-29T07:39:21.976879Z",
     "published_time": "2025-11-29T07:39:21.976879Z",
     "archived_at": "2025-11-29T07:39:21.976879Z",
-    "view_count": 1,
+    "view_count": 4,
     "category": "programming"
   },
   {
@@ -113,7 +113,60 @@
     "created_at": "2025-11-29T07:43:38.954155Z",
     "published_time": "2025-11-29T07:43:38.954155Z",
     "archived_at": "2025-11-29T07:43:38.954155Z",
-    "view_count": 9,
+    "view_count": 11,
+    "category": "programming"
+  },
+  {
+    "title": "使用 Qoder 2 个月，我总结了一些经验",
+    "url": "https://mp.weixin.qq.com/s/jFQWPEq-VUgttHHidhyJoQ",
+    "source": "kiritomoe",
+    "summary": "Qoder 使用经验分享",
+    "tags": [
+      "Qoder"
+    ],
+    "tool_tags": [
+      "Qoder"
+    ],
+    "score": 8.0,
+    "id": 35,
+    "created_at": "2025-11-30T11:22:04.111183Z",
+    "published_time": "2025-11-30T11:22:04.111183Z",
+    "archived_at": "2025-11-30T11:22:04.111183Z",
+    "view_count": 2,
+    "category": "programming"
+  },
+  {
+    "title": "Gemini 3 Pro + V0 才是前端终局！别让 Claude 和 GPT 去干它们不擅长的“装修活”",
+    "url": "https://mp.weixin.qq.com/s/P-Zl_xvINzy1fWP4R77VzQ",
+    "source": "春秋1",
+    "summary": "本文基于我最近的高强度开发体验，拒绝参数罗列，只讲实战心法。为你深度解析一套“极致性价比”的模型搭配策略：手把手教你用 GPT-5.1 搞规划、Claude 4.5 也就是主力、Gemini 做“花瓶”，把每一分钱都花在刀刃上。",
+    "tags": [
+      "Gemini 3"
+    ],
+    "tool_tags": [
+      "Gemini 3"
+    ],
+    "score": 8.0,
+    "id": 36,
+    "created_at": "2025-11-30T11:22:38.762795Z",
+    "published_time": "2025-11-30T11:22:38.762795Z",
+    "archived_at": "2025-11-30T11:22:38.762795Z",
+    "view_count": 1,
+    "category": "programming"
+  },
+  {
+    "title": "在团队里如何使用AI编程?Spec coding实践",
+    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1764472915&ver=6389&signature=fkfISBSa8NvnKIsy*9eUCPcClnyrju0rWCSDBAs7wx8u4osseDCg*OUKgZ9VYIbshyMXos6pzzGIsLDDsizgyAK9jAjHdiDmHuAKVoyyiUG9m03Stqc56tri-FIktH*k&new=1",
+    "source": "100kwhy",
+    "summary": "Spec Coding 的本质不是工具,而是流程变革. 它需要配合Git 工作流的改造、Code Review 标准的升级才能真正落地.工具免费,但...",
+    "tags": [],
+    "tool_tags": [],
+    "score": 8.0,
+    "id": 37,
+    "created_at": "2025-11-30T11:24:32.608317Z",
+    "published_time": "2025-11-30T11:24:32.608317Z",
+    "archived_at": "2025-11-30T11:24:32.608317Z",
+    "view_count": 4,
     "category": "programming"
   }
 ]

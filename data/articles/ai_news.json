@@ -45,7 +45,7 @@
     "created_at": "2025-11-27T09:02:09.009093Z",
     "published_time": "2025-11-27T09:02:09.009093Z",
     "archived_at": "2025-11-27T09:02:09.009093Z",
-    "view_count": 7,
+    "view_count": 8,
     "category": "ai_news"
   },
   {
@@ -156,7 +156,22 @@
     "created_at": "2025-11-29T07:46:52.096009Z",
     "published_time": "2025-11-29T07:46:52.096009Z",
     "archived_at": "2025-11-29T07:46:52.096009Z",
-    "view_count": 8,
+    "view_count": 9,
+    "category": "ai_news"
+  },
+  {
+    "title": "Stack Overflow CEO：因为 AI，我重新开始写代码了",
+    "url": "https://mp.weixin.qq.com/s/odqUTzsGuf7_C3j6kACqzg",
+    "source": "金色传说大聪明",
+    "summary": "最好、最新的内容，总来自赛博禅心",
+    "tags": [],
+    "tool_tags": [],
+    "score": 8.0,
+    "id": 34,
+    "created_at": "2025-11-30T11:21:57.901673Z",
+    "published_time": "2025-11-30T11:21:57.901673Z",
+    "archived_at": "2025-11-30T11:21:57.901673Z",
+    "view_count": 2,
     "category": "ai_news"
   }
 ]
