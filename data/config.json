@@ -15,20 +15,20 @@
       "title": "AI资讯",
       "description": "AI领域最新动态和技术文章"
     },
-    "hot-news": {
-      "id": "page-hot-news",
-      "title": "热门资讯",
-      "description": "最受欢迎的技术文章"
+    "prompts": {
+      "id": "page-prompts",
+      "title": "提示词",
+      "description": "精选AI编程提示词，提升开发效率"
     },
-    "recent": {
-      "id": "page-recent",
-      "title": "最新资讯",
-      "description": "编程资讯和AI资讯的最新文章，按时间排序"
+    "rules": {
+      "id": "page-rules",
+      "title": "规则",
+      "description": "Cursor Rules和其他AI编程规则"
     },
-    "submit": {
-      "id": "page-submit",
-      "title": "提交资讯",
-      "description": "分享优质的技术文章和资讯"
+    "resources": {
+      "id": "page-resources",
+      "title": "社区资源",
+      "description": "AI编程教程、文章和社区资源"
     },
     "wechat-mp": {
       "id": "page-wechat-mp",

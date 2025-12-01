@@ -286,5 +286,61 @@
     "like_count": 0,
     "is_featured": false,
     "created_at": "2025-11-28T08:53:05.665198Z"
+  },
+  {
+    "id": 656721,
+    "name": "Oopsie",
+    "url": "https://oopsie.ai/",
+    "description": "Oopsie 为移动应用开发者提供的 AI 驱动调试工具，能够快速定位和修复移动应用中的问题，提升开发效率。",
+    "category": "other",
+    "tags": [],
+    "icon": "🔧",
+    "score": 0,
+    "view_count": 0,
+    "like_count": 0,
+    "is_featured": false,
+    "created_at": "2025-12-01T00:00:00Z"
+  },
+  {
+    "id": 656722,
+    "name": "AgentAuth",
+    "url": "https://agentauth.dev/",
+    "description": "AgentAuth 是一款安全的AI智能体连接工具，为AI应用提供安全可靠的身份验证和授权服务。",
+    "category": "other",
+    "tags": [],
+    "icon": "🔧",
+    "score": 0,
+    "view_count": 0,
+    "like_count": 0,
+    "is_featured": false,
+    "created_at": "2025-12-01T00:00:00Z"
+  },
+  {
+    "id": 656723,
+    "name": "Boost space",
+    "url": "https://boost.space/",
+    "description": "Boost space 强大的数据管理和自动化平台，帮助开发者整合各种服务并自动化工作流程。",
+    "category": "other",
+    "tags": [],
+    "icon": "🔧",
+    "score": 0,
+    "view_count": 0,
+    "like_count": 0,
+    "is_featured": false,
+    "created_at": "2025-12-01T00:00:00Z"
+  },
+  {
+    "id": 656724,
+    "name": "Evolv",
+    "url": "https://www.evolv.ai/",
+    "description": "Evolv 帮助企业提高网站转化率，通过AI驱动的个性化优化提升用户体验和业务指标。",
+    "category": "other",
+    "tags": [],
+    "icon": "🔧",
+    "score": 0,
+    "view_count": 0,
+    "like_count": 0,
+    "is_featured": false,
+    "created_at": "2025-12-01T00:00:00Z"
   }
 ]

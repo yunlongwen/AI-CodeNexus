@@ -1,0 +1,73 @@
+[
+  {
+    "title": "Cursor 快速入门指南",
+    "description": "帮助开发者快速上手 Cursor 教程。什么是 Cursor 编辑器？为什么选择 Cursor？Cursor 的核心功能是什么？",
+    "type": "教程",
+    "category": "IDE",
+    "tags": ["Cursor", "IDE", "入门", "教程"],
+    "url": "https://cursor101.com/zh/article/cursor-quick-start",
+    "author": "Cursor 101",
+    "view_count": 0,
+    "created_at": "2025-12-01T00:00:00Z",
+    "is_featured": true,
+    "id": 1,
+    "identifier": "cursor-quick-start"
+  },
+  {
+    "title": "Cursor Composer 教程",
+    "description": "Cursor composer是什么? Cursor Composer 一个 Cursor 的 Beta 功能。它超越了单行和单文件编辑的限制，让你能够同时编辑多个文件，根据高级指令生成整个应用程序。",
+    "type": "教程",
+    "category": "IDE",
+    "tags": ["Cursor", "Composer", "AI编程"],
+    "url": "https://cursor101.com/zh/article/cursor-composer",
+    "author": "Cursor 101",
+    "view_count": 0,
+    "created_at": "2025-12-01T00:00:00Z",
+    "is_featured": true,
+    "id": 2,
+    "identifier": "cursor-composer-tutorial"
+  },
+  {
+    "title": "Cursor Rules：自定义 AI 行为以实现个性化编码",
+    "description": "Cursor Rules 使开发者能够根据特定需求定制 AI 编程，提高生产力和代码质量。了解如何设置全局和项目特定规则以优化您的编码体验。",
+    "type": "文章",
+    "category": "IDE",
+    "tags": ["Cursor", "Rules", "AI定制"],
+    "url": "https://cursor101.com/zh/article/cursor-rules",
+    "author": "Cursor 101",
+    "view_count": 0,
+    "created_at": "2025-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 3,
+    "identifier": "cursor-rules-customize"
+  },
+  {
+    "title": "Cursor AI 快捷键：提升您的生产力",
+    "description": "学习必备的 Cursor AI 快捷键，提高您的编码效率并简化工作流程。",
+    "type": "文章",
+    "category": "IDE",
+    "tags": ["Cursor", "快捷键", "效率"],
+    "url": "https://cursor101.com/zh/article/cursor-shortcuts",
+    "author": "Cursor 101",
+    "view_count": 0,
+    "created_at": "2025-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 4,
+    "identifier": "cursor-shortcuts"
+  },
+  {
+    "title": "Cursor MCP 功能详解",
+    "description": "全面指南：如何在 Cursor IDE 中配置和使用 MCP (Model Context Protocol)。通过实际案例学习 MCP Server 的配置方法，包括 Web Search 和 Brave Search 的详细设置步骤。",
+    "type": "教程",
+    "category": "IDE",
+    "tags": ["Cursor", "MCP", "配置"],
+    "url": "https://cursor101.com/zh/article/cursor-mcp",
+    "author": "Cursor 101",
+    "view_count": 0,
+    "created_at": "2025-12-01T00:00:00Z",
+    "is_featured": true,
+    "id": 5,
+    "identifier": "cursor-mcp-guide"
+  }
+]
+

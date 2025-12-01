@@ -378,7 +378,7 @@
   {
     "name": "ChatDev",
     "url": "https://github.com/OpenBMB/ChatDev",
-    "description": "ChatDev 是一家虚拟软件公司，由多个智能代理组成，这些代理担任不同的角色，包括首席执行官 (CEO)、首席产品官 (CPO)、首席技术官 (CTO)、程序员、审查员、测试员和艺术设计师。\n\n这些智能代理形成了一个多代理的组织结构，并以“通过编程革新数字世界”为使命。\n\n在 ChatDev 内部，智能代理通过参与专门的功能研讨会进行协作，负责包括设计、编码、测试和文档编写在内的各项任务。",
+    "description": "ChatDev 是一家虚拟软件公司，由多个智能代理组成，这些代理担任不同的角色，包括首席执行官 (CEO)、首席产品官 (CPO)、首席技术官 (CTO)、程序员、审查员、测试员和艺术设计师。\n\n这些智能代理形成了一个多代理的组织结构，并以\"通过编程革新数字世界\"为使命。\n\n在 ChatDev 内部，智能代理通过参与专门的功能研讨会进行协作，负责包括设计、编码、测试和文档编写在内的各项任务。",
     "category": "codeagent",
     "tags": [
       "open-source"
@@ -389,5 +389,139 @@
     "is_featured": false,
     "id": 29,
     "identifier": "chatdev"
+  },
+  {
+    "name": "Rosebud",
+    "url": "https://rosebud.ai/",
+    "description": "Rosebud 创建2D和3D游戏及虚拟世界的AI开发平台，让开发者能够通过自然语言快速生成游戏内容和虚拟环境。",
+    "category": "codeagent",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 30,
+    "identifier": "rosebud"
+  },
+  {
+    "name": "Clacky",
+    "url": "https://clacky.dev/",
+    "description": "Clacky 是专注于软件开发的 L3 Agentic AI 云开发环境，提供智能化的代码生成、调试和部署功能。",
+    "category": "codeagent",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 31,
+    "identifier": "clacky"
+  },
+  {
+    "name": "钉钉宜搭",
+    "url": "https://yida.dingtalk.com/",
+    "description": "钉钉宜搭是钉钉旗下的智能体平台，提供低代码开发和AI智能体构建能力，帮助企业快速搭建应用和自动化流程。",
+    "category": "codeagent",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 32,
+    "identifier": "dingding-yida"
+  },
+  {
+    "name": "Coval Dev",
+    "url": "https://coval.dev/",
+    "description": "Coval Dev 通过自动化模拟和评估，帮助开发者快速构建可靠语音和聊天 AI 代理的平台，提供完整的开发和测试工具链。",
+    "category": "codeagent",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 33,
+    "identifier": "coval-dev"
+  },
+  {
+    "name": "Magic Dev",
+    "url": "https://magic.dev/",
+    "description": "Magic Dev 通过自动化人工智能研究和代码生成，帮助开发者快速实现复杂功能，提升开发效率。",
+    "category": "codeagent",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 34,
+    "identifier": "magic-dev"
+  },
+  {
+    "name": "Poolside AI",
+    "url": "https://poolside.ai/",
+    "description": "Poolside AI 专注于现代软件工程挑战的 AI 基础模型平台，为开发者提供强大的AI编程能力。",
+    "category": "codeagent",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 35,
+    "identifier": "poolside-ai"
+  },
+  {
+    "name": "Gru AI",
+    "url": "https://gru.ai/",
+    "description": "Gru AI 专注于解决软件开发中的多个方面，包括调试、测试、部署和运维，提供全流程AI辅助开发能力。",
+    "category": "codeagent",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 36,
+    "identifier": "gru-ai"
+  },
+  {
+    "name": "Agentplace",
+    "url": "https://agentplace.ai/",
+    "description": "Agentplace 通过简单文本指令创建互动AI网站和应用的平台，让非技术用户也能快速构建AI驱动的应用。",
+    "category": "codeagent",
+    "tags": [],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 37,
+    "identifier": "agentplace"
+  },
+  {
+    "name": "GPT Engineer",
+    "url": "https://github.com/AntonOsika/gpt-engineer",
+    "description": "GPT Engineer 与 AI 聊天以构建 Web 应用，通过对话式交互让AI理解需求并生成完整的应用程序代码。",
+    "category": "codeagent",
+    "tags": [
+      "open-source"
+    ],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 38,
+    "identifier": "gpt-engineer"
+  },
+  {
+    "name": "SWE-Kit",
+    "url": "https://github.com/princeton-vl/SWE-Kit",
+    "description": "SWE-Kit 用于构建自定义软件工程 AI 代理的开源框架，提供灵活的代理构建和定制能力。",
+    "category": "codeagent",
+    "tags": [
+      "open-source"
+    ],
+    "icon": "🔧",
+    "view_count": 0,
+    "created_at": "2025-12-01T00:00:00Z",
+    "is_featured": false,
+    "id": 39,
+    "identifier": "swe-kit"
   }
 ]
