@@ -743,6 +743,23 @@ def create_app() -> FastAPI:
               backdrop-filter: blur(10px);
               border: 1px solid rgba(255, 255, 255, 0.1);
             }
+
+            /* 下拉菜单样式 - 完全透明，与提示词菜单保持一致 */
+            .news-dropdown-menu,
+            .weekly-dropdown-menu,
+            .resources-dropdown-menu {
+              background: transparent !important;
+              backdrop-filter: none !important;
+              border: none !important;
+              box-shadow: none !important;
+              padding: 0 !important;
+            }
+            
+            .news-dropdown-menu a,
+            .weekly-dropdown-menu a,
+            .resources-dropdown-menu a {
+              background: transparent !important;
+            }
             
             /* 霓虹发光效果 */
             .neon-glow {
@@ -1173,13 +1190,25 @@ def create_app() -> FastAPI:
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
                       </button>
-                      <div class="news-dropdown-menu absolute top-full left-0 mt-1 w-48 glass rounded-lg border border-dark-border shadow-xl hidden z-50" id="news-dropdown-menu">
-                        <a href="/news" class="block px-4 py-3 text-sm text-gray-300 hover:text-neon-cyan hover:bg-dark-card rounded-t-lg transition-all border-b border-dark-border">
+                      <div class="news-dropdown-menu absolute top-full left-0 mt-1 w-48 hidden z-50" id="news-dropdown-menu">
+                        <a href="/news" class="block px-5 py-3 text-base tech-font-nav text-gray-300 hover:text-neon-cyan transition-all">
                           💻 编程资讯
                         </a>
-                        <a href="/ai-news" class="block px-4 py-3 text-sm text-gray-300 hover:text-neon-purple hover:bg-dark-card rounded-b-lg transition-all">
+                        <a href="/ai-news" class="block px-5 py-3 text-base tech-font-nav text-gray-300 hover:text-neon-purple transition-all">
                           🤖 AI资讯
                         </a>
+                      </div>
+                    </div>
+                    <!-- 每周资讯下拉菜单 -->
+                    <div class="relative">
+                      <button class="top-nav-item px-5 py-3 text-base tech-font-nav text-gray-300 hover:text-neon-cyan rounded-lg transition-all whitespace-nowrap flex items-center gap-2" onclick="toggleWeeklyDropdown()">
+                        📅 每周资讯
+                        <svg class="w-4 h-4 transition-transform duration-200" id="weekly-dropdown-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                      </button>
+                      <div class="weekly-dropdown-menu absolute top-full left-0 mt-1 w-48 hidden z-50" id="weekly-dropdown-menu">
+                        <!-- 动态加载的weekly列表 -->
                       </div>
                     </div>
                     <a href="/prompts" class="top-nav-item px-5 py-3 text-base tech-font-nav text-gray-300 hover:text-neon-cyan rounded-lg transition-all whitespace-nowrap">
@@ -1188,9 +1217,26 @@ def create_app() -> FastAPI:
                     <a href="/rules" class="top-nav-item px-5 py-3 text-base tech-font-nav text-gray-300 hover:text-neon-cyan rounded-lg transition-all whitespace-nowrap">
                       📋 规则
                 </a>
-                    <a href="/resources" class="top-nav-item px-5 py-3 text-base tech-font-nav text-gray-300 hover:text-neon-purple rounded-lg transition-all whitespace-nowrap">
-                      🌐 社区资源
-                </a>
+                    <!-- 社区资源下拉菜单 -->
+                    <div class="relative">
+                      <button class="top-nav-item px-5 py-3 text-base tech-font-nav text-gray-300 hover:text-neon-purple rounded-lg transition-all whitespace-nowrap flex items-center gap-2" onclick="toggleResourcesDropdown()">
+                        🌐 社区资源
+                        <svg class="w-4 h-4 transition-transform duration-200" id="resources-dropdown-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                      </button>
+                      <div class="resources-dropdown-menu absolute top-full left-0 mt-1 w-48 hidden z-50" id="resources-dropdown-menu">
+                        <a href="/resources?category=飞书知识库" class="block px-5 py-3 text-base tech-font-nav text-gray-300 hover:text-neon-purple transition-all">
+                          📚 飞书知识库
+                        </a>
+                        <a href="/resources?category=技术社区" class="block px-5 py-3 text-base tech-font-nav text-gray-300 hover:text-neon-purple transition-all">
+                          👥 技术社区
+                        </a>
+                        <a href="/resources?category=Cursor资源" class="block px-5 py-3 text-base tech-font-nav text-gray-300 hover:text-neon-purple transition-all">
+                          🎯 Cursor资源
+                        </a>
+                      </div>
+                    </div>
                     <a href="/wechat-mp" class="top-nav-item px-5 py-3 text-base tech-font-nav text-gray-300 hover:text-neon-cyan rounded-lg transition-all whitespace-nowrap">
                       📱 微信公众号
                 </a>
@@ -1225,9 +1271,34 @@ def create_app() -> FastAPI:
                   <a href="/ai-news" class="mobile-nav-link">🤖 AI资讯</a>
                 </div>
               </div>
+              <!-- 每周资讯子菜单 -->
+              <div class="mobile-nav-submenu">
+                <div class="mobile-nav-submenu-header" onclick="toggleMobileWeeklySubmenu()">
+                  📅 每周资讯
+                  <svg class="w-4 h-4 transition-transform duration-200 inline ml-1" id="mobile-weekly-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </div>
+                <div class="mobile-nav-submenu-content hidden pl-4" id="mobile-weekly-submenu">
+                  <!-- 动态加载的weekly列表 -->
+                </div>
+              </div>
               <a href="/prompts" class="mobile-nav-link">💡 提示词</a>
               <a href="/rules" class="mobile-nav-link">📋 规则</a>
-              <a href="/resources" class="mobile-nav-link">🌐 社区资源</a>
+              <!-- 社区资源子菜单 -->
+              <div class="mobile-nav-submenu">
+                <div class="mobile-nav-submenu-header" onclick="toggleMobileResourcesSubmenu()">
+                  🌐 社区资源
+                  <svg class="w-4 h-4 transition-transform duration-200 inline ml-1" id="mobile-resources-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </div>
+                <div class="mobile-nav-submenu-content hidden pl-4" id="mobile-resources-submenu">
+                  <a href="/resources?category=飞书知识库" class="mobile-nav-link">📚 飞书知识库</a>
+                  <a href="/resources?category=技术社区" class="mobile-nav-link">👥 技术社区</a>
+                  <a href="/resources?category=Cursor资源" class="mobile-nav-link">🎯 Cursor资源</a>
+                </div>
+              </div>
               <a href="/wechat-mp" class="mobile-nav-link">📱 微信公众号</a>
               <a href="/digest/panel" id="mobile-admin-entry" class="mobile-nav-link hidden" style="display: none;">🔐 管理员入口</a>
             </div>
@@ -1989,6 +2060,10 @@ def create_app() -> FastAPI:
                 } else if (route === 'wechat-mp') {
                   currentPage.category = null;
                   showWeChatMP();
+                } else if (route.startsWith('weekly/')) {
+                  const weeklyId = route.substring(7); // 'weekly/'.length = 7
+                  currentPage.category = null;
+                  loadWeekly(weeklyId);
                 } else if (route.startsWith('category/')) {
                   const category = route.substring(9); // 'category/'.length = 9
                   currentPage.category = category;
@@ -2489,55 +2564,55 @@ def create_app() -> FastAPI:
               }
               
               // 加载社区资源（按分类模块化显示）
-              async function loadResources(page = 1) {
+              async function loadResources(page = 1, category = null) {
                 const mainContent = document.getElementById('main-content');
                 if (!mainContent) return;
                 
                 mainContent.innerHTML = '<div class="text-center py-20"><div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-neon-cyan"></div></div>';
                 
                 try {
-                  // 获取所有资源，使用最大page_size
-                  const response = await fetch(`${API_BASE}/resources?page=1&page_size=100`);
+                  // 从URL参数获取category
+                  const urlParams = new URLSearchParams(window.location.search);
+                  const urlCategory = urlParams.get('category');
+                  if (urlCategory) {
+                    category = urlCategory;
+                  }
+                  
+                  // 构建API URL
+                  let apiUrl = `${API_BASE}/resources?page=1&page_size=100`;
+                  if (category) {
+                    apiUrl += `&category=${encodeURIComponent(category)}`;
+                  }
+                  
+                  const response = await fetch(apiUrl);
                   const data = await response.json();
                   
                   const config = getPageConfig('resources');
-                  const title = config.title || '社区资源';
+                  let title = config.title || '社区资源';
+                  if (category) {
+                    title = category;
+                  }
                   const description = config.description || 'AI编程教程、文章和社区资源';
                   
-                  // 按分类分组
-                  const resourcesByCategory = {};
-                  data.items.forEach(resource => {
-                    const category = resource.category || '其他';
-                    if (!resourcesByCategory[category]) {
-                      resourcesByCategory[category] = [];
-                    }
-                    resourcesByCategory[category].push(resource);
-                  });
+                  // 如果有category参数，只显示该分类的资源
+                  let displayItems = data.items;
+                  if (category) {
+                    displayItems = data.items.filter(resource => resource.category === category);
+                  }
                   
                   let html = `
                     <div class="mb-6">
                       <h1 class="text-4xl tech-font-bold text-neon-cyan text-glow mb-2">${title}</h1>
-                      <p class="text-base text-gray-400 tech-font">${description} (共 ${data.total} 个)</p>
+                      <p class="text-base text-gray-400 tech-font">${description} (共 ${displayItems.length} 个)</p>
                     </div>
                   `;
                   
-                  if (data.items.length === 0) {
+                  if (displayItems.length === 0) {
                     html += '<div class="text-center py-20 text-gray-400">暂无资源</div>';
                   } else {
-                    // 按分类显示
-                    const categoryOrder = ['飞书知识库', '技术社区', '其他'];
-                    const sortedCategories = Object.keys(resourcesByCategory).sort((a, b) => {
-                      const indexA = categoryOrder.indexOf(a);
-                      const indexB = categoryOrder.indexOf(b);
-                      if (indexA === -1 && indexB === -1) return a.localeCompare(b);
-                      if (indexA === -1) return 1;
-                      if (indexB === -1) return -1;
-                      return indexA - indexB;
-                    });
-                    
-                    sortedCategories.forEach(category => {
-                      const resources = resourcesByCategory[category];
-                      const categoryIcon = category === '飞书知识库' ? '📚' : category === '技术社区' ? '🌐' : '📦';
+                    if (category) {
+                      // 如果指定了分类，直接显示该分类的资源
+                      const categoryIcon = category === '飞书知识库' ? '📚' : category === '技术社区' ? '👥' : category === 'Cursor资源' ? '🎯' : '📦';
                       
                       html += `
                         <div class="mb-8">
@@ -2547,7 +2622,7 @@ def create_app() -> FastAPI:
                           <div class="space-y-4">
                       `;
                       
-                      resources.forEach(resource => {
+                      displayItems.forEach(resource => {
                         html += `
                           <article class="glass rounded-xl border border-dark-border p-6 card-hover">
                             <div class="flex items-start gap-3 mb-2">
@@ -2569,7 +2644,63 @@ def create_app() -> FastAPI:
                           </div>
                         </div>
                       `;
-                    });
+                    } else {
+                      // 按分类分组显示
+                      const resourcesByCategory = {};
+                      displayItems.forEach(resource => {
+                        const cat = resource.category || '其他';
+                        if (!resourcesByCategory[cat]) {
+                          resourcesByCategory[cat] = [];
+                        }
+                        resourcesByCategory[cat].push(resource);
+                      });
+                      
+                      const categoryOrder = ['飞书知识库', '技术社区', 'Cursor资源', '其他'];
+                      const sortedCategories = Object.keys(resourcesByCategory).sort((a, b) => {
+                        const indexA = categoryOrder.indexOf(a);
+                        const indexB = categoryOrder.indexOf(b);
+                        if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+                        if (indexA === -1) return 1;
+                        if (indexB === -1) return -1;
+                        return indexA - indexB;
+                      });
+                      
+                      sortedCategories.forEach(cat => {
+                        const resources = resourcesByCategory[cat];
+                        const categoryIcon = cat === '飞书知识库' ? '📚' : cat === '技术社区' ? '👥' : cat === 'Cursor资源' ? '🎯' : '📦';
+                        
+                        html += `
+                          <div class="mb-8">
+                            <h2 class="text-2xl font-bold text-neon-cyan mb-4 flex items-center gap-2">
+                              ${categoryIcon} ${cat}
+                            </h2>
+                            <div class="space-y-4">
+                        `;
+                        
+                        resources.forEach(resource => {
+                          html += `
+                            <article class="glass rounded-xl border border-dark-border p-6 card-hover">
+                              <div class="flex items-start gap-3 mb-2">
+                                <span class="text-sm px-2 py-1 glass border border-neon-purple/30 text-neon-purple rounded">${resource.type || '资源'}</span>
+                              </div>
+                              <h3 class="text-xl font-semibold text-gray-100 mb-2">
+                                <a href="${resource.url}" target="_blank" class="hover:text-neon-cyan transition-colors">${resource.title}</a>
+                              </h3>
+                              <p class="text-sm text-gray-300 mb-3">${resource.description}</p>
+                              ${resource.author ? `<p class="text-xs text-gray-400 mb-3">作者: ${resource.author}</p>` : ''}
+                              <div class="flex items-center gap-2 flex-wrap">
+                                ${(resource.tags || []).map(tag => `<span class="px-2 py-1 glass text-neon-cyan text-xs rounded border border-neon-cyan/30">${tag}</span>`).join('')}
+                              </div>
+                            </article>
+                          `;
+                        });
+                        
+                        html += `
+                            </div>
+                          </div>
+                        `;
+                      });
+                    }
                   }
                   
                   mainContent.innerHTML = html;
@@ -2886,6 +3017,42 @@ def create_app() -> FastAPI:
                   </div>
                 `;
               }
+
+              // 加载每周资讯
+              async function loadWeekly(weeklyId) {
+                const mainContent = document.getElementById('main-content');
+                if (!mainContent) return;
+
+                mainContent.innerHTML = '<div class="text-center py-20"><div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-neon-cyan"></div></div>';
+
+                try {
+                  const response = await fetch(`${API_BASE}/weekly/${weeklyId}`);
+                  if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ detail: '加载失败' }));
+                    throw new Error(errorData.detail || `HTTP ${response.status}`);
+                  }
+                  const data = await response.json();
+
+                  let html = `
+                    <div class="mb-6">
+                      <h1 class="text-4xl tech-font-bold text-neon-cyan text-glow mb-2">${data.title || weeklyId}</h1>
+                      <p class="text-base text-gray-400 tech-font mb-4">${data.description || '每周资讯汇总'}</p>
+                    </div>
+                    <div class="glass rounded-xl border border-dark-border p-8">
+                      <div class="prose prose-invert max-w-none">
+                        ${data.content || '<p class="text-gray-400">暂无内容</p>'}
+                      </div>
+                    </div>
+                  `;
+
+                  mainContent.innerHTML = html;
+                  // 更新导航激活状态
+                  setTimeout(updateActiveNav, 100);
+                } catch (error) {
+                  console.error('加载每周资讯失败:', error);
+                  mainContent.innerHTML = `<div class="text-center py-20 text-red-400">加载失败: ${error.message}</div>`;
+                }
+              }
               
               // 管理员入口授权码验证
               let adminCodeInput = '';
@@ -3093,14 +3260,86 @@ def create_app() -> FastAPI:
                 }
               }
 
+              // 社区资源下拉菜单控制
+              function toggleResourcesDropdown() {
+                const menu = document.getElementById('resources-dropdown-menu');
+                const arrow = document.getElementById('resources-dropdown-arrow');
+
+                if (menu.classList.contains('hidden')) {
+                  menu.classList.remove('hidden');
+                  arrow.style.transform = 'rotate(180deg)';
+                } else {
+                  menu.classList.add('hidden');
+                  arrow.style.transform = 'rotate(0deg)';
+                }
+              }
+
+              // 每周资讯下拉菜单控制
+              function toggleWeeklyDropdown() {
+                const menu = document.getElementById('weekly-dropdown-menu');
+                const arrow = document.getElementById('weekly-dropdown-arrow');
+
+                if (menu.classList.contains('hidden')) {
+                  menu.classList.remove('hidden');
+                  arrow.style.transform = 'rotate(180deg)';
+                } else {
+                  menu.classList.add('hidden');
+                  arrow.style.transform = 'rotate(0deg)';
+                }
+              }
+
+              // 移动端社区资源子菜单控制
+              function toggleMobileResourcesSubmenu() {
+                const submenu = document.getElementById('mobile-resources-submenu');
+                const arrow = document.getElementById('mobile-resources-arrow');
+
+                if (submenu.classList.contains('open')) {
+                  submenu.classList.remove('open');
+                  arrow.style.transform = 'rotate(0deg)';
+                } else {
+                  submenu.classList.add('open');
+                  arrow.style.transform = 'rotate(90deg)';
+                }
+              }
+
+              // 移动端每周资讯子菜单控制
+              function toggleMobileWeeklySubmenu() {
+                const submenu = document.getElementById('mobile-weekly-submenu');
+                const arrow = document.getElementById('mobile-weekly-arrow');
+
+                if (submenu.classList.contains('open')) {
+                  submenu.classList.remove('open');
+                  arrow.style.transform = 'rotate(0deg)';
+                } else {
+                  submenu.classList.add('open');
+                  arrow.style.transform = 'rotate(90deg)';
+                }
+              }
+
               // 点击外部区域关闭下拉菜单
               document.addEventListener('click', function(e) {
                 const newsDropdown = document.getElementById('news-dropdown-menu');
                 const newsBtn = document.querySelector('[onclick="toggleNewsDropdown()"]');
+                const resourcesDropdown = document.getElementById('resources-dropdown-menu');
+                const resourcesBtn = document.querySelector('[onclick="toggleResourcesDropdown()"]');
+                const weeklyDropdown = document.getElementById('weekly-dropdown-menu');
+                const weeklyBtn = document.querySelector('[onclick="toggleWeeklyDropdown()"]');
 
                 if (newsDropdown && !newsDropdown.contains(e.target) && !newsBtn.contains(e.target)) {
                   newsDropdown.classList.add('hidden');
                   const arrow = document.getElementById('news-dropdown-arrow');
+                  if (arrow) arrow.style.transform = 'rotate(0deg)';
+                }
+
+                if (resourcesDropdown && !resourcesDropdown.contains(e.target) && !resourcesBtn.contains(e.target)) {
+                  resourcesDropdown.classList.add('hidden');
+                  const arrow = document.getElementById('resources-dropdown-arrow');
+                  if (arrow) arrow.style.transform = 'rotate(0deg)';
+                }
+
+                if (weeklyDropdown && !weeklyDropdown.contains(e.target) && !weeklyBtn.contains(e.target)) {
+                  weeklyDropdown.classList.add('hidden');
+                  const arrow = document.getElementById('weekly-dropdown-arrow');
                   if (arrow) arrow.style.transform = 'rotate(0deg)';
                 }
               });
@@ -3174,6 +3413,37 @@ def create_app() -> FastAPI:
                 });
               }
               
+              // 加载每周资讯列表
+              async function loadWeeklyList() {
+                try {
+                  const response = await fetch(`${API_BASE}/weekly`);
+                  const data = await response.json();
+                  
+                  const weeklyMenu = document.getElementById('weekly-dropdown-menu');
+                  const mobileWeeklySubmenu = document.getElementById('mobile-weekly-submenu');
+                  
+                  if (weeklyMenu && data.items && data.items.length > 0) {
+                    let html = '';
+                    data.items.forEach((item) => {
+                      html += `<a href="/weekly/${item.id}" class="block px-5 py-3 text-base tech-font-nav text-gray-300 hover:text-neon-cyan transition-all">
+                        📅 ${item.name}
+                      </a>`;
+                    });
+                    weeklyMenu.innerHTML = html;
+                  }
+                  
+                  if (mobileWeeklySubmenu && data.items && data.items.length > 0) {
+                    let html = '';
+                    data.items.forEach(item => {
+                      html += `<a href="/weekly/${item.id}" class="mobile-nav-link">📅 ${item.name}</a>`;
+                    });
+                    mobileWeeklySubmenu.innerHTML = html;
+                  }
+                } catch (error) {
+                  console.error('加载每周资讯列表失败:', error);
+                }
+              }
+
               // 初始化
               document.addEventListener('DOMContentLoaded', async function() {
                 // 初始化移动端顶部导航菜单
@@ -3184,6 +3454,9 @@ def create_app() -> FastAPI:
                 
                 // 先加载配置文件
                 await loadConfig();
+                
+                // 加载每周资讯列表
+                await loadWeeklyList();
                 
                 // 检查是否已经验证过（从localStorage）
                 if (localStorage.getItem('admin_verified') === 'true') {

@@ -664,3 +664,85 @@ async def get_resources(
     except Exception as e:
         logger.error(f"获取社区资源列表失败: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/weekly/{weekly_id}")
+async def get_weekly(weekly_id: str):
+    """获取每周资讯内容"""
+    try:
+        weekly_file = Path(__file__).resolve().parent.parent.parent / "data" / "weekly" / f"{weekly_id}.md"
+        
+        if not weekly_file.exists():
+            raise HTTPException(status_code=404, detail="Weekly not found")
+        
+        with open(weekly_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # 简单的Markdown转HTML（可以使用markdown库，这里简化处理）
+        import re
+        html_content = content
+        
+        # 转换标题（按行处理）
+        lines = html_content.split('\n')
+        processed_lines = []
+        for line in lines:
+            if line.startswith('# '):
+                processed_lines.append(f'<h1 class="text-3xl font-bold text-neon-cyan mb-4">{line[2:]}</h1>')
+            elif line.startswith('## '):
+                processed_lines.append(f'<h2 class="text-2xl font-bold text-gray-100 mb-3 mt-6">{line[3:]}</h2>')
+            elif line.startswith('### '):
+                processed_lines.append(f'<h3 class="text-xl font-bold text-gray-200 mb-2 mt-4">{line[4:]}</h3>')
+            elif line.startswith('#### '):
+                processed_lines.append(f'<h4 class="text-lg font-bold text-gray-200 mb-2 mt-4">{line[5:]}</h4>')
+            elif line.strip() == '':
+                processed_lines.append('')
+            else:
+                # 转换链接
+                line = re.sub(r'\[([^\]]+)\]\(([^\)]+)\)', r'<a href="\2" target="_blank" class="text-neon-cyan hover:text-neon-purple underline">\1</a>', line)
+                # 转换粗体
+                line = re.sub(r'\*\*([^\*]+)\*\*', r'<strong class="text-gray-100">\1</strong>', line)
+                # 转换代码块
+                line = re.sub(r'`([^`]+)`', r'<code class="px-1 py-0.5 bg-dark-card text-neon-cyan rounded text-sm">\1</code>', line)
+                processed_lines.append(f'<p class="text-gray-300 mb-4 leading-relaxed">{line}</p>')
+        
+        html_content = '\n'.join(processed_lines)
+        
+        return {
+            "title": weekly_id.replace('weekly', 'Week ').replace('2025', '2025 '),
+            "description": "每周资讯汇总",
+            "content": html_content
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"获取每周资讯失败: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/weekly")
+async def list_weekly():
+    """获取每周资讯文件列表"""
+    try:
+        weekly_dir = Path(__file__).resolve().parent.parent.parent / "data" / "weekly"
+        
+        if not weekly_dir.exists():
+            return {"items": []}
+        
+        # 获取所有.md文件
+        weekly_files = []
+        for file_path in weekly_dir.glob("*.md"):
+            weekly_id = file_path.stem  # 文件名（不含扩展名）
+            # 格式化显示名称：2025weekly49 -> 2025 Week 49
+            weekly_files.append({
+                "id": weekly_id,
+                "name": weekly_id,
+                "filename": file_path.name
+            })
+        
+        # 按文件名倒序排列（最新的在前）
+        weekly_files.sort(key=lambda x: x["id"], reverse=True)
+        
+        return {"items": weekly_files}
+    except Exception as e:
+        logger.error(f"获取每周资讯列表失败: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
