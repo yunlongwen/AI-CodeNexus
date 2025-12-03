@@ -23,14 +23,14 @@
 3. **脚本会自动**
    - 解析文本内容
    - 提取所有提示词章节
-   - 添加到 `data/prompts.json` 文件中
+   - 添加到 `data/prompts/prompts.json` 文件中
    - 自动生成ID、标识符、标签等
 
 ## 方法二：手动添加
 
 如果导入脚本无法正确解析文档格式，您可以：
 
-1. 打开 `data/prompts.json` 文件
+1. 打开 `data/prompts/prompts.json` 文件
 2. 找到需要补充内容的提示词条目（已创建框架，content字段需要补充）
 3. 从飞书文档复制对应的完整提示词内容
 4. 替换 `content` 字段中的占位符文本
@@ -82,7 +82,7 @@
 
 1. 检查JSON格式是否正确：
    ```bash
-   python -m json.tool data/prompts.json > /dev/null
+   python -m json.tool data/prompts/prompts.json > /dev/null
    ```
 
 2. 启动服务器，访问 `/prompts` 页面查看所有提示词

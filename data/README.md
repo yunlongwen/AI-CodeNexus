@@ -11,10 +11,17 @@ data/
 │   ├── cli.json         # 命令行工具
 │   ├── ide.json         # 开发IDE
 │   └── ...              # 其他分类
-└── articles/       # 资讯数据
-    ├── programming.json  # 编程资讯
-    ├── ai_news.json     # AI资讯
-    └── ...              # 其他分类
+├── articles/       # 资讯数据
+│   ├── programming.json  # 编程资讯
+│   ├── ai_news.json     # AI资讯
+│   └── ...              # 其他分类
+├── prompts/        # 提示词数据
+│   └── prompts.json     # 提示词集合
+├── rules.json      # 规则数据
+├── resources.json  # 社区资源数据
+└── weekly/         # 每周资讯周报
+    ├── 2025weekly48.md
+    └── 2025weekly49.md
 ```
 
 ## 数据格式
@@ -120,6 +127,21 @@ GET /api/news?category=programming&page=1&page_size=20
 ### 获取AI资讯
 ```
 GET /api/ai-news?page=1&page_size=20
+```
+
+### 获取提示词列表
+```
+GET /api/prompts?category={category}&page=1&page_size=20&search={keyword}
+```
+
+### 获取规则列表
+```
+GET /api/rules?category={category}&page=1&page_size=20&search={keyword}
+```
+
+### 获取社区资源列表
+```
+GET /api/resources?type={type}&category={category}&page=1&page_size=100
 ```
 
 ### 获取最近收录
