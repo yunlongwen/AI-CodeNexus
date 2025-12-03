@@ -72,60 +72,6 @@
     "identifier": "cursor-tools"
   },
   {
-    "name": "cursor.directory",
-    "description": "Cursor 综合生态社区平台，核心功能涵盖规则分享、MCP 工具推荐、行业资讯、招聘信息等多个维度。用户可浏览并生成适配不同技术栈（Next.js、React、Python、Vue 等）的 Cursor 规则，探索 Neon、Supabase、Vercel 等热门 MCP 工具的配置与使用。同时提供 Cursor 相关的最新动态、技术文章，以及远程 / 混合模式的开发岗位招聘信息，覆盖前端、后端、全栈等多个方向。平台整合了开发者所需的学习资源、工具支持与职业机会，构建了围绕 Cursor 的完整生态，促进用户之间的技术交流与资源共享。",
-    "category": "社区资源",
-    "tags": [
-      "社区资源",
-      "Cursor",
-      "cursor"
-    ],
-    "author": "",
-    "url": "https://cursor.directory/",
-    "content": "# cursor.directory\n\nCursor 综合生态社区平台，核心功能涵盖规则分享、MCP 工具推荐、行业资讯、招聘信息等多个维度。用户可浏览并生成适配不同技术栈（Next.js、React、Python、Vue 等）的 Cursor 规则，探索 Neon、Supabase、Vercel 等热门 MCP 工具的配置与使用。同时提供 Cursor 相关的最新动态、技术文章，以及远程 / 混合模式的开发岗位招聘信息，覆盖前端、后端、全栈等多个方向。平台整合了开发者所需的学习资源、工具支持与职业机会，构建了围绕 Cursor 的完整生态，促进用户之间的技术交流与资源共享。\n\n## 链接\nhttps://cursor.directory/\n\n## 分类\n社区资源",
-    "view_count": 0,
-    "created_at": "2025-12-03T22:35:53.584916Z",
-    "is_featured": false,
-    "id": 5,
-    "identifier": "cursordirectory"
-  },
-  {
-    "name": "cursor-forum",
-    "description": "Cursor 官方社区论坛，核心功能是为用户提供交流互动、问题反馈与功能建议的平台。用户可参与热门讨论，如 GPT-4.1、Claude 3.7 等模型在 Cursor 中的应用体验，Gemini 2.5 与 o3/o4 系列模型的性能对比；反馈软件 bug，如版本更新后 Chat/Agent 功能失效、安装扩展报错等问题；提交功能需求，如增加模型选择、扩展 MCP 工具数量、优化上下文检索等。同时包含工具使用教程、版本更新说明（如 v0.49 版本的新功能介绍）、付费订阅相关疑问解答等内容，是用户与官方、用户之间沟通的核心渠道。",
-    "category": "社区资源",
-    "tags": [
-      "社区资源",
-      "Cursor",
-      "cursor"
-    ],
-    "author": "",
-    "url": "https://forum.cursor.com/",
-    "content": "# cursor-forum\n\nCursor 官方社区论坛，核心功能是为用户提供交流互动、问题反馈与功能建议的平台。用户可参与热门讨论，如 GPT-4.1、Claude 3.7 等模型在 Cursor 中的应用体验，Gemini 2.5 与 o3/o4 系列模型的性能对比；反馈软件 bug，如版本更新后 Chat/Agent 功能失效、安装扩展报错等问题；提交功能需求，如增加模型选择、扩展 MCP 工具数量、优化上下文检索等。同时包含工具使用教程、版本更新说明（如 v0.49 版本的新功能介绍）、付费订阅相关疑问解答等内容，是用户与官方、用户之间沟通的核心渠道。\n\n## 链接\nhttps://forum.cursor.com/\n\n## 分类\n社区资源",
-    "view_count": 0,
-    "created_at": "2025-12-03T22:35:53.584918Z",
-    "is_featured": false,
-    "id": 6,
-    "identifier": "cursor-forum"
-  },
-  {
-    "name": "cursor101",
-    "description": "专注于 Cursor AI 编辑器的免费学习平台，核心功能是提供全面的入门教程与实用技巧，涵盖 Tab 功能、提示栏（Cmd K）、Chat（Cmd L）、Composer 等核心功能的使用方法，帮助用户快速掌握工具。同时提供各类框架的快速启动模板、自定义工作流程的 Cursor Rules 配置指南，以及精选视频教程和 AI 编程资源合集。还包含 Cursor 与 GitHub Copilot 等竞品的能力对比、Trae AI 等同类工具的介绍与使用教程，支持用户从入门到进阶，适配编程小白到资深开发者的不同需求，助力高效运用 AI 辅助编程。",
-    "category": "社区资源",
-    "tags": [
-      "社区资源",
-      "Cursor",
-      "cursor"
-    ],
-    "author": "",
-    "url": "https://cursor101.com/zh",
-    "content": "# cursor101\n\n专注于 Cursor AI 编辑器的免费学习平台，核心功能是提供全面的入门教程与实用技巧，涵盖 Tab 功能、提示栏（Cmd K）、Chat（Cmd L）、Composer 等核心功能的使用方法，帮助用户快速掌握工具。同时提供各类框架的快速启动模板、自定义工作流程的 Cursor Rules 配置指南，以及精选视频教程和 AI 编程资源合集。还包含 Cursor 与 GitHub Copilot 等竞品的能力对比、Trae AI 等同类工具的介绍与使用教程，支持用户从入门到进阶，适配编程小白到资深开发者的不同需求，助力高效运用 AI 辅助编程。\n\n## 链接\nhttps://cursor101.com/zh\n\n## 分类\n社区资源",
-    "view_count": 0,
-    "created_at": "2025-12-03T22:35:53.584920Z",
-    "is_featured": false,
-    "id": 7,
-    "identifier": "cursor101"
-  },
-  {
     "name": "awesome-cursorrules-zh",
     "description": "专为中文开发者优化的 Cursor AI 编程规则集合，是一个由社区驱动、为中文开发者量身打造的 Awesome Cursor Rules 高质量翻译和优化项目。目前已完成所有规则集的翻译工作，包含覆盖多种技术栈的高质量中文规则。",
     "category": "开发规则",
@@ -142,7 +88,7 @@
     "view_count": 0,
     "created_at": "2025-12-03T23:00:00.000000Z",
     "is_featured": false,
-    "id": 8,
+    "id": 5,
     "identifier": "awesome-cursorrules-zh"
   },
   {
@@ -161,7 +107,7 @@
     "view_count": 0,
     "created_at": "2025-12-03T23:00:00.000000Z",
     "is_featured": false,
-    "id": 9,
+    "id": 6,
     "identifier": "cursor-rules-flyeric0212"
   },
   {
@@ -180,7 +126,7 @@
     "view_count": 0,
     "created_at": "2025-12-03T23:00:00.000000Z",
     "is_featured": false,
-    "id": 10,
+    "id": 7,
     "identifier": "harmony-cursor-rules"
   },
   {
@@ -199,7 +145,7 @@
     "view_count": 0,
     "created_at": "2025-12-03T23:00:00.000000Z",
     "is_featured": false,
-    "id": 11,
+    "id": 8,
     "identifier": "cursor-rules-aidenzuk"
   },
   {
@@ -218,7 +164,7 @@
     "view_count": 0,
     "created_at": "2025-12-03T23:00:00.000000Z",
     "is_featured": false,
-    "id": 12,
+    "id": 9,
     "identifier": "cursor-rules-lessup"
   }
 ]

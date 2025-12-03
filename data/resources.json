@@ -96,6 +96,48 @@
     "is_featured": false,
     "id": 7,
     "identifier": "csdn-ai-programming"
+  },
+  {
+    "title": "cursor.directory",
+    "description": "Cursor综合生态社区平台，核心功能涵盖规则分享、MCP工具推荐、行业资讯、招聘信息等多个维度。用户可浏览并生成适配不同技术栈的Cursor规则，探索热门MCP工具的使用方法。",
+    "type": "社区",
+    "category": "Cursor资源",
+    "tags": ["Cursor", "AI编程", "社区平台", "MCP工具"],
+    "url": "https://cursor.directory/",
+    "author": "Cursor",
+    "view_count": 0,
+    "created_at": "2025-12-03T22:35:53.584916Z",
+    "is_featured": true,
+    "id": 8,
+    "identifier": "cursor-directory"
+  },
+  {
+    "title": "cursor-forum",
+    "description": "Cursor官方社区论坛，为用户提供交流互动、问题反馈与功能建议的平台。包含工具使用教程、版本更新说明和技术讨论。",
+    "type": "社区",
+    "category": "Cursor资源",
+    "tags": ["Cursor", "论坛", "官方社区", "技术支持"],
+    "url": "https://forum.cursor.com/",
+    "author": "Cursor",
+    "view_count": 0,
+    "created_at": "2025-12-03T22:35:53.584918Z",
+    "is_featured": true,
+    "id": 9,
+    "identifier": "cursor-forum"
+  },
+  {
+    "title": "cursor101",
+    "description": "专注于Cursor AI编辑器的免费学习平台，提供全面的入门教程与实用技巧，帮助用户快速掌握Cursor工具的使用方法。",
+    "type": "教程",
+    "category": "Cursor资源",
+    "tags": ["Cursor", "教程", "学习平台", "AI编辑器"],
+    "url": "https://cursor101.com/zh",
+    "author": "cursor101",
+    "view_count": 0,
+    "created_at": "2025-12-03T22:35:53.584920Z",
+    "is_featured": true,
+    "id": 10,
+    "identifier": "cursor101"
   }
 ]
 
