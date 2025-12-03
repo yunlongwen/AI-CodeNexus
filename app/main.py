@@ -1116,6 +1116,34 @@ def create_app() -> FastAPI:
                 display: block !important;
               }
             }
+
+            /* 移动端子菜单样式 */
+            .mobile-nav-submenu-header {
+              display: block;
+              padding: 1rem 1.5rem;
+              color: #d1d5db;
+              text-decoration: none;
+              font-size: 0.9375rem;
+              transition: all 0.3s ease;
+              cursor: pointer;
+              border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            }
+
+            .mobile-nav-submenu-header:hover {
+              background: rgba(0, 240, 255, 0.1);
+              color: #00f0ff;
+              padding-left: 2rem;
+            }
+
+            .mobile-nav-submenu-content {
+              transition: all 0.2s ease;
+              max-height: 0;
+              overflow: hidden;
+            }
+
+            .mobile-nav-submenu-content.open {
+              max-height: 200px;
+            }
           </style>
         </head>
         <body class="tech-bg text-gray-100" style="position: relative; z-index: 1;">
@@ -1137,12 +1165,23 @@ def create_app() -> FastAPI:
               <!-- 主导航和管理员入口 -->
               <div class="flex items-center gap-2 flex-1 justify-end">
                   <nav class="flex items-center gap-2 flex-wrap">
-                    <a href="/news" class="top-nav-item px-5 py-3 text-base tech-font-nav text-gray-300 hover:text-neon-cyan rounded-lg transition-all whitespace-nowrap">
-                  📰 编程资讯
-                </a>
-                    <a href="/ai-news" class="top-nav-item px-5 py-3 text-base tech-font-nav text-gray-300 hover:text-neon-purple rounded-lg transition-all whitespace-nowrap">
-                  🤖 AI资讯
-                </a>
+                    <!-- 最新资讯下拉菜单 -->
+                    <div class="relative">
+                      <button class="top-nav-item px-5 py-3 text-base tech-font-nav text-gray-300 hover:text-neon-cyan rounded-lg transition-all whitespace-nowrap flex items-center gap-2" onclick="toggleNewsDropdown()">
+                        📰 最新资讯
+                        <svg class="w-4 h-4 transition-transform duration-200" id="news-dropdown-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                      </button>
+                      <div class="news-dropdown-menu absolute top-full left-0 mt-1 w-48 glass rounded-lg border border-dark-border shadow-xl hidden z-50" id="news-dropdown-menu">
+                        <a href="/news" class="block px-4 py-3 text-sm text-gray-300 hover:text-neon-cyan hover:bg-dark-card rounded-t-lg transition-all border-b border-dark-border">
+                          💻 编程资讯
+                        </a>
+                        <a href="/ai-news" class="block px-4 py-3 text-sm text-gray-300 hover:text-neon-purple hover:bg-dark-card rounded-b-lg transition-all">
+                          🤖 AI资讯
+                        </a>
+                      </div>
+                    </div>
                     <a href="/prompts" class="top-nav-item px-5 py-3 text-base tech-font-nav text-gray-300 hover:text-neon-cyan rounded-lg transition-all whitespace-nowrap">
                       💡 提示词
                 </a>
@@ -1173,8 +1212,19 @@ def create_app() -> FastAPI:
             
             <!-- 移动端顶部导航下拉菜单 -->
             <div class="mobile-top-nav-menu" id="mobile-top-nav-menu">
-              <a href="/news" class="mobile-nav-link">📰 编程资讯</a>
-              <a href="/ai-news" class="mobile-nav-link">🤖 AI资讯</a>
+              <!-- 最新资讯子菜单 -->
+              <div class="mobile-nav-submenu">
+                <div class="mobile-nav-submenu-header" onclick="toggleMobileNewsSubmenu()">
+                  📰 最新资讯
+                  <svg class="w-4 h-4 transition-transform duration-200 inline ml-1" id="mobile-news-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </div>
+                <div class="mobile-nav-submenu-content hidden pl-4" id="mobile-news-submenu">
+                  <a href="/news" class="mobile-nav-link">💻 编程资讯</a>
+                  <a href="/ai-news" class="mobile-nav-link">🤖 AI资讯</a>
+                </div>
+              </div>
               <a href="/prompts" class="mobile-nav-link">💡 提示词</a>
               <a href="/rules" class="mobile-nav-link">📋 规则</a>
               <a href="/resources" class="mobile-nav-link">🌐 社区资源</a>
@@ -2281,82 +2331,7 @@ def create_app() -> FastAPI:
                 }
               }
 
-              // 复制提示词内容
-              async function loadAndCopyPrompt(button, promptId) {
-                try {
-                  const identifier = button.getAttribute('data-identifier');
-                  if (!identifier) {
-                    console.error('未找到identifier');
-                    return;
-                  }
 
-                  // 获取内容
-                  const contentElement = document.getElementById(`content-${promptId}`);
-                  if (!contentElement) {
-                    console.error('未找到内容元素');
-                    return;
-                  }
-
-                  const content = contentElement.textContent;
-                  if (!content || content === '正在加载内容...' || content === '加载内容失败') {
-                    alert('内容尚未加载完成，请稍后再试');
-                    return;
-                  }
-
-                  // 复制到剪贴板
-                  if (navigator.clipboard && navigator.clipboard.writeText) {
-                    await navigator.clipboard.writeText(content);
-                  } else {
-                    // 降级方案
-                    const textArea = document.createElement('textarea');
-                    textArea.value = content;
-                    textArea.style.position = 'fixed';
-                    textArea.style.opacity = '0';
-                    document.body.appendChild(textArea);
-                    textArea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textArea);
-                  }
-
-                  // 显示成功提示
-                  const originalText = button.innerHTML;
-                  button.innerHTML = '✓ 已复制';
-                  button.classList.add('bg-green-600');
-                  button.classList.remove('bg-neon-cyan');
-                  setTimeout(() => {
-                    button.innerHTML = originalText;
-                    button.classList.remove('bg-green-600');
-                    button.classList.add('bg-neon-cyan');
-                  }, 2000);
-
-                } catch (error) {
-                  console.error('复制失败:', error);
-                  alert('复制失败，请稍后重试');
-                }
-              }
-
-              // 加载提示词内容
-              async function loadPromptContent(identifier, promptId) {
-                try {
-                  const contentElement = document.getElementById(`content-${promptId}`);
-                  if (!contentElement) return;
-
-                  const response = await fetch(`/api/prompts/${identifier}`);
-                  if (!response.ok) {
-                    contentElement.textContent = '加载内容失败';
-                    return;
-                  }
-
-                  const data = await response.json();
-                  contentElement.textContent = data.content;
-                } catch (error) {
-                  console.error('加载提示词内容失败:', error);
-                  const contentElement = document.getElementById(`content-${promptId}`);
-                  if (contentElement) {
-                    contentElement.textContent = '加载内容失败';
-                  }
-                }
-              }
 
               // 加载提示词
               async function loadPrompts(page = 1) {
@@ -2396,25 +2371,17 @@ def create_app() -> FastAPI:
                               <h3 class="text-xl font-semibold text-gray-100 mb-2">${prompt.name}</h3>
                               <p class="text-sm text-gray-400 mb-3">${prompt.description}</p>
                             </div>
-                            ${hasContent ? `
-                            <button id="copy-btn-${promptId}"
-                                    data-identifier="${identifier}"
-                                    onclick="loadAndCopyPrompt(this, ${promptId})"
+                            ${prompt.url ? `
+                            <a href="${prompt.url}"
+                                    target="_blank"
                                     class="ml-4 px-4 py-2 bg-neon-cyan hover:bg-neon-blue text-dark-bg rounded-lg font-medium transition-all hover-glow flex items-center gap-2 whitespace-nowrap">
                               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                               </svg>
-                              一键复制
-                            </button>
+                              查看详情
+                            </a>
                             ` : ''}
                           </div>
-                          ${hasContent ? `
-                          <div id="content-container-${promptId}" class="content-container relative">
-                            <div class="glass p-5 rounded-lg border border-neon-cyan/20 bg-dark-bg/50 mb-4">
-                              <pre id="content-${promptId}" class="text-sm text-gray-200 whitespace-pre-wrap font-mono leading-relaxed overflow-x-auto" style="max-height: 600px; overflow-y: auto;">正在加载内容...</pre>
-                            </div>
-                          </div>
-                          ` : ''}
                           <div class="flex items-center justify-between mt-4 pt-4 border-t border-dark-border">
                             <div class="flex items-center gap-2 flex-wrap">
                               ${(prompt.tags || []).map(tag => `<span class="px-2 py-1 glass text-neon-cyan text-xs rounded border border-neon-cyan/30">${tag}</span>`).join('')}
@@ -2439,15 +2406,6 @@ def create_app() -> FastAPI:
                   }
 
                   mainContent.innerHTML = html;
-
-                  // 加载每个提示词的内容
-                  data.items.forEach((prompt, index) => {
-                    const promptId = prompt.id || index;
-                    const identifier = prompt.identifier;
-                    if (identifier) {
-                      loadPromptContent(identifier, promptId);
-                    }
-                  });
 
                   // 更新导航激活状态
                   setTimeout(updateActiveNav, 100);
@@ -3106,7 +3064,47 @@ def create_app() -> FastAPI:
                   });
                 }
               }
-              
+
+              // 最新资讯下拉菜单控制
+              function toggleNewsDropdown() {
+                const menu = document.getElementById('news-dropdown-menu');
+                const arrow = document.getElementById('news-dropdown-arrow');
+
+                if (menu.classList.contains('hidden')) {
+                  menu.classList.remove('hidden');
+                  arrow.style.transform = 'rotate(180deg)';
+                } else {
+                  menu.classList.add('hidden');
+                  arrow.style.transform = 'rotate(0deg)';
+                }
+              }
+
+              // 移动端最新资讯子菜单控制
+              function toggleMobileNewsSubmenu() {
+                const submenu = document.getElementById('mobile-news-submenu');
+                const arrow = document.getElementById('mobile-news-arrow');
+
+                if (submenu.classList.contains('open')) {
+                  submenu.classList.remove('open');
+                  arrow.style.transform = 'rotate(0deg)';
+                } else {
+                  submenu.classList.add('open');
+                  arrow.style.transform = 'rotate(90deg)';
+                }
+              }
+
+              // 点击外部区域关闭下拉菜单
+              document.addEventListener('click', function(e) {
+                const newsDropdown = document.getElementById('news-dropdown-menu');
+                const newsBtn = document.querySelector('[onclick="toggleNewsDropdown()"]');
+
+                if (newsDropdown && !newsDropdown.contains(e.target) && !newsBtn.contains(e.target)) {
+                  newsDropdown.classList.add('hidden');
+                  const arrow = document.getElementById('news-dropdown-arrow');
+                  if (arrow) arrow.style.transform = 'rotate(0deg)';
+                }
+              });
+
               // 移动端侧边栏菜单控制
               function initMobileMenu() {
                 const menuBtn = document.getElementById('mobile-menu-btn');
@@ -3295,706 +3293,6 @@ def create_app() -> FastAPI:
         """
         return HTMLResponse(content=html)
 
-    @app.get("/ai-assistant", response_class=HTMLResponse)
-    @app.get("/ai-assistant/{assistant_id}", response_class=HTMLResponse)
-    async def ai_assistant_page(assistant_id: str = None):
-        """AI助手页面 - 列表页和详情页"""
-        html = """
-        <!DOCTYPE html>
-        <html lang="zh-CN">
-        <head>
-          <meta charset="UTF-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <title>AI助手集合 - AI-CodeNexus</title>
-          <link rel="preconnect" href="https://fonts.googleapis.com">
-          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-          <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-          <script src="https://cdn.tailwindcss.com"></script>
-          <style>
-            body { margin: 0; padding: 0; background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1419 100%); min-height: 100vh; }
-            .tech-font { font-family: 'Orbitron', 'Rajdhani', sans-serif; letter-spacing: 0.05em; }
-            .glass { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
-            .neon-glow { box-shadow: 0 0 10px rgba(0, 240, 255, 0.5), 0 0 20px rgba(0, 240, 255, 0.3); }
-            .preview-content { max-height: 400px; overflow-y: auto; }
-            .preview-content img { max-width: 100%; height: auto; }
-            .preview-content pre { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; }
-            .preview-content table { border-collapse: collapse; width: 100%; }
-            .preview-content th, .preview-content td { border: 1px solid #ddd; padding: 8px; }
-            
-            /* 卡片动画 */
-            .assistant-card {
-              transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-              cursor: pointer;
-              position: relative;
-              overflow: hidden;
-            }
-            .assistant-card::before {
-              content: '';
-              position: absolute;
-              top: 0;
-              left: -100%;
-              width: 100%;
-              height: 100%;
-              background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-              transition: left 0.5s;
-            }
-            .assistant-card:hover::before {
-              left: 100%;
-            }
-            .assistant-card:hover {
-              transform: translateY(-8px) scale(1.02);
-              box-shadow: 0 20px 40px rgba(0, 240, 255, 0.3), 0 0 20px rgba(168, 85, 247, 0.2);
-              border-color: rgba(0, 240, 255, 0.5);
-            }
-            .assistant-card:active {
-              transform: translateY(-4px) scale(1.01);
-            }
-            
-            /* 卡片图标动画 */
-            .card-icon {
-              transition: all 0.3s ease;
-            }
-            .assistant-card:hover .card-icon {
-              transform: scale(1.1) rotate(5deg);
-            }
-            
-            /* 页面切换动画 */
-            .page-section {
-              animation: fadeIn 0.4s ease-in;
-            }
-            @keyframes fadeIn {
-              from { opacity: 0; transform: translateY(20px); }
-              to { opacity: 1; transform: translateY(0); }
-            }
-            
-            /* 卡片网格 */
-            .assistant-grid {
-              display: grid;
-              grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-              gap: 1.5rem;
-            }
-          </style>
-        </head>
-        <body class="text-white">
-          <div class="container mx-auto px-4 py-8 max-w-7xl">
-            <!-- 列表页 -->
-            <div id="assistant-list-page" class="page-section">
-              <!-- 标题 -->
-              <div class="text-center mb-8">
-                <h1 class="tech-font text-4xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-                  AI助手集合
-                </h1>
-                <p class="text-gray-400">智能助手，提升你的工作效率</p>
-              </div>
-
-              <!-- AI助手卡片网格 -->
-              <div class="assistant-grid">
-                <!-- 微信公众号发布助手卡片 -->
-                <div class="assistant-card glass rounded-xl p-6" onclick="openAssistant('wechat-publisher')">
-                  <div class="flex flex-col items-center text-center">
-                    <div class="card-icon text-6xl mb-4">📝</div>
-                    <h3 class="text-xl font-bold mb-2 tech-font">微信公众号发布助手</h3>
-                    <p class="text-gray-400 text-sm mb-4">将 Markdown 格式的文章转换为微信公众号格式，并一键发布到公众号草稿箱</p>
-                    <div class="flex flex-wrap gap-2 justify-center">
-                      <span class="px-3 py-1 bg-blue-600/30 text-blue-300 rounded-full text-xs">内容创作</span>
-                      <span class="px-3 py-1 bg-purple-600/30 text-purple-300 rounded-full text-xs">公众号</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- 更多AI助手卡片可以在这里添加 -->
-                <!-- 示例：占位卡片（未来添加） -->
-                <!--
-                <div class="assistant-card glass rounded-xl p-6 opacity-50">
-                  <div class="flex flex-col items-center text-center">
-                    <div class="card-icon text-6xl mb-4">🚀</div>
-                    <h3 class="text-xl font-bold mb-2 tech-font">更多助手</h3>
-                    <p class="text-gray-400 text-sm">即将推出...</p>
-                  </div>
-                </div>
-                -->
-              </div>
-            </div>
-
-            <!-- 详情页 - 微信公众号发布助手 -->
-            <div id="assistant-detail-page" class="page-section hidden">
-              <!-- 返回按钮 -->
-              <button onclick="backToList()" class="mb-6 px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-2">
-                <span>←</span> 返回助手列表
-              </button>
-
-              <!-- 微信公众号发布助手详情 -->
-              <div id="assistant-wechat-publisher" class="assistant-detail hidden">
-                <div class="glass rounded-lg p-6 mb-6">
-                <h2 class="text-2xl font-bold mb-4 tech-font">微信公众号发布助手</h2>
-                <p class="text-gray-400 mb-4">Markdown 与微信公众号文章格式互转，一键发布到公众号草稿箱</p>
-                
-                <!-- 标签页切换 -->
-                <div class="flex gap-2 mb-6 border-b border-gray-700">
-                  <button onclick="switchTab('md-to-wechat')" id="tab-md-to-wechat" class="px-4 py-2 border-b-2 border-cyan-400 text-cyan-400 font-medium">
-                    Markdown → 公众号
-                  </button>
-                  <button onclick="switchTab('wechat-to-md')" id="tab-wechat-to-md" class="px-4 py-2 border-b-2 border-transparent text-gray-400 hover:text-white">
-                    公众号 → Markdown
-                  </button>
-                </div>
-                
-                <!-- Markdown 转公众号 -->
-                <div id="tab-content-md-to-wechat" class="tab-content">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <!-- 左侧：输入区域 -->
-                  <div>
-                    <label class="block text-sm font-medium mb-2">Markdown 内容</label>
-                    <textarea 
-                      id="markdown-input" 
-                      class="w-full h-96 p-4 bg-gray-800 text-white rounded-lg border border-gray-600 focus:border-cyan-400 focus:outline-none font-mono text-sm"
-                      placeholder="在此输入 Markdown 内容...&#10;&#10;例如：&#10;# 标题&#10;&#10;这是一段**粗体**文字和*斜体*文字。&#10;&#10;```python&#10;def hello():&#10;    print('Hello, World!')&#10;```"
-                    ></textarea>
-                    <div class="mt-4 flex gap-2">
-                      <button onclick="convertMarkdown()" class="px-6 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-lg transition-colors neon-glow">
-                        转换为公众号格式
-                      </button>
-                      <button onclick="clearMarkdown()" class="px-6 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors">
-                        清空
-                      </button>
-                    </div>
-                  </div>
-
-                  <!-- 右侧：预览区域 -->
-                  <div>
-                    <label class="block text-sm font-medium mb-2">预览效果</label>
-                    <div id="markdown-preview" class="w-full h-96 p-4 bg-white text-gray-800 rounded-lg border border-gray-600 overflow-auto preview-content">
-                      <p class="text-gray-500">预览将显示在这里...</p>
-                    </div>
-                    <div class="mt-4 flex gap-2 flex-wrap">
-                      <button onclick="copyWechatHtml()" class="px-6 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors">
-                        复制公众号 HTML
-                      </button>
-                      <button onclick="publishArticle()" class="px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors">
-                        发表到公众号
-                      </button>
-                    </div>
-                    <div class="mt-2 text-xs text-gray-500">
-                      💡 提示：复制 HTML 后，在微信公众号编辑器中点击"HTML"按钮（或按 Ctrl+Shift+V）粘贴，而不是直接粘贴
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 发表文章表单 -->
-                <div id="publish-form" class="mt-6 hidden">
-                  <div class="glass rounded-lg p-4">
-                    <h3 class="text-xl font-bold mb-4">发表文章到微信公众号</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label class="block text-sm font-medium mb-2">标题 *</label>
-                        <input type="text" id="article-title" class="w-full p-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:border-cyan-400 focus:outline-none" placeholder="文章标题">
-                      </div>
-                      <div>
-                        <label class="block text-sm font-medium mb-2">作者</label>
-                        <input type="text" id="article-author" class="w-full p-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:border-cyan-400 focus:outline-none" value="AI-CodeNexus" placeholder="作者名称">
-                      </div>
-                      <div class="md:col-span-2">
-                        <label class="block text-sm font-medium mb-2">摘要（不超过54字符）</label>
-                        <input type="text" id="article-digest" class="w-full p-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:border-cyan-400 focus:outline-none" placeholder="文章摘要" maxlength="54">
-                      </div>
-                      <div class="md:col-span-2">
-                        <label class="block text-sm font-medium mb-2">原文链接（可选）</label>
-                        <input type="url" id="article-url" class="w-full p-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:border-cyan-400 focus:outline-none" placeholder="https://...">
-                      </div>
-                    </div>
-                    <div class="mt-4 flex gap-2">
-                      <button onclick="submitPublish()" class="px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors">
-                        创建草稿
-                      </button>
-                      <button onclick="hidePublishForm()" class="px-6 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors">
-                        取消
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 草稿箱 -->
-                <div class="mt-6">
-                  <h3 class="text-xl font-bold mb-4">草稿箱管理</h3>
-                  <button onclick="loadDrafts()" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors mb-4">
-                    刷新草稿列表
-                  </button>
-                  <div id="drafts-list" class="space-y-4">
-                    <p class="text-gray-400">点击"刷新草稿列表"加载草稿...</p>
-                  </div>
-                </div>
-                </div>
-                
-                <!-- 公众号转 Markdown -->
-                <div id="tab-content-wechat-to-md" class="tab-content hidden">
-                  <div class="space-y-6">
-                    <div>
-                      <label class="block text-sm font-medium mb-2">微信公众号文章 URL</label>
-                      <div class="flex gap-2">
-                        <input 
-                          type="url" 
-                          id="wechat-article-url" 
-                          class="flex-1 p-3 bg-gray-800 text-white rounded-lg border border-gray-600 focus:border-cyan-400 focus:outline-none" 
-                          placeholder="https://mp.weixin.qq.com/s/..."
-                        >
-                        <button onclick="convertWechatArticle()" class="px-6 py-3 bg-cyan-600 hover:bg-cyan-700 rounded-lg transition-colors">
-                          转换
-                        </button>
-                      </div>
-                      <p class="text-gray-500 text-xs mt-2">或者直接粘贴文章 HTML 内容到下方</p>
-                    </div>
-                    
-                    <div>
-                      <label class="block text-sm font-medium mb-2">或粘贴 HTML 内容</label>
-                      <textarea 
-                        id="wechat-html-input" 
-                        class="w-full h-48 p-4 bg-gray-800 text-white rounded-lg border border-gray-600 focus:border-cyan-400 focus:outline-none font-mono text-sm"
-                        placeholder="在此粘贴微信公众号文章的 HTML 内容..."
-                      ></textarea>
-                      <div class="mt-2 flex gap-2">
-                        <button onclick="convertWechatHtml()" class="px-6 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-lg transition-colors">
-                          转换为 Markdown
-                        </button>
-                        <button onclick="clearWechatInput()" class="px-6 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors">
-                          清空
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <label class="block text-sm font-medium mb-2">转换后的 Markdown</label>
-                      <textarea 
-                        id="wechat-markdown-output" 
-                        class="w-full h-96 p-4 bg-gray-800 text-white rounded-lg border border-gray-600 focus:border-cyan-400 focus:outline-none font-mono text-sm"
-                        placeholder="转换后的 Markdown 将显示在这里..."
-                        readonly
-                      ></textarea>
-                      <div class="mt-2 flex gap-2">
-                        <button onclick="copyMarkdown()" class="px-6 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors">
-                          复制 Markdown
-                        </button>
-                        <button onclick="useAsInput()" class="px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors">
-                          用作输入（切换到 Markdown → 公众号）
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              </div>
-            </div>
-
-            <!-- 消息提示 -->
-            <div id="message" class="fixed top-4 right-4 p-4 rounded-lg shadow-lg hidden z-50">
-              <span id="message-text"></span>
-            </div>
-          </div>
-
-          <script>
-            let currentWechatHtml = '';
-            let currentMarkdown = '';
-            let currentAssistant = null;
-
-            // 初始化：根据 URL 决定显示列表页还是详情页
-            function initPage() {
-              const path = window.location.pathname;
-              const match = path.match(/\/ai-assistant\/(.+)/);
-              if (match) {
-                openAssistant(match[1], false);
-              } else {
-                showListPage();
-              }
-            }
-
-            // 显示列表页
-            function showListPage() {
-              document.getElementById('assistant-list-page').classList.remove('hidden');
-              document.getElementById('assistant-detail-page').classList.add('hidden');
-              window.history.pushState({ page: 'list' }, '', '/ai-assistant');
-            }
-
-            // 打开助手详情页
-            function openAssistant(assistantId, pushState = true) {
-              currentAssistant = assistantId;
-              
-              // 隐藏列表页，显示详情页
-              document.getElementById('assistant-list-page').classList.add('hidden');
-              document.getElementById('assistant-detail-page').classList.remove('hidden');
-              
-              // 隐藏所有助手详情，显示当前助手
-              document.querySelectorAll('.assistant-detail').forEach(el => el.classList.add('hidden'));
-              const detailEl = document.getElementById(`assistant-${assistantId}`);
-              if (detailEl) {
-                detailEl.classList.remove('hidden');
-              }
-              
-              // 更新 URL
-              if (pushState) {
-                window.history.pushState({ page: 'detail', assistant: assistantId }, '', `/ai-assistant/${assistantId}`);
-              }
-            }
-
-            // 返回列表页
-            function backToList() {
-              showListPage();
-            }
-
-            // 处理浏览器前进后退
-            window.addEventListener('popstate', function(event) {
-              if (event.state && event.state.page === 'detail') {
-                openAssistant(event.state.assistant, false);
-              } else {
-                showListPage();
-              }
-            });
-
-            // 页面加载时初始化
-            initPage();
-
-            // 标签页切换
-            function switchTab(tabName) {
-              // 隐藏所有标签内容
-              document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-              
-              // 重置所有标签按钮样式
-              document.querySelectorAll('[id^="tab-"]').forEach(btn => {
-                btn.classList.remove('border-cyan-400', 'text-cyan-400');
-                btn.classList.add('border-transparent', 'text-gray-400');
-              });
-              
-              // 显示选中的标签内容
-              document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
-              
-              // 更新选中的标签按钮样式
-              const activeTab = document.getElementById(`tab-${tabName}`);
-              activeTab.classList.remove('border-transparent', 'text-gray-400');
-              activeTab.classList.add('border-cyan-400', 'text-cyan-400');
-            }
-
-            // 转换微信公众号文章（通过 URL）
-            async function convertWechatArticle() {
-              const url = document.getElementById('wechat-article-url').value.trim();
-              if (!url) {
-                showMessage('请输入文章 URL', 'error');
-                return;
-              }
-
-              try {
-                showMessage('正在获取文章内容...', 'info');
-                const response = await fetch('/api/ai-assistant/wechat-publisher/article-to-markdown', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ url: url })
-                });
-
-                const data = await response.json();
-                
-                if (response.ok) {
-                  document.getElementById('wechat-markdown-output').value = data.markdown;
-                  if (data.title) {
-                    showMessage(`转换成功！标题: ${data.title}`, 'success');
-                  } else {
-                    showMessage('转换成功！', 'success');
-                  }
-                } else {
-                  showMessage(data.detail || '转换失败', 'error');
-                }
-              } catch (error) {
-                showMessage('转换失败: ' + error.message, 'error');
-              }
-            }
-
-            // 转换微信公众号 HTML（直接粘贴）
-            async function convertWechatHtml() {
-              const html = document.getElementById('wechat-html-input').value.trim();
-              if (!html) {
-                showMessage('请输入 HTML 内容', 'error');
-                return;
-              }
-
-              try {
-                showMessage('正在转换...', 'info');
-                const response = await fetch('/api/ai-assistant/wechat-publisher/article-to-markdown', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ html: html })
-                });
-
-                const data = await response.json();
-                
-                if (response.ok) {
-                  document.getElementById('wechat-markdown-output').value = data.markdown;
-                  showMessage('转换成功！', 'success');
-                } else {
-                  showMessage(data.detail || '转换失败', 'error');
-                }
-              } catch (error) {
-                showMessage('转换失败: ' + error.message, 'error');
-              }
-            }
-
-            // 清空公众号输入
-            function clearWechatInput() {
-              document.getElementById('wechat-article-url').value = '';
-              document.getElementById('wechat-html-input').value = '';
-              document.getElementById('wechat-markdown-output').value = '';
-            }
-
-            // 复制 Markdown
-            function copyMarkdown() {
-              const markdown = document.getElementById('wechat-markdown-output').value;
-              if (!markdown) {
-                showMessage('没有可复制的内容', 'error');
-                return;
-              }
-
-              navigator.clipboard.writeText(markdown).then(() => {
-                showMessage('已复制到剪贴板', 'success');
-              }).catch(() => {
-                showMessage('复制失败', 'error');
-              });
-            }
-
-            // 用作输入（切换到 Markdown → 公众号）
-            function useAsInput() {
-              const markdown = document.getElementById('wechat-markdown-output').value;
-              if (!markdown) {
-                showMessage('没有可用的 Markdown 内容', 'error');
-                return;
-              }
-
-              // 切换到 Markdown → 公众号 标签页
-              switchTab('md-to-wechat');
-              
-              // 将 Markdown 填入输入框
-              document.getElementById('markdown-input').value = markdown;
-              
-              showMessage('已切换到 Markdown → 公众号，内容已填入', 'success');
-            }
-
-            // 转换 Markdown
-            async function convertMarkdown() {
-              const markdown = document.getElementById('markdown-input').value;
-              if (!markdown.trim()) {
-                showMessage('请输入 Markdown 内容', 'error');
-                return;
-              }
-
-              currentMarkdown = markdown;
-              
-              try {
-                const response = await fetch('/api/ai-assistant/wechat-publisher/markdown/convert', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ markdown: markdown })
-                });
-
-                const data = await response.json();
-                
-                if (response.ok) {
-                  currentWechatHtml = data.wechat_html;
-                  document.getElementById('markdown-preview').innerHTML = data.html;
-                  showMessage('转换成功！', 'success');
-                } else {
-                  showMessage(data.detail || '转换失败', 'error');
-                }
-              } catch (error) {
-                showMessage('转换失败: ' + error.message, 'error');
-              }
-            }
-
-            // 复制公众号 HTML（使用富文本格式，类似 Ctrl+C 复制网页）
-            async function copyWechatHtml() {
-              if (!currentWechatHtml) {
-                showMessage('请先转换 Markdown', 'error');
-                return;
-              }
-
-              try {
-                // 创建一个临时 div 元素来渲染 HTML（完全隐藏）
-                const tempDiv = document.createElement('div');
-                tempDiv.style.position = 'fixed';
-                tempDiv.style.left = '-9999px';
-                tempDiv.style.top = '-9999px';
-                tempDiv.style.width = '1px';
-                tempDiv.style.height = '1px';
-                tempDiv.style.opacity = '0';
-                tempDiv.style.pointerEvents = 'none';
-                tempDiv.setAttribute('contenteditable', 'true');
-                tempDiv.innerHTML = currentWechatHtml;
-                document.body.appendChild(tempDiv);
-
-                // 选中所有内容
-                const range = document.createRange();
-                range.selectNodeContents(tempDiv);
-                const selection = window.getSelection();
-                selection.removeAllRanges();
-                selection.addRange(range);
-
-                // 先获取文本内容（在移除元素之前）
-                const textContent = tempDiv.innerText || tempDiv.textContent || '';
-
-                // 使用 document.execCommand 复制（最接近 Ctrl+C 的行为）
-                const success = document.execCommand('copy');
-                
-                // 清理
-                selection.removeAllRanges();
-                document.body.removeChild(tempDiv);
-
-                if (success) {
-                  showMessage('已复制到剪贴板（富文本格式）', 'success');
-                } else {
-                  // 如果 execCommand 失败，尝试使用 Clipboard API
-                  if (navigator.clipboard && navigator.clipboard.write) {
-                    const htmlBlob = new Blob([currentWechatHtml], { type: 'text/html' });
-                    const textBlob = new Blob([textContent], { type: 'text/plain' });
-                    
-                    const clipboardItem = new ClipboardItem({
-                      'text/html': htmlBlob,
-                      'text/plain': textBlob
-                    });
-
-                    await navigator.clipboard.write([clipboardItem]);
-                    showMessage('已复制到剪贴板（富文本格式）', 'success');
-                  } else {
-                    throw new Error('浏览器不支持复制功能');
-                  }
-                }
-              } catch (error) {
-                console.error('复制失败:', error);
-                // 如果富文本复制失败，尝试降级到纯文本
-                try {
-                  await navigator.clipboard.writeText(currentWechatHtml);
-                  showMessage('已复制到剪贴板（纯文本格式）', 'warning');
-                } catch (textError) {
-                  showMessage('复制失败: ' + error.message, 'error');
-                }
-              }
-            }
-
-
-            // 清空 Markdown
-            function clearMarkdown() {
-              document.getElementById('markdown-input').value = '';
-              document.getElementById('markdown-preview').innerHTML = '<p class="text-gray-500">预览将显示在这里...</p>';
-              currentWechatHtml = '';
-              currentMarkdown = '';
-            }
-
-            // 显示发表表单
-            function publishArticle() {
-              if (!currentWechatHtml) {
-                showMessage('请先转换 Markdown', 'error');
-                return;
-              }
-              document.getElementById('publish-form').classList.remove('hidden');
-            }
-
-            // 隐藏发表表单
-            function hidePublishForm() {
-              document.getElementById('publish-form').classList.add('hidden');
-            }
-
-            // 提交发表
-            async function submitPublish() {
-              const title = document.getElementById('article-title').value.trim();
-              const author = document.getElementById('article-author').value.trim() || 'AI-CodeNexus';
-              const digest = document.getElementById('article-digest').value.trim();
-              const url = document.getElementById('article-url').value.trim();
-
-              if (!title) {
-                showMessage('请输入文章标题', 'error');
-                return;
-              }
-
-              if (!currentWechatHtml) {
-                showMessage('请先转换 Markdown', 'error');
-                return;
-              }
-
-              try {
-                const response = await fetch('/api/ai-assistant/wechat-publisher/publish', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    title: title,
-                    content: currentWechatHtml,
-                    author: author,
-                    digest: digest || undefined,
-                    content_source_url: url || undefined
-                  })
-                });
-
-                const data = await response.json();
-                
-                if (response.ok && data.success) {
-                  showMessage('草稿创建成功！media_id: ' + data.media_id, 'success');
-                  hidePublishForm();
-                } else {
-                  showMessage(data.message || data.detail || '发表失败', 'error');
-                }
-              } catch (error) {
-                showMessage('发表失败: ' + error.message, 'error');
-              }
-            }
-
-            // 加载草稿列表
-            async function loadDrafts() {
-              try {
-                const response = await fetch('/api/ai-assistant/wechat-publisher/drafts?offset=0&count=20');
-                const result = await response.json();
-                
-                if (response.ok && result.ok) {
-                  const drafts = result.data.item || [];
-                  const listEl = document.getElementById('drafts-list');
-                  
-                  if (drafts.length === 0) {
-                    listEl.innerHTML = '<p class="text-gray-400">草稿箱为空</p>';
-                  } else {
-                    listEl.innerHTML = drafts.map((draft, idx) => `
-                      <div class="glass rounded-lg p-4">
-                        <div class="flex justify-between items-start">
-                          <div>
-                            <h3 class="font-bold text-lg">${draft.news_item?.[0]?.title || '无标题'}</h3>
-                            <p class="text-gray-400 text-sm mt-1">media_id: ${draft.media_id}</p>
-                            <p class="text-gray-400 text-sm">更新时间: ${new Date(draft.update_time * 1000).toLocaleString()}</p>
-                          </div>
-                        </div>
-                      </div>
-                    `).join('');
-                  }
-                  showMessage('草稿列表加载成功', 'success');
-                } else {
-                  showMessage(result.detail || '加载失败', 'error');
-                }
-              } catch (error) {
-                showMessage('加载失败: ' + error.message, 'error');
-              }
-            }
-
-            // 显示消息
-            function showMessage(text, type = 'info') {
-              const msgEl = document.getElementById('message');
-              const textEl = document.getElementById('message-text');
-              
-              msgEl.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
-                type === 'success' ? 'bg-green-600' : 
-                type === 'error' ? 'bg-red-600' : 
-                'bg-blue-600'
-              }`;
-              msgEl.classList.remove('hidden');
-              textEl.textContent = text;
-              
-              setTimeout(() => {
-                msgEl.classList.add('hidden');
-              }, 3000);
-            }
-
-          </script>
-        </body>
-        </html>
-        """
-        return HTMLResponse(content=html)
 
     @app.get("/health")
     async def health_check():

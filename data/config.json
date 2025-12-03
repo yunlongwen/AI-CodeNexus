@@ -15,6 +15,11 @@
       "title": "AI资讯",
       "description": "AI领域最新动态和技术文章"
     },
+    "recent": {
+      "id": "page-recent",
+      "title": "最新资讯",
+      "description": "编程资讯和AI资讯的最新文章，按时间排序"
+    },
     "prompts": {
       "id": "page-prompts",
       "title": "提示词",
