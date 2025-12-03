@@ -1,1 +1,8 @@
-[]
+[
+  {
+    "title": "Cursor Rules 四大原则：让AI代码生成更稳定高效",
+    "url": "https://mp.weixin.qq.com/s/vEUAZIJrb5kEjWptIhsC-g",
+    "source": "梁波Eric",
+    "summary": "Cursor Rules 在实际应用中可能遇到规则不生效、Token浪费、维护困难、输出不稳定和破坏项目风格等问题，本文提出MSEC四大原则：最小化原则、结构化原则、精准引用原则、一致性原则。通过这四个原则可有效提升AI代码生成的稳定性。"
+  }
+]

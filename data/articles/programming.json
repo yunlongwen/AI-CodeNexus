@@ -200,7 +200,7 @@
     "created_at": "2025-12-01T10:38:20.074030Z",
     "published_time": "2025-12-01T10:38:20.074030Z",
     "archived_at": "2025-12-01T10:38:20.074030Z",
-    "view_count": 1,
+    "view_count": 2,
     "category": "programming"
   },
   {
@@ -215,7 +215,7 @@
     "created_at": "2025-12-01T10:38:24.288802Z",
     "published_time": "2025-12-01T10:38:24.288802Z",
     "archived_at": "2025-12-01T10:38:24.288802Z",
-    "view_count": 1,
+    "view_count": 3,
     "category": "programming"
   },
   {
@@ -245,7 +245,7 @@
     "created_at": "2025-12-02T13:54:48.151560Z",
     "published_time": "2025-12-02T13:54:48.151560Z",
     "archived_at": "2025-12-02T13:54:48.151560Z",
-    "view_count": 0,
+    "view_count": 1,
     "category": "programming"
   },
   {
@@ -275,6 +275,106 @@
     "created_at": "2025-12-02T13:57:41.993033Z",
     "published_time": "2025-12-02T13:57:41.993033Z",
     "archived_at": "2025-12-02T13:57:41.993033Z",
+    "view_count": 1,
+    "category": "programming"
+  },
+  {
+    "title": "Claude用不好浪费钱？10个高级技巧让效率翻3倍",
+    "url": "https://mp.weixin.qq.com/s/JGmTFwHC990OUx7s66_egQ",
+    "source": "技术更好说",
+    "summary": "深度讲解Claude的Artifacts、Projects、Extended Thinking等10个高级功能。提供20+实战Prompt模板,帮你效率提升3倍。适合程序员、内容创作者、产品经理,从系统提示词到完整工作流全覆盖。",
+    "tags": [
+      "Claude"
+    ],
+    "tool_tags": [
+      "Claude"
+    ],
+    "score": 8.0,
+    "id": 46,
+    "created_at": "2025-12-03T08:30:50.811016Z",
+    "published_time": "2025-12-03T08:30:50.811016Z",
+    "archived_at": "2025-12-03T08:30:50.811016Z",
+    "view_count": 1,
+    "category": "programming"
+  },
+  {
+    "title": "SpecKit 在成熟 Java 项目中的 AI 编码实践",
+    "url": "https://mp.weixin.qq.com/s/AZJknKuyRfvjQxWAMaFFlg",
+    "source": "悟壳",
+    "summary": "暂无摘要",
+    "tags": [],
+    "tool_tags": [],
+    "score": 8.0,
+    "id": 47,
+    "created_at": "2025-12-03T12:11:37.006889Z",
+    "published_time": "2025-12-03T12:11:37.006889Z",
+    "archived_at": "2025-12-03T12:11:37.006889Z",
+    "view_count": 0,
+    "category": "programming"
+  },
+  {
+    "title": "产业之声 | 从编写代码到对话未来：生成式AI重塑软件的新范式",
+    "url": "https://mp.weixin.qq.com/s/G_3PrbzMZVZ7isNHSnJICg",
+    "source": "袁媛",
+    "summary": "生成式AI正推动软件开发经历“范式级跃迁”：传统以人工编写、调试、迭代为核心的开发流程，正加速向“自然语言驱动、AI自主生成、人机协同优化”的新模式演进。",
+    "tags": [],
+    "tool_tags": [],
+    "score": 8.0,
+    "id": 48,
+    "created_at": "2025-12-03T12:12:06.894750Z",
+    "published_time": "2025-12-03T12:12:06.894750Z",
+    "archived_at": "2025-12-03T12:12:06.894750Z",
+    "view_count": 0,
+    "category": "programming"
+  },
+  {
+    "title": "SpecKit 在成熟 Java 项目中的 AI 编码实践",
+    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1764738834&ver=6395&signature=WTKeYiRhek5IQVc9wfPCZv-VPXZjF9EkZICB4Kd8wePBjZjtM2*c017YZ1FUzhNk0LPVQCrzD8ZhgB06jNmEgix0XOrtbjwgoRX043O8rLNbQMTKCmuNZd1h-H9D6EoE&new=1",
+    "source": "100kwhy",
+    "summary": "背景初次尝试 AI Code + SpecKit,过程中被其能力所震撼.本文将总结一些实践经验,与大家共同学习探讨.当前 vibe coding 正如火...",
+    "tool_tags": [
+      "sudocode"
+    ],
+    "id": 50,
+    "created_at": "2025-12-03T13:48:37.051985Z",
+    "published_time": "2025-12-03T13:48:37.051985Z",
+    "archived_at": "2025-12-03T13:48:37.051985Z",
+    "view_count": 0,
+    "category": "programming",
+    "tags": [
+      "sudocode"
+    ]
+  },
+  {
+    "title": "Google 重磅新工具 Code Wiki:让AI写代码更规范,搭配 Vibe Coding 玩转 AI 编程新范式",
+    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1764738704&ver=6395&signature=RdujWWUpHA-CeXPCvHBwPV15CrsISSC*XkhyC5prGT9AmjbjqznAfdoXP4VuC8-qTbaA0*GIydRpLmLqkCtisWWjU2MjTm1kL7qXkpqaSTWPmbVXmo7JZM1jWriz1KcH&new=1",
+    "source": "100kwhy",
+    "summary": "Google CodeWiki 是什么CodeWiki 是 Google 推出的一个基于 AI 的文档平台,用于自动生成、更新和维护代码仓库的文档 .它会扫描...",
+    "tool_tags": [
+      "codewiki"
+    ],
+    "id": 51,
+    "created_at": "2025-12-03T13:48:53.853734Z",
+    "published_time": "2025-12-03T13:48:53.853734Z",
+    "archived_at": "2025-12-03T13:48:53.853734Z",
+    "view_count": 0,
+    "category": "programming",
+    "tags": [
+      "codewiki"
+    ]
+  },
+  {
+    "title": "Cursor Rules 四大原则：让AI代码生成更稳定高效",
+    "url": "https://mp.weixin.qq.com/s/vEUAZIJrb5kEjWptIhsC-g",
+    "source": "梁波Eric",
+    "summary": "Cursor Rules 在实际应用中可能遇到规则不生效、Token浪费、维护困难、输出不稳定和破坏项目风格等问题，本文提出MSEC四大原则：最小化原则、结构化原则、精准引用原则、一致性原则。通过这四个原则可有效提升AI代码生成的稳定性。",
+    "tags": [],
+    "tool_tags": [],
+    "score": 8.0,
+    "id": 52,
+    "created_at": "2025-12-03T22:31:10.222941Z",
+    "published_time": "2025-12-03T22:31:10.222941Z",
+    "archived_at": "2025-12-03T22:31:10.222941Z",
     "view_count": 0,
     "category": "programming"
   }
