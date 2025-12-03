@@ -130,5 +130,17 @@
     "is_featured": false,
     "id": 18,
     "identifier": "deepseek-quote-card-generation"
+  },
+  {
+    "name": "AI编程工具中文提示词合集",
+    "description": "AI编程工具中文提示词合集，包含Cursor、Devin、VSCode Agent等多种AI编程工具的提示词，为中文开发者提供AI辅助编程参考资源。持续更新中文编程Rules和最新AI编程提示词。",
+    "category": "代码",
+    "tags": ["AI编程", "提示词", "中文", "Cursor", "Devin", "VSCode"],
+    "author": "",
+    "copy_count": 0,
+    "created_at": "2025-12-03T23:30:00.000000Z",
+    "is_featured": false,
+    "id": 19,
+    "identifier": "system-prompts-and-models-of-ai-tools-chinese"
   }
 ]
