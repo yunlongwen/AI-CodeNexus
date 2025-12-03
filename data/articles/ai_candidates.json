@@ -1,1 +1,72 @@
-[]
+[
+  {
+    "title": "Google 重磅新工具 Code Wiki:让AI写代码更规范,搭配 Vibe Coding 玩转 AI 编程新范式",
+    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1764772269&ver=6396&signature=b3vTXm2jK*SyOn7AhypCCoftAc3eYg4D5NYsaPlCGFyw1Nnb-U6dNtNE7jxBGKPGsN2G9xETTWo*cJBCjbITEi8KhgIWgwVaqvOsDKjKJGr3LkcUi1HWF*-vO5gmvlqW&new=1",
+    "source": "100kwhy",
+    "summary": "Code Wiki,就是瞄准这个痛点:它用 Gemini 帮你把整个仓库变成一个持续更新的、可搜索的代码维基,让你读项目像刷文档一样轻...",
+    "crawled_from": "sogou_wechat:Code Wiki"
+  },
+  {
+    "title": "Gemini 3 上线两周,ChatGPT 日活下降 6%,Altman 内部信拉响红色警报",
+    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1764772280&ver=6396&signature=wLktcqbNOI06t0GUj**YhjDuU6M6b4jhBXui14kS7CBpt9n9CGNJpUApRVQVrthOEzgOou5cJdihhIuWXb1IwqDbVQNLr*r8-VT9PkaPzWdQ*ZW4lAq2MevB6PffDHvB&new=1",
+    "source": "100kwhy",
+    "summary": "Gemini 3 起来之后,ChatGPT 这么大压力?除了生态位,还有两个 AI 时代的特征不容忽视:第一,AI 时代用户的忠诚度更低了,哪个...",
+    "crawled_from": "sogou_wechat:Gemini 3"
+  },
+  {
+    "title": "当Gemini 3刷屏时,这款AI已开始救命了:原子级攻克「不可成药」靶点",
+    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1764772280&ver=6396&signature=dbxWaxZQNfP2pE5LAzTEmNFvqzD2k7ud21-g8tg4Fq0GUqBoCfQt1Q-0CiRPddchtgxjgVJfCCRFvSVXOg1AdtU1Kj9KcxCfdelNYWH-dPTxHSsris*OP*RQyA6LkGck&new=1",
+    "source": "100kwhy",
+    "summary": "AI圈大概率已经被Gemini 3、Nano Banana Pro刷屏:一边是 4K 神图,一边是秒出文案、玩梗造梦.上下滑动查看可几乎没人注意到...",
+    "crawled_from": "sogou_wechat:Gemini 3"
+  },
+  {
+    "title": "花10分钟熟练掌握Gemini3和NanoBanana2",
+    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1764772280&ver=6396&signature=S1lQYWIqAu2SCCRU0iXIhSVPuJC8aeOuCfB9Y8XKnrjwEjO8QWB91JfkMQ9*D9d5QJGDpbvJSkt6*MpVpY-P7EsFNhsxlACEVNm4BczpNuVYv*tPQkuFxTvV*NpS8OeI&new=1",
+    "source": "100kwhy",
+    "summary": "大家好,我是森图小鸿.前两天刚发了 Gemini 3 和 Nano Banana 2(即梦国际版)的测评,后台很多小伙伴问:“工具是好,但在具...",
+    "crawled_from": "sogou_wechat:Gemini 3"
+  },
+  {
+    "title": "Agent混战2025:为何IDC将蚂蚁数科选为“领导者”?",
+    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1764772371&ver=6396&signature=9XCWW8gEVRc9euOUwr1fa1w7ZD4BcsUGcSoKwW8D6EM4X18Z1cpDiq8qOQ-LlIUHnpRzrwiRjqgtC7Egmt5hjOinBJ6Ly-E2eucr30Eorp*kzAqySif4911JjkvaxopJ&new=1",
+    "source": "100kwhy",
+    "summary": "鹿尧2025年,中国科技圈的关键词无疑是“智能体”(Agent).在几乎任何一场科技论坛或创投峰会上,你都能听到“全能助理”类的...",
+    "crawled_from": "sogou_wechat:Agent"
+  },
+  {
+    "title": "2025年AI现状:智能体Agent、创新与转型 | 麦肯锡",
+    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1764772371&ver=6396&signature=kfymO3M5vvWiKEV74HndoUMmDNBNodxBLsdhDLsLVbCecpdG9jq-affyhknTvy5wnoZO3ceWyA9YZxl1uD75up66FAM7rjm70iDlmdNDxbFtVy2BfRzg7u13KYMRrcYH&new=1",
+    "source": "100kwhy",
+    "summary": "Agent的应用场景与行业分布从单个业务职能来看,Agent的使用最常用于IT和知识管理领域,在这些领域,如IT服务台管理和知识管理...",
+    "crawled_from": "sogou_wechat:Agent"
+  },
+  {
+    "title": "RL不是提升Agent的唯一路径",
+    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1764772371&ver=6396&signature=rPeuiNkr-O8X0yF7KLWXwE2t*VOpfuSJFtVJuqhxfXWZFt6wZvYakXNHM9LyCuW1Q7b5VBp24HD3nje5x-uxODHzkl4HkJuoDwKonqN2lViXKiU-eT62Bq7sNlUCgLJ7&new=1",
+    "source": "100kwhy",
+    "summary": "论文:Agent Learning via Early Experience训练Agent时,让LLM先熟悉一下环境:随便点点这、点点那,看看会发生什么.这种重在...",
+    "crawled_from": "sogou_wechat:Agent"
+  },
+  {
+    "title": "Android智能取证系统V1.1.8",
+    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1764772414&ver=6396&signature=GusG06eR9UbdEMXryRTkmq31-ZTf2nQMmTxOwFk5mdKf6IgceEUp2KR2U9zjuyZU-HgzZHVimTnRECKgAYy02voZsG4V57vpRqlpQmpDw9T2nqMUIdszSrQB3DHCHXyN&new=1",
+    "source": "100kwhy",
+    "summary": "鸿蒙(HarmonyOS)病毒检测工具V4.0鸿蒙(HarmonyOS)病毒检测工具V5.0Android病毒分析工具V2.8-VIP会员版Android病毒分析...",
+    "crawled_from": "sogou_wechat:Android"
+  },
+  {
+    "title": "“安卓之父”的机器人梦想与日本新机遇",
+    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1764772414&ver=6396&signature=1jb1FiNPSQSu*BnYOOMvDV0qAFhGXLSQ1hsvMNSlv7MqQn0uRaVkkXBLRroUm2S2tJZMvTDLn087X95wXxTLGz03kSRwmPfziokiwHxUf785RGGFg9w919wyR469NhVa&new=1",
+    "source": "100kwhy",
+    "summary": "特意以“Android”(意为机器人)为名,向该领域致敬.尽管他随后带领Android系统开创了移动互联网时代,但其对实体机器人的执...",
+    "crawled_from": "sogou_wechat:Android"
+  },
+  {
+    "title": "安卓16更新太6了,加入AI通知摘要、升级家长安全监护",
+    "url": "https://mp.weixin.qq.com/s?src=11&timestamp=1764772414&ver=6396&signature=n64oKubiOdoayWj4Lh8G*RlZWi-Y0PHBEvV0-*bdM1qZn57QqtTqOUcG742AM52-kTijB3HDznKmDMiOrWco4uUsAmRRMC1eN*s*9p4QoPxVjz0rz9nz6v6SHuuklass&new=1",
+    "source": "100kwhy",
+    "summary": "Google 2日释出Android 16系统更新,陆续带来开发者大会揭示后的全新功能,让你的Android装置变得更聪明,管理日常更轻松.帮...",
+    "crawled_from": "sogou_wechat:Android"
+  }
+]
