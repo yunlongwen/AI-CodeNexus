@@ -678,38 +678,135 @@ async def get_weekly(weekly_id: str):
         with open(weekly_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
-        # 简单的Markdown转HTML（可以使用markdown库，这里简化处理）
         import re
-        html_content = content
+        lines = content.split('\n')
         
-        # 转换标题（按行处理）
-        lines = html_content.split('\n')
-        processed_lines = []
-        for line in lines:
+        # 解析文章信息
+        articles = {
+            'ai': [],  # AI资讯
+            'programming': []  # 编程资讯
+        }
+        current_category = None
+        current_article = {}
+        
+        title_line = ''
+        time_range = ''
+        
+        for i, line in enumerate(lines):
+            line = line.strip()
+            
+            # 解析主标题
             if line.startswith('# '):
-                processed_lines.append(f'<h1 class="text-3xl font-bold text-neon-cyan mb-4">{line[2:]}</h1>')
-            elif line.startswith('## '):
-                processed_lines.append(f'<h2 class="text-2xl font-bold text-gray-100 mb-3 mt-6">{line[3:]}</h2>')
-            elif line.startswith('### '):
-                processed_lines.append(f'<h3 class="text-xl font-bold text-gray-200 mb-2 mt-4">{line[4:]}</h3>')
-            elif line.startswith('#### '):
-                processed_lines.append(f'<h4 class="text-lg font-bold text-gray-200 mb-2 mt-4">{line[5:]}</h4>')
-            elif line.strip() == '':
-                processed_lines.append('')
-            else:
-                # 转换链接
-                line = re.sub(r'\[([^\]]+)\]\(([^\)]+)\)', r'<a href="\2" target="_blank" class="text-neon-cyan hover:text-neon-purple underline">\1</a>', line)
-                # 转换粗体
-                line = re.sub(r'\*\*([^\*]+)\*\*', r'<strong class="text-gray-100">\1</strong>', line)
-                # 转换代码块
-                line = re.sub(r'`([^`]+)`', r'<code class="px-1 py-0.5 bg-dark-card text-neon-cyan rounded text-sm">\1</code>', line)
-                processed_lines.append(f'<p class="text-gray-300 mb-4 leading-relaxed">{line}</p>')
+                title_line = line[2:].strip()
+                continue
+            
+            # 解析时间范围
+            if line.startswith('时间范围：'):
+                time_range = line.replace('时间范围：', '').strip()
+                continue
+            
+            # 解析分类标题
+            if line.startswith('## 🤖 AI资讯'):
+                current_category = 'ai'
+                continue
+            elif line.startswith('## 💻 编程资讯'):
+                current_category = 'programming'
+                continue
+            
+            # 解析文章条目（以数字开头，如 "1. 标题"）
+            if re.match(r'^\d+\.\s+', line):
+                # 保存上一个文章
+                if current_article and current_category:
+                    articles[current_category].append(current_article)
+                
+                # 开始新文章
+                title = re.sub(r'^\d+\.\s+', '', line).strip()
+                current_article = {
+                    'title': title,
+                    'summary': '',
+                    'source': '',
+                    'url': ''
+                }
+                continue
+            
+            # 解析文章详情
+            if current_article:
+                if line.startswith('来源：'):
+                    current_article['source'] = line.replace('来源：', '').strip()
+                elif line.startswith('链接：'):
+                    current_article['url'] = line.replace('链接：', '').strip()
+                elif line and not line.startswith('---') and not line.startswith('统计信息') and not line.startswith('本报告'):
+                    # 摘要（不是来源、链接、分隔符的行）
+                    if not current_article['summary']:
+                        current_article['summary'] = line
         
-        html_content = '\n'.join(processed_lines)
+        # 保存最后一个文章
+        if current_article and current_category:
+            articles[current_category].append(current_article)
+        
+        # 反转列表，使最新的内容在最前面
+        articles['ai'].reverse()
+        articles['programming'].reverse()
+        
+        # 生成HTML
+        html_parts = []
+        
+        # 标题和时间
+        html_parts.append(f'<h1 class="text-4xl tech-font-bold text-neon-cyan text-glow mb-2">{title_line}</h1>')
+        if time_range:
+            html_parts.append(f'<p class="text-base text-gray-400 tech-font mb-6">{time_range}</p>')
+        
+        # 先显示编程资讯
+        if articles['programming']:
+            html_parts.append('<h2 class="text-2xl font-bold text-gray-100 mb-4 mt-8">💻 编程资讯</h2>')
+            html_parts.append('<div class="space-y-4 mb-8">')
+            for article in articles['programming']:
+                article_html = '<div class="glass rounded-lg border border-dark-border p-4 hover:border-neon-cyan transition-all">'
+                if article['url']:
+                    article_html += f'<a href="{article["url"]}" target="_blank" class="block">'
+                    article_html += f'<h3 class="text-lg font-semibold text-neon-cyan hover:text-neon-purple mb-2 transition-colors">{article["title"]}</h3>'
+                    article_html += '</a>'
+                else:
+                    article_html += f'<h3 class="text-lg font-semibold text-gray-100 mb-2">{article["title"]}</h3>'
+                
+                if article['summary'] and article['summary'] != '暂无摘要':
+                    article_html += f'<p class="text-sm text-gray-400 mb-2">{article["summary"]}</p>'
+                
+                if article['source']:
+                    article_html += f'<p class="text-xs text-gray-500">来源：{article["source"]}</p>'
+                
+                article_html += '</div>'
+                html_parts.append(article_html)
+            html_parts.append('</div>')
+        
+        # 再显示AI资讯
+        if articles['ai']:
+            html_parts.append('<h2 class="text-2xl font-bold text-gray-100 mb-4 mt-8">🤖 AI资讯</h2>')
+            html_parts.append('<div class="space-y-4 mb-8">')
+            for article in articles['ai']:
+                article_html = '<div class="glass rounded-lg border border-dark-border p-4 hover:border-neon-cyan transition-all">'
+                if article['url']:
+                    article_html += f'<a href="{article["url"]}" target="_blank" class="block">'
+                    article_html += f'<h3 class="text-lg font-semibold text-neon-cyan hover:text-neon-purple mb-2 transition-colors">{article["title"]}</h3>'
+                    article_html += '</a>'
+                else:
+                    article_html += f'<h3 class="text-lg font-semibold text-gray-100 mb-2">{article["title"]}</h3>'
+                
+                if article['summary'] and article['summary'] != '暂无摘要':
+                    article_html += f'<p class="text-sm text-gray-400 mb-2">{article["summary"]}</p>'
+                
+                if article['source']:
+                    article_html += f'<p class="text-xs text-gray-500">来源：{article["source"]}</p>'
+                
+                article_html += '</div>'
+                html_parts.append(article_html)
+            html_parts.append('</div>')
+        
+        html_content = '\n'.join(html_parts)
         
         return {
-            "title": weekly_id.replace('weekly', 'Week ').replace('2025', '2025 '),
-            "description": "每周资讯汇总",
+            "title": title_line or weekly_id.replace('weekly', 'Week ').replace('2025', '2025 '),
+            "description": time_range or "每周资讯汇总",
             "content": html_content
         }
     except HTTPException:

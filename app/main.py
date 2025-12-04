@@ -653,9 +653,10 @@ def create_app() -> FastAPI:
     @app.get("/prompts", response_class=HTMLResponse)
     @app.get("/rules", response_class=HTMLResponse)
     @app.get("/resources", response_class=HTMLResponse)
+    @app.get("/weekly/{weekly_id}", response_class=HTMLResponse)
     @app.get("/category/{category}", response_class=HTMLResponse)
     @app.get("/tool/{tool_id_or_identifier}", response_class=HTMLResponse)
-    async def root(category: str = None, tool_id_or_identifier: str = None):
+    async def root(category: str = None, tool_id_or_identifier: str = None, weekly_id: str = None):
         """AICoding基地 首页（支持所有前端路由）"""
         html = """
         <!DOCTYPE html>
@@ -882,6 +883,35 @@ def create_app() -> FastAPI:
             
             .top-nav-item.active {
               color: #00f0ff;
+            }
+            
+            /* 移除下拉菜单按钮的背景色、边框和轮廓 */
+            button.top-nav-item {
+              background: transparent !important;
+              border: none !important;
+              outline: none !important;
+              box-shadow: none !important;
+            }
+            
+            button.top-nav-item:hover {
+              background: transparent !important;
+              border: none !important;
+              outline: none !important;
+              box-shadow: none !important;
+            }
+            
+            button.top-nav-item:focus {
+              background: transparent !important;
+              border: none !important;
+              outline: none !important;
+              box-shadow: none !important;
+            }
+            
+            button.top-nav-item:active {
+              background: transparent !important;
+              border: none !important;
+              outline: none !important;
+              box-shadow: none !important;
             }
             
             /* 移动端响应式样式 */
@@ -1160,6 +1190,7 @@ def create_app() -> FastAPI:
 
             .mobile-nav-submenu-content.open {
               max-height: 200px;
+              display: block !important;
             }
           </style>
         </head>
@@ -2516,21 +2547,36 @@ def create_app() -> FastAPI:
                       <h1 class="text-4xl tech-font-bold text-neon-cyan text-glow mb-2">${title}</h1>
                       <p class="text-base text-gray-400 tech-font">${description} (共 ${data.total} 个)</p>
                     </div>
-                    <div class="space-y-4 mb-8">
+                    <div class="space-y-6 mb-8">
                   `;
                   
                   if (data.items.length === 0) {
                     html += '<div class="text-center py-20 text-gray-400">暂无规则</div>';
                   } else {
-                    data.items.forEach(rule => {
+                    data.items.forEach((rule, index) => {
                       html += `
-                        <article class="glass rounded-xl border border-dark-border p-6 card-hover">
-                          <h3 class="text-xl font-semibold text-gray-100 mb-2">${rule.name}</h3>
-                          <p class="text-sm text-gray-300 mb-3">${rule.description}</p>
-                          ${rule.content ? `<div class="glass p-4 rounded-lg mb-3"><pre class="text-xs text-gray-300 whitespace-pre-wrap">${rule.content.substring(0, 500)}${rule.content.length > 500 ? '...' : ''}</pre></div>` : ''}
-                          ${rule.url ? `<a href="${rule.url}" target="_blank" class="text-neon-cyan hover:text-neon-blue text-sm">查看详情 →</a>` : ''}
-                          <div class="flex items-center gap-2 flex-wrap mt-3">
-                            ${(rule.tags || []).map(tag => `<span class="px-2 py-1 glass text-neon-cyan text-xs rounded border border-neon-cyan/30">${tag}</span>`).join('')}
+                        <article class="glass rounded-xl border border-dark-border p-6 card-hover relative">
+                          <div class="flex items-start justify-between mb-4">
+                            <div class="flex-1">
+                              <h3 class="text-xl font-semibold text-gray-100 mb-2">${rule.name}</h3>
+                              <p class="text-sm text-gray-400 mb-3">${rule.description}</p>
+                            </div>
+                            ${rule.url ? `
+                            <a href="${rule.url}"
+                                    target="_blank"
+                                    class="ml-4 px-4 py-2 bg-neon-cyan hover:bg-neon-blue text-dark-bg rounded-lg font-medium transition-all hover-glow flex items-center gap-2 whitespace-nowrap">
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                              查看详情
+                            </a>
+                            ` : ''}
+                          </div>
+                          <div class="flex items-center justify-between mt-4 pt-4 border-t border-dark-border">
+                            <div class="flex items-center gap-2 flex-wrap">
+                              ${(rule.tags || []).map(tag => `<span class="px-2 py-1 glass text-neon-cyan text-xs rounded border border-neon-cyan/30">${tag}</span>`).join('')}
+                            </div>
+                            ${rule.url ? `<a href="${rule.url}" target="_blank" class="text-xs text-gray-400 hover:text-neon-cyan transition-colors">查看原文 →</a>` : ''}
                           </div>
                         </article>
                       `;
@@ -2968,7 +3014,7 @@ def create_app() -> FastAPI:
                 const description = config.description || '关注我们的微信公众号，获取最新技术资讯';
                 
                 mainContent.innerHTML = `
-                  <div class="mb-6">
+                  <div class="mb-6 text-center">
                     <h1 class="text-4xl tech-font-bold text-neon-cyan text-glow mb-2">${title}</h1>
                     <p class="text-base text-gray-400 tech-font">${description}</p>
                   </div>
@@ -3253,8 +3299,10 @@ def create_app() -> FastAPI:
 
                 if (submenu.classList.contains('open')) {
                   submenu.classList.remove('open');
+                  submenu.classList.add('hidden');
                   arrow.style.transform = 'rotate(0deg)';
                 } else {
+                  submenu.classList.remove('hidden');
                   submenu.classList.add('open');
                   arrow.style.transform = 'rotate(90deg)';
                 }
@@ -3295,8 +3343,10 @@ def create_app() -> FastAPI:
 
                 if (submenu.classList.contains('open')) {
                   submenu.classList.remove('open');
+                  submenu.classList.add('hidden');
                   arrow.style.transform = 'rotate(0deg)';
                 } else {
+                  submenu.classList.remove('hidden');
                   submenu.classList.add('open');
                   arrow.style.transform = 'rotate(90deg)';
                 }
@@ -3309,8 +3359,10 @@ def create_app() -> FastAPI:
 
                 if (submenu.classList.contains('open')) {
                   submenu.classList.remove('open');
+                  submenu.classList.add('hidden');
                   arrow.style.transform = 'rotate(0deg)';
                 } else {
+                  submenu.classList.remove('hidden');
                   submenu.classList.add('open');
                   arrow.style.transform = 'rotate(90deg)';
                 }
