@@ -201,7 +201,37 @@
     "created_at": "2025-12-03T12:13:13.081326Z",
     "published_time": "2025-12-03T12:13:13.081326Z",
     "archived_at": "2025-12-03T12:13:13.081326Z",
-    "view_count": 2,
+    "view_count": 4,
+    "category": "ai_news"
+  },
+  {
+    "title": "专访OpenAI研究员：AI 时代的终极生存技能，用AI学习AI！",
+    "url": "https://mp.weixin.qq.com/s/y2fgmLo4Uug3iJsJrn6SPw",
+    "source": "Datawhale",
+    "summary": "暂无摘要",
+    "tags": [],
+    "tool_tags": [],
+    "score": 8.0,
+    "id": 55,
+    "created_at": "2025-12-04T12:12:01.260531Z",
+    "published_time": "2025-12-04T12:12:01.260531Z",
+    "archived_at": "2025-12-04T12:12:01.260531Z",
+    "view_count": 1,
+    "category": "ai_news"
+  },
+  {
+    "title": "大模型如何「在思考中使用工具」｜Interleaved Thinking",
+    "url": "https://mp.weixin.qq.com/s/P5XsY8pO2monh5APBBr7eQ",
+    "source": "金色传说大聪明",
+    "summary": "最好、最新的内容，总来自赛博禅心",
+    "tags": [],
+    "tool_tags": [],
+    "score": 8.0,
+    "id": 62,
+    "created_at": "2025-12-05T08:28:17.941104Z",
+    "published_time": "2025-12-05T08:28:17.941104Z",
+    "archived_at": "2025-12-05T08:28:17.941104Z",
+    "view_count": 0,
     "category": "ai_news"
   }
 ]

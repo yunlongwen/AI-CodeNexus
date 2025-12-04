@@ -1,7 +1,6 @@
 {
+  "max_articles_per_keyword": 3,
   "hour": 14,
-  "minute": 0,
   "count": 5,
-  "cron": "0 14 * * *",
-  "max_articles_per_keyword": 3
+  "cron": "0 14 * * 1-5"
 }

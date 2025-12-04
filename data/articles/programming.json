@@ -275,7 +275,7 @@
     "created_at": "2025-12-02T13:57:41.993033Z",
     "published_time": "2025-12-02T13:57:41.993033Z",
     "archived_at": "2025-12-02T13:57:41.993033Z",
-    "view_count": 1,
+    "view_count": 2,
     "category": "programming"
   },
   {
@@ -294,7 +294,7 @@
     "created_at": "2025-12-03T08:30:50.811016Z",
     "published_time": "2025-12-03T08:30:50.811016Z",
     "archived_at": "2025-12-03T08:30:50.811016Z",
-    "view_count": 1,
+    "view_count": 2,
     "category": "programming"
   },
   {
@@ -309,7 +309,7 @@
     "created_at": "2025-12-03T12:11:37.006889Z",
     "published_time": "2025-12-03T12:11:37.006889Z",
     "archived_at": "2025-12-03T12:11:37.006889Z",
-    "view_count": 0,
+    "view_count": 1,
     "category": "programming"
   },
   {
@@ -357,7 +357,7 @@
     "created_at": "2025-12-03T13:48:53.853734Z",
     "published_time": "2025-12-03T13:48:53.853734Z",
     "archived_at": "2025-12-03T13:48:53.853734Z",
-    "view_count": 0,
+    "view_count": 1,
     "category": "programming",
     "tags": [
       "codewiki"
@@ -375,6 +375,70 @@
     "created_at": "2025-12-03T22:31:10.222941Z",
     "published_time": "2025-12-03T22:31:10.222941Z",
     "archived_at": "2025-12-03T22:31:10.222941Z",
+    "view_count": 3,
+    "category": "programming"
+  },
+  {
+    "title": "Vibe Coding 产品最大的错觉，是以为自己真的有护城河",
+    "url": "https://mp.weixin.qq.com/s/CCVYQx9ad52RzXl2027-NA",
+    "source": "Founder Park",
+    "summary": "8000 万「卖身」后，Base44 想得更清楚了。",
+    "tags": [],
+    "tool_tags": [],
+    "score": 8.0,
+    "id": 53,
+    "created_at": "2025-12-04T12:06:46.675585Z",
+    "published_time": "2025-12-04T12:06:46.675585Z",
+    "archived_at": "2025-12-04T12:06:46.675585Z",
+    "view_count": 2,
+    "category": "programming"
+  },
+  {
+    "title": "三端齐发，TalkCody 正式开源",
+    "url": "https://mp.weixin.qq.com/s/Tf69os9nXL_xJ5t8DVib1g",
+    "source": "康凯森",
+    "summary": "今天，由我开发的 AI Coding Agent —— TalkCody 正式开源了，欢迎大家试用、反馈",
+    "tags": [],
+    "tool_tags": [],
+    "score": 8.0,
+    "id": 54,
+    "created_at": "2025-12-04T12:11:56.506532Z",
+    "published_time": "2025-12-04T12:11:56.506532Z",
+    "archived_at": "2025-12-04T12:11:56.506532Z",
+    "view_count": 4,
+    "category": "programming"
+  },
+  {
+    "title": "“人人都是程序员”的梦该醒了！AI 编程“大逃杀”：Cursor 或成创业公司唯一“幸存者”，“60 分开发者”撑起最后防线",
+    "url": "https://mp.weixin.qq.com/s/pJQ_IoIAs5F7nzhIb2DQog",
+    "source": "Tina",
+    "summary": "“人人都是程序员”的一年实验：烧了几十亿美元，只引来了一小撮圈外人",
+    "tags": [
+      "Cursor"
+    ],
+    "tool_tags": [
+      "Cursor"
+    ],
+    "score": 8.0,
+    "id": 63,
+    "created_at": "2025-12-05T08:28:31.045058Z",
+    "published_time": "2025-12-05T08:28:31.045058Z",
+    "archived_at": "2025-12-05T08:28:31.045058Z",
+    "view_count": 0,
+    "category": "programming"
+  },
+  {
+    "title": "这，才是Vibe Coding的未来。",
+    "url": "https://mp.weixin.qq.com/s/dZzc9BacXRjxvj9m7-lQcg",
+    "source": "数字生命卡兹克",
+    "summary": "技术最大的谦卑就是隐藏自己",
+    "tags": [],
+    "tool_tags": [],
+    "score": 8.0,
+    "id": 64,
+    "created_at": "2025-12-05T08:28:37.269218Z",
+    "published_time": "2025-12-05T08:28:37.269218Z",
+    "archived_at": "2025-12-05T08:28:37.269218Z",
     "view_count": 0,
     "category": "programming"
   }
