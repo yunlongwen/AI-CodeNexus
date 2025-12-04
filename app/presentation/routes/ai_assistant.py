@@ -9,7 +9,7 @@ from loguru import logger
 import httpx
 from bs4 import BeautifulSoup
 
-from ..notifier.wechat_mp import WeChatMPClient
+from ...infrastructure.notifiers.wechat_mp import WeChatMPClient
 
 router = APIRouter()
 

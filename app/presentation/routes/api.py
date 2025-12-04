@@ -19,7 +19,7 @@ try:
 except Exception as e:
     logger.warning(f"加载 .env 文件失败: {e}")
 
-from ..services.data_loader import DataLoader
+from ...services.data_loader import DataLoader
 
 router = APIRouter()
 
@@ -257,7 +257,7 @@ async def record_article_click_by_url(url: str = Query(..., description="文章U
 async def submit_tool(request: dict):
     """提交工具到候选池"""
     try:
-        from ..sources.tool_candidates import CandidateTool, load_candidate_pool, save_candidate_pool
+        from ...domain.sources.tool_candidates import CandidateTool, load_candidate_pool, save_candidate_pool
         from datetime import datetime
         
         logger.info(f"收到工具提交请求: {request}")
@@ -320,7 +320,7 @@ async def submit_tool(request: dict):
         
         if save_result:
             # 验证文件是否真的保存成功
-            from ..sources.tool_candidates import _candidate_data_path
+            from ...domain.sources.tool_candidates import _candidate_data_path
             candidate_path = _candidate_data_path()
             if candidate_path.exists():
                 # 重新加载验证
@@ -444,7 +444,7 @@ async def record_tool_click(tool_id_or_identifier: str):
 async def submit_article(request: dict):
     """提交资讯到候选池"""
     try:
-        from ..sources.ai_candidates import CandidateArticle, load_candidate_pool, save_candidate_pool
+        from ...domain.sources.ai_candidates import CandidateArticle, load_candidate_pool, save_candidate_pool
         from pathlib import Path
         import random
         
@@ -470,7 +470,7 @@ async def submit_article(request: dict):
         
         # 随机分配关键字（从配置的关键字列表中）
         try:
-            from ..config_loader import load_crawler_keywords
+            from ...config_loader import load_crawler_keywords
             keywords = load_crawler_keywords()
             if not keywords:
                 # 如果没有配置关键字，使用默认关键字
@@ -524,7 +524,7 @@ async def submit_article(request: dict):
             
             if save_result:
                 # 验证文件是否真的保存成功
-                from ..sources.ai_candidates import _candidate_data_path
+                from ...domain.sources.ai_candidates import _candidate_data_path
                 candidate_path = _candidate_data_path()
                 if candidate_path.exists():
                     # 重新加载验证
@@ -670,7 +670,8 @@ async def get_resources(
 async def get_weekly(weekly_id: str):
     """获取每周资讯内容"""
     try:
-        weekly_file = Path(__file__).resolve().parent.parent.parent / "data" / "weekly" / f"{weekly_id}.md"
+        # app/presentation/routes/api.py -> app/presentation/routes -> app/presentation -> app -> 项目根目录
+        weekly_file = Path(__file__).resolve().parent.parent.parent.parent / "data" / "weekly" / f"{weekly_id}.md"
         
         if not weekly_file.exists():
             raise HTTPException(status_code=404, detail="Weekly not found")
@@ -820,9 +821,14 @@ async def get_weekly(weekly_id: str):
 async def list_weekly():
     """获取每周资讯文件列表"""
     try:
-        weekly_dir = Path(__file__).resolve().parent.parent.parent / "data" / "weekly"
+        # app/presentation/routes/api.py -> app/presentation/routes -> app/presentation -> app -> 项目根目录
+        weekly_dir = Path(__file__).resolve().parent.parent.parent.parent / "data" / "weekly"
+        
+        logger.info(f"每周资讯目录路径: {weekly_dir}")
+        logger.info(f"目录是否存在: {weekly_dir.exists()}")
         
         if not weekly_dir.exists():
+            logger.warning(f"每周资讯目录不存在: {weekly_dir}")
             return {"items": []}
         
         # 获取所有.md文件
@@ -836,10 +842,14 @@ async def list_weekly():
                 "filename": file_path.name
             })
         
+        logger.info(f"找到 {len(weekly_files)} 个每周资讯文件: {[f['id'] for f in weekly_files]}")
+        
         # 按文件名倒序排列（最新的在前）
         weekly_files.sort(key=lambda x: x["id"], reverse=True)
         
-        return {"items": weekly_files}
+        result = {"items": weekly_files}
+        logger.info(f"返回数据: {result}")
+        return result
     except Exception as e:
         logger.error(f"获取每周资讯列表失败: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))

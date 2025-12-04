@@ -4,7 +4,7 @@ from typing import Iterable, List
 import httpx
 from loguru import logger
 
-from ..config_loader import load_wecom_template
+from ...config_loader import load_wecom_template
 
 WECOM_WEBHOOK = os.getenv("WECOM_WEBHOOK", "")
 

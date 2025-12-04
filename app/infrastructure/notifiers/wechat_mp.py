@@ -5,7 +5,7 @@ from typing import Dict, Any, Optional
 import httpx
 from loguru import logger
 
-from ..config_loader import load_env_var
+from ...config_loader import load_env_var
 
 
 class WeChatMPClient:

@@ -12,7 +12,7 @@ from fastapi.responses import HTMLResponse
 from loguru import logger
 from pydantic import BaseModel
 
-from ..config_loader import (
+from ...config_loader import (
     load_digest_schedule,
     load_crawler_keywords,
     save_crawler_keywords,
@@ -25,9 +25,9 @@ from ..config_loader import (
     save_tool_keywords,
     add_tool_keyword,
 )
-from ..notifier.wecom import build_wecom_digest_markdown, send_markdown_to_wecom
-from ..notifier.wechat_mp import WeChatMPClient
-from ..sources.ai_articles import (
+from ...infrastructure.notifiers.wecom import build_wecom_digest_markdown, send_markdown_to_wecom
+from ...infrastructure.notifiers.wechat_mp import WeChatMPClient
+from ...domain.sources.ai_articles import (
     clear_articles,
     delete_article_from_config,
     get_all_articles,
@@ -35,26 +35,26 @@ from ..sources.ai_articles import (
     save_article_to_config,
     todays_theme,
 )
-from ..sources.article_sources import fetch_from_all_sources
-from ..crawlers.rss import fetch_rss_articles
-from ..crawlers.github_trending import fetch_github_trending
-from ..crawlers.hackernews import fetch_hackernews_articles
-from ..sources.article_crawler import fetch_article_info
-from ..crawlers.sogou_wechat import search_articles_by_keyword
-from ..crawlers.devmaster import fetch_tools_from_api
-from ..sources.ai_candidates import (
+from ...domain.sources.article_sources import fetch_from_all_sources
+from ...infrastructure.crawlers.rss import fetch_rss_articles
+from ...infrastructure.crawlers.github_trending import fetch_github_trending
+from ...infrastructure.crawlers.hackernews import fetch_hackernews_articles
+from ...domain.sources.article_crawler import fetch_article_info
+from ...infrastructure.crawlers.sogou_wechat import search_articles_by_keyword
+from ...infrastructure.crawlers.devmaster import fetch_tools_from_api
+from ...domain.sources.ai_candidates import (
     add_candidates_to_pool,
     clear_candidate_pool,
     load_candidate_pool,
     promote_candidates_to_articles,
     save_candidate_pool,
 )
-from ..sources.tool_candidates import (
+from ...domain.sources.tool_candidates import (
     load_candidate_pool as load_tool_candidate_pool,
     save_candidate_pool as save_tool_candidate_pool,
     CandidateTool,
 )
-from ..services.weekly_digest import update_weekly_digest
+from ...services.weekly_digest import update_weekly_digest
 import json
 from pathlib import Path
 
@@ -215,7 +215,7 @@ async def list_all_articles(admin: None = Depends(_require_admin)):
     Returns:
         dict: 包含所有文章的列表，每个文章包含 is_archived 字段
     """
-    from ..services.data_loader import DataLoader
+    from ...services.data_loader import DataLoader
     
     articles = get_all_articles()
     
@@ -282,7 +282,7 @@ async def list_candidate_articles(admin: None = Depends(_require_admin)):
     logger.info(f"Endpoint /candidates: Found {len(candidates)} candidates in the pool.")
 
     # 检查归档状态
-    from ..services.data_loader import DataLoader
+    from ...services.data_loader import DataLoader
     
     grouped_candidates = {}
     for candidate in candidates:
@@ -359,7 +359,7 @@ async def accept_candidate(request: CandidateActionRequest, admin: None = Depend
     save_candidate_pool(remaining_candidates)
     
     # 2. 根据资讯来源类型进行不同处理
-    from ..services.data_loader import DataLoader
+    from ...services.data_loader import DataLoader
     
     if is_tool_related:
         # 工具关键字爬取的资讯：归档到编程资讯（programming.json）
@@ -477,7 +477,7 @@ async def archive_candidate(request: ArchiveArticleRequest, admin: None = Depend
         raise HTTPException(status_code=404, detail="在候选池中未找到该文章")
     
     # 使用DataLoader归档文章
-    from ..services.data_loader import DataLoader
+    from ...services.data_loader import DataLoader
     success = DataLoader.archive_article_to_category(article_to_archive, category, tool_tags)
     
     if not success:
@@ -536,7 +536,7 @@ async def accept_tool_candidate(request: dict, admin: None = Depends(_require_ad
         save_tool_candidate_pool(remaining_candidates)
         
         # 2. 添加到正式工具池
-        from ..services.data_loader import DataLoader
+        from ...services.data_loader import DataLoader
         from datetime import datetime
         
         # 生成工具ID（使用时间戳）
@@ -619,7 +619,7 @@ async def crawl_tools(request: CrawlToolsRequest, admin: None = Depends(_require
         request: 爬取请求，包含分类和最大数量
     """
     try:
-        from ..services.data_loader import DataLoader
+        from ...services.data_loader import DataLoader
         
         # 获取所有已存在的工具URL（包括正式工具库和候选池）
         # 使用规范化后的URL进行对比，避免因URL格式差异导致的重复
@@ -957,7 +957,7 @@ async def delete_article(request: DeleteArticleRequest, admin: None = Depends(_r
     Returns:
         dict: 包含成功状态和删除详情的响应
     """
-    from ..services.data_loader import DataLoader
+    from ...services.data_loader import DataLoader
     
     url = request.url.strip()
     if not url:
@@ -979,7 +979,7 @@ async def delete_article(request: DeleteArticleRequest, admin: None = Depends(_r
         deletion_results["from_categories"] = category_results
         
         # 3. 从周报中删除
-        from ..services.weekly_digest import delete_article_from_weekly
+        from ...services.weekly_digest import delete_article_from_weekly
         weekly_success = delete_article_from_weekly(url)
         deletion_results["from_weekly"] = weekly_success
         
@@ -1049,7 +1049,7 @@ async def archive_article_from_pool(request: ArchiveArticleFromPoolRequest, admi
         raise HTTPException(status_code=400, detail=f"无效的分类，支持的分类：{', '.join(valid_categories)}")
     
     # 检查文章是否已归档
-    from ..services.data_loader import DataLoader
+    from ...services.data_loader import DataLoader
     if DataLoader.is_article_archived(url):
         raise HTTPException(status_code=400, detail="文章已归档，无法重复归档")
     

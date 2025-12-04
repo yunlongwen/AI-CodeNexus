@@ -13,8 +13,8 @@ from bs4 import BeautifulSoup
 from loguru import logger
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
 
-from ..sources.ai_candidates import CandidateArticle
-from ..sources.article_crawler import normalize_weixin_url
+from ...domain.sources.ai_candidates import CandidateArticle
+from ...domain.sources.article_crawler import normalize_weixin_url
 
 def _parse_time_string(time_str: str) -> datetime:
     """

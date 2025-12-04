@@ -5,10 +5,10 @@ from typing import List, Dict, Any, Optional
 
 from loguru import logger
 
-from ..crawlers.rss import fetch_rss_articles
-from ..crawlers.github_trending import fetch_github_trending
-from ..crawlers.hackernews import fetch_hackernews_articles
-from ..crawlers.sogou_wechat import search_articles_by_keyword
+from ...infrastructure.crawlers.rss import fetch_rss_articles
+from ...infrastructure.crawlers.github_trending import fetch_github_trending
+from ...infrastructure.crawlers.hackernews import fetch_hackernews_articles
+from ...infrastructure.crawlers.sogou_wechat import search_articles_by_keyword
 
 
 async def fetch_from_all_sources(
