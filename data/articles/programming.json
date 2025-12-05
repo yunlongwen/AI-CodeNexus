@@ -98,7 +98,7 @@
     "created_at": "2025-11-29T07:39:21.976879Z",
     "published_time": "2025-11-29T07:39:21.976879Z",
     "archived_at": "2025-11-29T07:39:21.976879Z",
-    "view_count": 4,
+    "view_count": 5,
     "category": "programming"
   },
   {
@@ -357,7 +357,7 @@
     "created_at": "2025-12-03T13:48:53.853734Z",
     "published_time": "2025-12-03T13:48:53.853734Z",
     "archived_at": "2025-12-03T13:48:53.853734Z",
-    "view_count": 1,
+    "view_count": 2,
     "category": "programming",
     "tags": [
       "codewiki"
@@ -375,7 +375,7 @@
     "created_at": "2025-12-03T22:31:10.222941Z",
     "published_time": "2025-12-03T22:31:10.222941Z",
     "archived_at": "2025-12-03T22:31:10.222941Z",
-    "view_count": 3,
+    "view_count": 4,
     "category": "programming"
   },
   {
@@ -405,40 +405,51 @@
     "created_at": "2025-12-04T12:11:56.506532Z",
     "published_time": "2025-12-04T12:11:56.506532Z",
     "archived_at": "2025-12-04T12:11:56.506532Z",
-    "view_count": 4,
+    "view_count": 5,
     "category": "programming"
   },
   {
-    "title": "“人人都是程序员”的梦该醒了！AI 编程“大逃杀”：Cursor 或成创业公司唯一“幸存者”，“60 分开发者”撑起最后防线",
-    "url": "https://mp.weixin.qq.com/s/pJQ_IoIAs5F7nzhIb2DQog",
-    "source": "Tina",
-    "summary": "“人人都是程序员”的一年实验：烧了几十亿美元，只引来了一小撮圈外人",
-    "tags": [
-      "Cursor"
-    ],
-    "tool_tags": [
-      "Cursor"
-    ],
+    "title": "如何调教一名合格的“编程搭子”",
+    "url": "https://mp.weixin.qq.com/s/2UBz1kWFvFTT3vado4eFfg",
+    "source": "微信公众平台",
+    "summary": "大家好，我是来自阿里云智能集团的王月成，今天我分享的主题是：如何调教一名合格的编程搭子。",
+    "tags": [],
+    "tool_tags": [],
     "score": 8.0,
-    "id": 63,
-    "created_at": "2025-12-05T08:28:31.045058Z",
-    "published_time": "2025-12-05T08:28:31.045058Z",
-    "archived_at": "2025-12-05T08:28:31.045058Z",
+    "id": 56,
+    "created_at": "2025-12-06T19:14:53.438377Z",
+    "published_time": "2025-12-06T19:14:53.438377Z",
+    "archived_at": "2025-12-06T19:14:53.438377Z",
     "view_count": 0,
     "category": "programming"
   },
   {
-    "title": "这，才是Vibe Coding的未来。",
-    "url": "https://mp.weixin.qq.com/s/dZzc9BacXRjxvj9m7-lQcg",
-    "source": "数字生命卡兹克",
-    "summary": "技术最大的谦卑就是隐藏自己",
+    "title": "大模型到底能否真正提升写代码效率？Anthropic 内部 20 万条数据首次公开大模型在真实代码工作流中的表现",
+    "url": "https://mp.weixin.qq.com/s/p39y9XzYaJmoge1x3qQFKA",
+    "source": "DataLearner",
+    "summary": "Anthropic 发布了一篇很有意思的研究博客：132 名工程师与研究员、53 场深度访谈、20 万条 Claude Code 内部使用记录，试图回答在一家 AI 公司内部，当工程师人人有一个“AI 同事”之后，工作到底变成了什么样？",
     "tags": [],
     "tool_tags": [],
     "score": 8.0,
-    "id": 64,
-    "created_at": "2025-12-05T08:28:37.269218Z",
-    "published_time": "2025-12-05T08:28:37.269218Z",
-    "archived_at": "2025-12-05T08:28:37.269218Z",
+    "id": 57,
+    "created_at": "2025-12-06T19:15:20.534656Z",
+    "published_time": "2025-12-06T19:15:20.534656Z",
+    "archived_at": "2025-12-06T19:15:20.534656Z",
+    "view_count": 0,
+    "category": "programming"
+  },
+  {
+    "title": "AI Coding与单元测试的协同进化：从验证到驱动",
+    "url": "https://mp.weixin.qq.com/s/vqqw60fwEfI3pjBgUc4QUg",
+    "source": "业务研发平台",
+    "summary": "一线技术实践，三大策略破解AI编程痛点！",
+    "tags": [],
+    "tool_tags": [],
+    "score": 8.0,
+    "id": 58,
+    "created_at": "2025-12-06T19:15:41.966152Z",
+    "published_time": "2025-12-06T19:15:41.966152Z",
+    "archived_at": "2025-12-06T19:15:41.966152Z",
     "view_count": 0,
     "category": "programming"
   }
