@@ -731,9 +731,6 @@ INDEX_HTML = """
               <!-- 工具分类 -->
                 <div class="flex-1 p-5 overflow-y-auto">
                   <div class="space-y-2">
-                    <a href="/tools" class="nav-item block px-4 py-3 text-base tech-font-nav text-gray-400 hover:text-neon-cyan rounded transition-all">
-                      🔥 热门工具
-                    </a>
                     <a href="/category/ide" class="nav-item block px-4 py-3 text-base tech-font-nav text-gray-400 hover:text-neon-cyan rounded transition-all">
                       💻 开发IDE
                   </a>

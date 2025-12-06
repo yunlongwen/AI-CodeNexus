@@ -78,7 +78,33 @@ async def lifespan(app: FastAPI):
 
     # 配置推送任务触发器
     if schedule.cron:
-        trigger = CronTrigger.from_crontab(schedule.cron, timezone="Asia/Shanghai")
+        # 解析cron表达式，确保周一到周五正确解析
+        # cron格式: 分 时 日 月 周
+        # 周字段: 0=周日, 1=周一, ..., 6=周六
+        # 1-5 表示周一到周五
+        cron_parts = schedule.cron.strip().split()
+        if len(cron_parts) == 5:
+            minute, hour, day, month, day_of_week = cron_parts
+            # 使用CronTrigger构造函数，明确指定day_of_week参数
+            # APScheduler支持day_of_week='1-5'表示周一到周五
+            # 直接传递字符串参数，让CronTrigger自己解析
+            trigger_kwargs = {
+                "timezone": "Asia/Shanghai"
+            }
+            if minute != '*':
+                trigger_kwargs['minute'] = minute
+            if hour != '*':
+                trigger_kwargs['hour'] = hour
+            if day != '*':
+                trigger_kwargs['day'] = day
+            if month != '*':
+                trigger_kwargs['month'] = month
+            if day_of_week != '*':
+                trigger_kwargs['day_of_week'] = day_of_week
+            trigger = CronTrigger(**trigger_kwargs)
+        else:
+            # 如果解析失败，使用from_crontab作为后备
+            trigger = CronTrigger.from_crontab(schedule.cron, timezone="Asia/Shanghai")
         scheduler_manager.add_job(
             digest_service.send_daily_digest,
             trigger=trigger,
@@ -118,13 +144,14 @@ async def lifespan(app: FastAPI):
         logger.error("[调度器] 警告：推送任务添加失败，未找到任务！")
 
     # 添加数据备份任务：每天 23:00 执行（备份config目录）
-    scheduler_manager.add_cron_job(
-        backup_service.backup_data_to_github,
-        hour=23,
-        minute=0,
-        job_id="daily_data_backup",
-    )
-    logger.info("[调度器] 已添加数据备份任务，每日 23:00 执行（备份config目录）")
+    # 已禁用每日定时备份
+    # scheduler_manager.add_cron_job(
+    #     backup_service.backup_data_to_github,
+    #     hour=23,
+    #     minute=0,
+    #     job_id="daily_data_backup",
+    # )
+    # logger.info("[调度器] 已添加数据备份任务，每日 23:00 执行（备份config目录）")
     
     # 启动调度器
     scheduler_manager.start()

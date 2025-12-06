@@ -11,7 +11,7 @@
 ### 📱 关注微信公众号
 
 <div align="center">
-  <img src="app/presentation/static" alt="微信公众号二维码" width="200" />
+  <img src="app/presentation/static/wechat_mp_qr.jpg" alt="微信公众号二维码" width="200" />
   <br/>
   <p>扫描二维码关注公众号，获取最新技术资讯和工具推荐</p>
 </div>
