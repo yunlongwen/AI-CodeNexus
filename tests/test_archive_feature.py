@@ -64,7 +64,7 @@ class TestArchiveFeature:
             json.dump(archived_data, f, ensure_ascii=False)
         
         # Mock文章池路径和归档检查
-        with patch('app.sources.ai_articles._articles_path', return_value=article_pool_file):
+        with patch('app.domain.sources.ai_articles._articles_path', return_value=article_pool_file):
             with patch('app.services.data_loader.ARTICLES_DIR', articles_dir):
                 response = client.get(
                     "/digest/articles",
@@ -110,7 +110,7 @@ class TestArchiveFeature:
             json.dump([], f, ensure_ascii=False)
         
         # Mock路径
-        with patch('app.sources.ai_articles._articles_path', return_value=article_pool_file):
+        with patch('app.domain.sources.ai_articles._articles_path', return_value=article_pool_file):
             with patch('app.services.data_loader.ARTICLES_DIR', articles_dir):
                 response = client.post(
                     "/digest/archive-article",
@@ -162,7 +162,7 @@ class TestArchiveFeature:
         with open(archived_file, 'w', encoding='utf-8') as f:
             json.dump(archived_data, f, ensure_ascii=False)
         
-        with patch('app.sources.ai_articles._articles_path', return_value=article_pool_file):
+        with patch('app.domain.sources.ai_articles._articles_path', return_value=article_pool_file):
             with patch('app.services.data_loader.ARTICLES_DIR', articles_dir):
                 response = client.post(
                     "/digest/archive-article",

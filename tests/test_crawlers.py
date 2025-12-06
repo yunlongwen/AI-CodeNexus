@@ -1,8 +1,8 @@
 """爬虫测试"""
 import pytest
-from app.crawlers.rss import fetch_rss_articles
-from app.crawlers.github_trending import fetch_github_trending
-from app.crawlers.hackernews import fetch_hackernews_articles
+from app.infrastructure.crawlers.rss import fetch_rss_articles
+from app.infrastructure.crawlers.github_trending import fetch_github_trending
+from app.infrastructure.crawlers.hackernews import fetch_hackernews_articles
 
 
 @pytest.mark.asyncio
