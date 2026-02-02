@@ -109,32 +109,45 @@ async def lifespan(app: FastAPI):
         else:
             # 如果解析失败，使用from_crontab作为后备
             trigger = CronTrigger.from_crontab(schedule.cron, timezone="Asia/Shanghai")
-        scheduler_manager.add_job(
-            digest_service.send_daily_digest,
-            trigger=trigger,
-            job_id="daily_ai_digest",
-            kwargs={"digest_count": digest_count},
-        )
-        logger.info(
-            "[调度器] 已添加推送任务，使用 cron 表达式: %r, 每次推送 %d 篇文章",
-            schedule.cron,
-            digest_count,
-        )
+        
+        # 检查定时推送开关
+        if schedule.scheduler_enabled:
+            scheduler_manager.add_job(
+                digest_service.send_daily_digest,
+                trigger=trigger,
+                job_id="daily_ai_digest",
+                kwargs={"digest_count": digest_count},
+            )
+            logger.info(
+                "[调度器] 已添加推送任务，使用 cron 表达式: %r, 每次推送 %d 篇文章",
+                schedule.cron,
+                digest_count,
+            )
+        else:
+            logger.info(
+                "[调度器] 定时推送已禁用（scheduler_enabled=false），不添加推送任务。手动触发不受影响。"
+            )
     else:
-        scheduler_manager.add_cron_job(
-            digest_service.send_daily_digest,
-            hour=digest_hour,
-            minute=digest_minute,
-            job_id="daily_ai_digest",
-            kwargs={"digest_count": digest_count},
-        )
-        logger.info(
-            "[调度器] 已添加推送任务，每日推送时间: %02d:%02d (Asia/Shanghai), "
-            "每次推送 %d 篇文章",
-            digest_hour,
-            digest_minute,
-            digest_count,
-        )
+        # 检查定时推送开关
+        if schedule.scheduler_enabled:
+            scheduler_manager.add_cron_job(
+                digest_service.send_daily_digest,
+                hour=digest_hour,
+                minute=digest_minute,
+                job_id="daily_ai_digest",
+                kwargs={"digest_count": digest_count},
+            )
+            logger.info(
+                "[调度器] 已添加推送任务，每日推送时间: %02d:%02d (Asia/Shanghai), "
+                "每次推送 %d 篇文章",
+                digest_hour,
+                digest_minute,
+                digest_count,
+            )
+        else:
+            logger.info(
+                "[调度器] 定时推送已禁用（scheduler_enabled=false），不添加推送任务。手动触发不受影响。"
+            )
     
     # 验证任务是否已正确添加
     job = scheduler_manager.get_job("daily_ai_digest")

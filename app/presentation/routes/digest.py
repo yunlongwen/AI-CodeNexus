@@ -103,9 +103,13 @@ class ScheduleConfigRequest(BaseModel):
     minute: Optional[int] = None
     count: Optional[int] = None
     max_articles_per_keyword: Optional[int] = None
+    scheduler_enabled: Optional[bool] = None
 
 class WecomTemplateRequest(BaseModel):
     template: dict
+
+class SchedulerToggleRequest(BaseModel):
+    enabled: bool
 
 class CandidateActionRequest(BaseModel):
     url: str
@@ -1133,6 +1137,95 @@ async def update_schedule_config(request: ScheduleConfigRequest, admin: None = D
     return {"ok": True, "schedule": asdict(schedule)}
 
 
+@router.get("/scheduler")
+async def get_scheduler_status(admin: None = Depends(_require_admin)):
+    """获取定时推送状态"""
+    from ..main import scheduler_manager
+    schedule = load_digest_schedule()
+    
+    # 检查调度器中是否有任务
+    job = None
+    if scheduler_manager and scheduler_manager.scheduler:
+        job = scheduler_manager.scheduler.get_job("daily_ai_digest")
+    
+    return {
+        "ok": True,
+        "scheduler": {
+            "enabled": schedule.scheduler_enabled,
+            "has_job": job is not None,
+            "next_run": job.next_run_time.isoformat() if job and job.next_run_time else None,
+            "cron": schedule.cron,
+            "hour": schedule.hour,
+            "minute": schedule.minute,
+            "count": schedule.count,
+        }
+    }
+
+
+@router.post("/scheduler/toggle")
+async def toggle_scheduler(request: SchedulerToggleRequest, admin: None = Depends(_require_admin)):
+    """切换定时推送开关（立即生效）"""
+    from ..main import scheduler_manager
+    
+    enabled = request.enabled is True
+    
+    # 保存配置
+    if not save_digest_schedule({"scheduler_enabled": enabled}):
+        raise HTTPException(status_code=500, detail="保存配置失败")
+    
+    # 更新调度器中的任务
+    if scheduler_manager and scheduler_manager.scheduler:
+        if enabled:
+            # 启用：添加任务
+            schedule = load_digest_schedule()
+            digest_service = DigestService()
+            digest_count = schedule.count
+            
+            if schedule.cron:
+                cron_parts = schedule.cron.strip().split()
+                if len(cron_parts) == 5:
+                    minute, hour, day, month, day_of_week = cron_parts
+                    trigger_kwargs = {"timezone": "Asia/Shanghai"}
+                    if minute != '*':
+                        trigger_kwargs['minute'] = minute
+                    if hour != '*':
+                        trigger_kwargs['hour'] = hour
+                    if day != '*':
+                        trigger_kwargs['day'] = day
+                    if month != '*':
+                        trigger_kwargs['month'] = month
+                    if day_of_week != '*':
+                        trigger_kwargs['day_of_week'] = day_of_week
+                    from apscheduler.triggers.cron import CronTrigger
+                    trigger = CronTrigger(**trigger_kwargs)
+                else:
+                    from apscheduler.triggers.cron import CronTrigger
+                    trigger = CronTrigger.from_crontab(schedule.cron, timezone="Asia/Shanghai")
+                
+                scheduler_manager.add_job(
+                    digest_service.send_daily_digest,
+                    trigger=trigger,
+                    job_id="daily_ai_digest",
+                    kwargs={"digest_count": digest_count},
+                )
+            else:
+                scheduler_manager.add_cron_job(
+                    digest_service.send_daily_digest,
+                    hour=schedule.hour,
+                    minute=schedule.minute,
+                    job_id="daily_ai_digest",
+                    kwargs={"digest_count": digest_count},
+                )
+            
+            logger.info(f"[调度器] 管理员手动启用定时推送任务")
+        else:
+            # 禁用：移除任务
+            scheduler_manager.remove_job("daily_ai_digest")
+            logger.info(f"[调度器] 管理员手动禁用定时推送任务")
+    
+    return {"ok": True, "enabled": enabled}
+
+
 @router.get("/config/wecom-template")
 async def get_wecom_template_config(admin: None = Depends(_require_admin)):
     """获取企业微信模板配置"""
@@ -1968,6 +2061,21 @@ async def digest_panel():
           </div>
 
           <div id="config-schedule-section" class="config-section hidden">
+            <!-- 定时推送开关 -->
+            <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div class="flex items-center justify-between">
+                <div>
+                  <label class="block text-sm font-medium text-gray-900 mb-1">定时推送开关</label>
+                  <p class="text-xs text-gray-600">启用后，系统会在指定时间自动推送资讯。关闭后仅支持手动触发推送。</p>
+                </div>
+                <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                  <input type="checkbox" name="scheduler-enabled" id="scheduler-enabled" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300" style="top: 0; left: 0;"/>
+                  <label for="scheduler-enabled" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer transition-colors duration-300"></label>
+                </div>
+              </div>
+              <div class="mt-2 text-sm" id="scheduler-status"></div>
+            </div>
+
             <div class="mb-4">
               <label class="block text-sm font-medium text-gray-700 mb-2">调度方式</label>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -2105,6 +2213,23 @@ async def digest_panel():
           </div>
         </div>
       </div>
+
+      <style>
+        /* 定时推送开关样式 */
+        .toggle-checkbox:checked {
+          right: 0;
+          border-color: #10B981;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+          background-color: #10B981;
+        }
+        .toggle-checkbox:not(:checked) {
+          right: 0;
+        }
+        .toggle-checkbox:focus + .toggle-label {
+          box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        }
+      </style>
 
       <script>
         // 最开始的日志，确保脚本执行
@@ -3370,9 +3495,12 @@ async def digest_panel():
           const minuteInput = document.getElementById("schedule-minute");
           const countInput = document.getElementById("schedule-count");
           const maxInput = document.getElementById("schedule-max");
+          const schedulerEnabledInput = document.getElementById("scheduler-enabled");
           const statusEl = document.getElementById("config-schedule-status");
+          const schedulerStatusEl = document.getElementById("scheduler-status");
           
           if (statusEl) statusEl.textContent = "";
+          if (schedulerStatusEl) schedulerStatusEl.textContent = "";
           
           try {
             const adminCode = getAdminCode();
@@ -3400,6 +3528,18 @@ async def digest_panel():
               if (minuteInput) minuteInput.value = s.minute || "";
               if (countInput) countInput.value = s.count || "";
               if (maxInput) maxInput.value = s.max_articles_per_keyword || "";
+              if (schedulerEnabledInput) schedulerEnabledInput.checked = s.scheduler_enabled === true;
+              
+              // 显示定时推送状态
+              if (schedulerStatusEl) {
+                if (s.scheduler_enabled) {
+                  schedulerStatusEl.textContent = "✅ 定时推送已启用";
+                  schedulerStatusEl.className = "text-sm text-green-600";
+                } else {
+                  schedulerStatusEl.textContent = "⏸️ 定时推送已禁用（仅支持手动触发）";
+                  schedulerStatusEl.className = "text-sm text-gray-500";
+                }
+              }
             }
           } catch (err) {
             console.error("加载调度配置失败:", err);
@@ -3741,6 +3881,7 @@ async def digest_panel():
           const minuteInput = document.getElementById("schedule-minute");
           const countInput = document.getElementById("schedule-count");
           const maxInput = document.getElementById("schedule-max");
+          const schedulerEnabledInput = document.getElementById("scheduler-enabled");
           const statusEl = document.getElementById("config-schedule-status");
           
           const payload = {};
@@ -3758,6 +3899,10 @@ async def digest_panel():
           }
           if (maxInput && maxInput.value) {
             payload.max_articles_per_keyword = parseInt(maxInput.value, 10);
+          }
+          // 保存定时推送开关
+          if (schedulerEnabledInput) {
+            payload.scheduler_enabled = schedulerEnabledInput.checked;
           }
           
           if (Object.keys(payload).length === 0) {
@@ -3798,6 +3943,17 @@ async def digest_panel():
               if (statusEl) {
                 statusEl.textContent = "✅ 调度配置已保存";
                 statusEl.className = "text-sm text-green-600";
+              }
+              // 更新定时推送状态显示
+              const schedulerStatusEl = document.getElementById("scheduler-status");
+              if (schedulerStatusEl && data.schedule) {
+                if (data.schedule.scheduler_enabled) {
+                  schedulerStatusEl.textContent = "✅ 定时推送已启用";
+                  schedulerStatusEl.className = "text-sm text-green-600";
+                } else {
+                  schedulerStatusEl.textContent = "⏸️ 定时推送已禁用（仅支持手动触发）";
+                  schedulerStatusEl.className = "text-sm text-gray-500";
+                }
               }
             } else {
               throw new Error(data.message || "保存失败");
@@ -3883,6 +4039,69 @@ async def digest_panel():
         document.getElementById("save-schedule-btn").addEventListener("click", saveScheduleConfig);
         document.getElementById("save-template-btn").addEventListener("click", saveWecomTemplateConfig);
         document.getElementById("save-env-btn").addEventListener("click", saveEnvConfig);
+
+        // 定时推送开关事件监听
+        const schedulerEnabledInput = document.getElementById("scheduler-enabled");
+        if (schedulerEnabledInput) {
+          schedulerEnabledInput.addEventListener("change", async function() {
+            const enabled = this.checked;
+            const schedulerStatusEl = document.getElementById("scheduler-status");
+
+            if (schedulerStatusEl) {
+              schedulerStatusEl.textContent = "正在更新...";
+              schedulerStatusEl.className = "text-sm";
+            }
+
+            try {
+              const adminCode = getAdminCode();
+              const res = await fetch("./scheduler/toggle", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-Admin-Code": adminCode || ""
+                },
+                body: JSON.stringify({ enabled: enabled })
+              });
+
+              if (res.status === 401 || res.status === 403) {
+                handleAuthError(schedulerStatusEl);
+                // 恢复开关状态
+                this.checked = !enabled;
+                return;
+              }
+
+              if (!res.ok) {
+                throw new Error("HTTP " + res.status);
+              }
+
+              const data = await res.json();
+              if (data.ok) {
+                if (schedulerStatusEl) {
+                  if (enabled) {
+                    schedulerStatusEl.textContent = "✅ 定时推送已启用";
+                    schedulerStatusEl.className = "text-sm text-green-600";
+                  } else {
+                    schedulerStatusEl.textContent = "⏸️ 定时推送已禁用（仅支持手动触发）";
+                    schedulerStatusEl.className = "text-sm text-gray-500";
+                  }
+                }
+                // 同时保存到调度配置
+                await saveScheduleConfig();
+              } else {
+                throw new Error(data.message || "更新失败");
+              }
+            } catch (err) {
+              console.error("切换定时推送失败:", err);
+              if (schedulerStatusEl) {
+                schedulerStatusEl.textContent = "❌ 更新失败: " + err.message;
+                schedulerStatusEl.className = "text-sm text-red-600";
+              }
+              // 恢复开关状态
+              this.checked = !enabled;
+            }
+          });
+        }
+
         const backupBtn = document.getElementById("backup-to-github-btn");
         if (backupBtn) {
           backupBtn.addEventListener("click", backupToGitHub);

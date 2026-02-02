@@ -20,6 +20,10 @@ class DigestSchedule:
     - 推荐新方式：使用 cron 表达式（5 字段），例如：
       - 每天 14:00：      "0 14 * * *"
       - 每周一三五 9:30： "30 9 * * 1,3,5"
+
+    - scheduler_enabled: 定时推送开关，默认关闭（false）
+      - true: 启用定时推送任务
+      - false: 禁用定时推送任务（仅支持手动触发）
     """
 
     hour: int = 14
@@ -27,6 +31,7 @@ class DigestSchedule:
     count: int = 5
     cron: Optional[str] = None  # 可选 cron 表达式（优先使用）
     max_articles_per_keyword: int = 5  # 每个关键词最多抓取的文章数
+    scheduler_enabled: bool = False  # 定时推送开关，默认关闭
 
 
 def _digest_schedule_path() -> Path:
@@ -106,6 +111,7 @@ def load_digest_schedule() -> DigestSchedule:
         max_articles_per_keyword=_get_int(
             "max_articles_per_keyword", default.max_articles_per_keyword
         ),
+        scheduler_enabled=data.get("scheduler_enabled", False) is True,
     )
 
     return schedule
@@ -226,6 +232,10 @@ def save_digest_schedule(schedule: Dict[str, Any]) -> bool:
 
     if "cron" in schedule and isinstance(schedule["cron"], str):
         sanitized["cron"] = schedule["cron"].strip()
+
+    # 保存 scheduler_enabled 开关
+    if "scheduler_enabled" in schedule:
+        sanitized["scheduler_enabled"] = schedule["scheduler_enabled"] is True
 
     try:
         with path.open("w", encoding="utf-8") as f:

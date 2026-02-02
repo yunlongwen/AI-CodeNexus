@@ -2,5 +2,6 @@
   "max_articles_per_keyword": 3,
   "hour": 14,
   "count": 5,
-  "cron": "0 14 * * 1-5"
+  "cron": "0 14 * * 1-5",
+  "scheduler_enabled": false
 }
